@@ -13,7 +13,7 @@
 
 ## Workspace
 
-- **Worktree path**: `.worktrees/<change-name>/`
+- **Worktree path**: `<absolute worktree path>`
 - **Worktree branch**: `<change-name>`
 - **Feature branch**: `<branch checked out before apply step 0>`
 - **Base branch**: `<integration branch, typically main>`

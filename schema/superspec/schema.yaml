@@ -26,8 +26,11 @@ artifacts:
       IMPORTANT output redirection:
       - Do NOT write to `docs/superpowers/specs/`. Instead, write the
         brainstorming design output directly to this change's `brainstorm.md`.
-      - If brainstorming produces a design document, also write it to
-        this change's `design.md` (this will pre-fill the design artifact).
+      - Keep technical decisions out of brainstorm.md; they belong in
+        design.md. The two must not repeat each other.
+      - When the design is approved, do NOT invoke writing-plans or any
+        other skill the brainstorming skill hands off to. Return to the
+        OpenSpec flow; the next artifact is proposal.
 
       After brainstorming completes, summarize the agreed design in
       brainstorm.md using the template structure.
@@ -143,9 +146,9 @@ artifacts:
       - Order tasks by dependency (what must be done first?)
 
       Reference specs for what needs to be built. If design.md exists,
-      reference it for how to build it — but design is optional (see
-      openspec-conventions: design.md is only for changes that need to
-      explain non-trivial technical decisions).
+      reference it for how to build it — but design is optional: design.md
+      is only for changes that need to explain non-trivial technical
+      decisions.
     requires:
       - specs
 
@@ -169,6 +172,16 @@ artifacts:
       Pass the tasks.md content to the skill as the input for
       decomposition. The plan should reference the specs and
       design artifacts in this change directory.
+
+      Plan rules:
+      - Skip the skill's execution handoff; `/opsx-apply` chooses the
+        executor.
+      - Every plan task names the tasks.md ID it implements (e.g.
+        `Task 3 — implements 1.2`).
+      - List, for every `#### Scenario:` in specs/, the test that
+        covers it.
+      - The plan header's spec reference points at this change's
+        `specs/` and `design.md`.
     requires:
       - tasks
 
@@ -196,7 +209,10 @@ artifacts:
     instruction: |
       Load the **openspec-verify-change** skill (the `/opsx-verify`
       slash command is its user-facing equivalent). If that skill is
-      unavailable, run the six checks below manually.
+      unavailable, run the six checks below manually. The six checks
+      below replace the skill's own check list; if they differ, follow
+      this list. Also load **verification-before-completion**: record
+      fresh command output as evidence.
 
       Run verify with the WORKTREE as the working directory: apply wrote
       its artifacts there. apply.md MUST exist before this artifact
@@ -279,7 +295,7 @@ artifacts:
         still works: it merges the worktree back, pushes the
         feature branch (creating the remote tracking branch if
         needed), and the code-reviewer comment subroutine
-        self-skips (recording `PR comment: skipped (no PR)` in
+        self-skips (recording `PR comment status: skipped (no PR)` in
         finalize.md). You can `gh pr create` after finalize
         completes, or never open a PR at all.
 
@@ -292,7 +308,7 @@ artifacts:
 
       1. Locate the worktree and read the branch facts from apply.md:
 
-         WORKTREE=$(git worktree list --porcelain | awk '/^worktree / {wt=$2} $0 == "branch refs/heads/<change-name>" {print wt; exit}')
+         WORKTREE=$(git worktree list --porcelain | awk '/^worktree / {wt=substr($0,10)} $0 == "branch refs/heads/<change-name>" {print wt; exit}')
          # If WORKTREE is empty, list `git worktree list` and ask the
          # user which path corresponds to this change.
 
@@ -312,7 +328,7 @@ artifacts:
          # Stop on failure — record the failure in finalize.md and
          # do not proceed.
 
-      3. Switch to feature branch in main checkout and pull:
+      3. Switch to the feature branch and pull:
 
          MAIN_ROOT=$(git -C "$WORKTREE" rev-parse --git-common-dir)/..
          cd "$MAIN_ROOT"
@@ -338,13 +354,12 @@ artifacts:
          Step 6 — see "Borrowed logic" below for attribution and the
          recreation method):
 
-         WORKTREE_REL=$(realpath --relative-to="$MAIN_ROOT" "$WORKTREE")
-         case "$WORKTREE_REL" in
-           .worktrees/*|worktrees/*) OWN=1 ;;
-           *) case "$WORKTREE" in
-                "$HOME/.config/superpowers/worktrees/"*) OWN=1 ;;
-                *) OWN=0 ;;
-              esac ;;
+         MAIN_ROOT=$(pwd -P)   # step 3 left us in the main checkout
+         WORKTREE=$(cd "$WORKTREE" && pwd -P)
+         case "$WORKTREE" in
+           "$MAIN_ROOT"/.worktrees/*|"$MAIN_ROOT"/worktrees/*) OWN=1 ;;
+           "$HOME/.config/superpowers/worktrees/"*) OWN=1 ;;
+           *) OWN=0 ;;
          esac
          if [ "$OWN" = "1" ]; then
            git worktree remove "$WORKTREE"
@@ -363,10 +378,10 @@ artifacts:
          openspec/changes/<change-name>/finalize.md. Required values
          for the git-side closeout:
          - Outcome: `pr-updated`
-         - Branch: <feature-branch>
-         - Base branch: <integration branch, typically `main`>
+         - Branch: $FEATURE_BRANCH
+         - Base branch: $BASE_BRANCH
          - Final state: `pr-updated`
-         - PR URL: discovered via `gh pr view <feature-branch> --json url --jq .url`
+         - PR URL: discovered via `gh pr view "$FEATURE_BRANCH" --json url --jq .url`
          - Worktree: <path or "removed">
          - Cleanup: `removed` (or `preserved (harness-owned)`)
          - Tests baseline status at finish: `passing`
@@ -479,7 +494,7 @@ artifacts:
 
       a. Detect the PR:
          PR_NUMBER=$(gh pr view "$FEATURE_BRANCH" --json number --jq .number 2>/dev/null)
-         If empty: record `PR comment: skipped (no PR)` in
+         If empty: record `PR comment status: skipped (no PR)` in
          finalize.md and return.
 
       b. Build the comment body. The body starts with the literal
@@ -551,16 +566,16 @@ artifacts:
 
          gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" \
            -f body=@/tmp/superspec-finalize-comment.md
-         Record `PR comment: edited-existing` in finalize.md.
+         Record `PR comment status: edited-existing` in finalize.md.
 
          Otherwise, post a new comment:
 
          gh pr comment "$PR_NUMBER" --body-file /tmp/superspec-finalize-comment.md
-         Record `PR comment: posted` in finalize.md.
+         Record `PR comment status: posted` in finalize.md.
 
       e. On any failure (gh missing, draft PR with comments
          disabled, network/auth/rate-limit error), record
-         `PR comment: failed — <reason>` in finalize.md. Do NOT
+         `PR comment status: failed: <reason>` in finalize.md. Do NOT
          roll back the merge/push. The change is git-clean; the
          comment is a nice-to-have, not a correctness gate.
 
@@ -582,9 +597,7 @@ artifacts:
       the steps above against the upstream skill's current Step 5
       (Option 1) and Step 6, port any meaningful behavioral
       changes back into this instruction, then update the commit
-      hash above. A short subsection in docs/workflow-details.md
-      ("Borrowed logic and recreation method") restates this
-      discipline.
+      hash above.
 
       ------------------------------------------------------------
       Escape hatch: manual skill invocation
@@ -614,8 +627,7 @@ artifacts:
       even outside the canonical automation.
 
       Once finalize.md exists, the change is git-clean and ready
-      for /opsx-archive. See docs/workflow-details.md Phase 6
-      (Archival) for the golden path.
+      for /opsx-archive.
     requires:
       - verify
 
@@ -655,9 +667,13 @@ apply:
           with the change directory already tracked."
           ```
 
-       c. If the output is empty (everything committed) or contains
-          only modifications (`M`) without untracked entries, skip
-          the commit — the change directory is already tracked.
+       c. If the output is non-empty (untracked or modified entries),
+          stage and commit only this change's directory
+          (`git add openspec/changes/<name>/ && git commit`); the
+          worktree is created from HEAD, so uncommitted artifacts
+          would be missing from its authoritative copy. Skip the
+          commit only when the output is empty (everything is
+          committed).
 
        d. **Branch-state checks** (v4):
           - **Recommended**: a feature branch (any branch that is not
@@ -704,6 +720,9 @@ apply:
        Tell the executor:
        - Read plan.md in this change directory for micro-tasks
        - Update tasks.md checkboxes as coarse tasks complete
+       - When a plan task's review passes, tick its tasks.md box.
+         tasks.md is the official status; the executor's ledger is
+         for recovery only.
        - Work within the created worktree
 
        IMPORTANT — transitive skill activation:
@@ -758,4 +777,5 @@ apply:
        belong to finalize, after verify. Next, run `/opsx-verify`.
 
     If any skill is unavailable, fall back to manual implementation
-    using the standard task-by-task loop from tasks.md.
+    using the standard task-by-task loop from tasks.md, then request a
+    whole-branch review, write apply.md (step 3) and stop.

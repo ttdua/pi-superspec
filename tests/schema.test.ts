@@ -325,4 +325,139 @@ run("bundled schema", () => {
 			}
 		});
 	});
+
+	describe("final review findings", () => {
+		const instructionFor = (id: string): string => {
+			const out = project.openspec(["instructions", id, "--change", "x", "--json"]);
+			expect(out.status, out.stdout + out.stderr).toBe(0);
+			return (JSON.parse(out.stdout).instruction as string).replace(/\s+/g, " ");
+		};
+		const tpl = (name: string) =>
+			readFileSync(join(SCHEMA_DIR, "templates", name), "utf8");
+
+		it("brainstorm keeps technical decisions out and does not hand off to writing-plans", () => {
+			const text = instructionFor("brainstorm");
+			expect(text).toContain(
+				"Keep technical decisions out of brainstorm.md; they belong in design.md. The two must not repeat each other.",
+			);
+			expect(text).toContain(
+				"do NOT invoke writing-plans or any other skill the brainstorming skill hands off to",
+			);
+			expect(text).toContain("the next artifact is proposal");
+			expect(text).not.toContain("also write it to this change's `design.md`");
+		});
+
+		it("plan instruction carries the handoff, ID, scenario and spec rules", () => {
+			const text = instructionFor("plan");
+			expect(text).toContain(
+				"Skip the skill's execution handoff; `/opsx-apply` chooses the executor.",
+			);
+			expect(text).toContain(
+				"Every plan task names the tasks.md ID it implements (e.g. `Task 3 — implements 1.2`).",
+			);
+			expect(text).toContain(
+				"List, for every `#### Scenario:` in specs/, the test that covers it.",
+			);
+			expect(text).toContain(
+				"The plan header's spec reference points at this change's `specs/` and `design.md`.",
+			);
+		});
+
+		it("plan template does not pre-select an executor", () => {
+			const t = tpl("plan.md");
+			expect(t).not.toContain("subagent-driven-development");
+			expect(t).toContain("Executed via `/opsx-apply`, which chooses the executor.");
+			expect(t).toMatch(/^## Task 1: .*implements X\.Y$/m);
+			expect(t).toMatch(/^## Scenario → test$/m);
+		});
+
+		it("apply ticks tasks.md as official status and commits dirty change dirs", () => {
+			const text = instructionFor("apply");
+			expect(text).toContain(
+				"When a plan task's review passes, tick its tasks.md box. tasks.md is the official status; the executor's ledger is for recovery only.",
+			);
+			expect(text).toContain(
+				"If the output is non-empty (untracked or modified entries), stage and commit only this change's directory",
+			);
+			expect(text).toContain("Skip the commit only when the output is empty");
+			expect(text).not.toMatch(/only modifications/);
+			expect(text).toContain(
+				"then request a whole-branch review, write apply.md (step 3) and stop.",
+			);
+		});
+
+		it("apply.md template has no hard-coded .worktrees path", () => {
+			const t = tpl("apply.md");
+			expect(t).not.toContain(".worktrees/");
+			expect(t).toContain("<absolute worktree path>");
+		});
+
+		it("no dangling workflow-details or openspec-conventions references", () => {
+			expect(schemaText()).not.toContain("workflow-details");
+			expect(schemaText()).not.toContain("openspec-conventions");
+			expect(tpl("brainstorm.md")).not.toContain("openspec/config.yaml");
+		});
+
+		it("verify instruction states precedence and loads verification-before-completion", () => {
+			const text = instructionFor("verify");
+			expect(text).toContain(
+				"The six checks below replace the skill's own check list; if they differ, follow this list.",
+			);
+			expect(text).toContain("verification-before-completion");
+			expect(text).toContain("record fresh command output as evidence");
+		});
+
+		it("verify template records outcomes and the iteration cap", () => {
+			const t = tpl("verify.md");
+			expect(t).toContain("PASS_WITH_WARNINGS");
+			expect(t).toContain("5 iterations");
+		});
+
+		describe("finalize wording", () => {
+			it("step 8 uses the branch variables", () => {
+				const flat = instructionFor("finalize");
+				expect(flat).toContain("Branch: $FEATURE_BRANCH");
+				expect(flat).toContain("Base branch: $BASE_BRANCH");
+				expect(flat).toContain('gh pr view "$FEATURE_BRANCH" --json url');
+				const step8 = flat.slice(
+					flat.indexOf("8. Write finalize.md"),
+					flat.indexOf("9. Commit the receipt"),
+				);
+				expect(step8.length).toBeGreaterThan(0);
+				expect(step8).not.toContain("<feature-branch>");
+				expect(step8).not.toContain("<integration branch");
+			});
+
+			it("step 3 title is accurate", () => {
+				const flat = instructionFor("finalize");
+				expect(flat).toContain("3. Switch to the feature branch and pull:");
+				expect(flat).not.toContain("Switch to feature branch in main checkout");
+			});
+
+			it("uses one PR-comment label and one failure form", () => {
+				const all = schemaText();
+				expect(all).not.toMatch(/PR comment:/);
+				expect(all).not.toMatch(/\*\*Comment status\*\*/);
+				expect(all).not.toContain("failed —");
+				expect(tpl("finalize.md")).toContain("**PR comment status**");
+				expect(tpl("finalize.md")).toContain("failed: <reason>");
+				expect(tpl("finalize.md")).toContain("preserved (harness-owned)");
+			});
+
+			it("cleanup guard is portable", () => {
+				const y = schemaYaml();
+				expect(y).not.toContain("realpath --relative-to");
+				expect(y).toContain("pwd -P");
+				expect(y).toContain('"$MAIN_ROOT"/.worktrees/*|"$MAIN_ROOT"/worktrees/*) OWN=1');
+				expect(y).toContain('"$HOME/.config/superpowers/worktrees/"*');
+			});
+
+			it("awk worktree parse survives spaces in paths", () => {
+				const y = schemaYaml();
+				expect(y).toContain("wt=substr($0,10)");
+				expect(y).not.toContain("wt=$2");
+			});
+		});
+
+	});
 });

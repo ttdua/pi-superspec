@@ -1,7 +1,7 @@
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** Use superpowers:subagent-driven-development
-> to implement this plan task-by-task.
+> Executed via `/opsx-apply`, which chooses the executor.
+> Spec reference: this change's `specs/` and `design.md`.
 
 **Goal:** <!-- One sentence -->
 
@@ -11,7 +11,15 @@
 
 ---
 
-## Task 1: <!-- Component Name -->
+## Task 1: <!-- Component Name --> — implements X.Y
 
 - [ ] **Step 1:** <!-- micro-step -->
 - [ ] **Step 2:** <!-- micro-step -->
+
+---
+
+## Scenario → test
+
+<!-- One row per `#### Scenario:` in specs/ -->
+
+- <!-- Scenario name --> → <!-- test that covers it -->

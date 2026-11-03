@@ -23,13 +23,13 @@
 ## Workspace
 
 - **Worktree**: `<path or N/A if normal repo>`
-- **Cleanup**: `removed` | `preserved (PR / keep-as-is)` | `N/A (normal repo)`
+- **Cleanup**: `removed` | `preserved (PR / keep-as-is)` | `preserved (harness-owned)` | `N/A (normal repo)`
 
 ---
 
 ## PR comment
 
-- **Comment status**: `posted` | `edited-existing` | `skipped (no PR)` | `failed: <reason>`
+- **PR comment status**: `posted` | `edited-existing` | `skipped (no PR)` | `failed: <reason>`
 
 ---
 
