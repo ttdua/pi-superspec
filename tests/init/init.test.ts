@@ -1,4 +1,13 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -104,6 +113,8 @@ describe("runInit", () => {
 		expect(calls.filter(isValidate)).toHaveLength(1);
 		expect(io.reloads).toBe(0);
 		expect(io.notes.join("\n")).toContain("bad schema");
+		expect(io.notes.join("\n")).toContain("next session start");
+		expect(io.reports).toEqual([]);
 	});
 
 	it("activates, reloads once and prints the next step on success", async () => {
@@ -111,7 +122,9 @@ describe("runInit", () => {
 		const { io, calls } = recording(root);
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		expect(io.reloads).toBe(1);
-		expect(io.notes.some((n) => n.includes("/opsx-new"))).toBe(true);
+		expect(io.reports).toHaveLength(1);
+		expect(io.reports[0]).toContain("Schema superspec is valid.");
+		expect(io.reports[0]).toContain("Next: /opsx-new <name>");
 		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe("schema: superspec\n");
 		expect(existsSync(join(root, "openspec", "schemas", "superspec", "schema.yaml"))).toBe(true);
 		const v = calls.findIndex(isValidate);
@@ -123,12 +136,20 @@ describe("runInit", () => {
 		const root = tmp();
 		let reloaded = false;
 		const notes: string[] = [];
+		const stale = () => {
+			if (reloaded) throw new Error("ctx is stale after reload");
+		};
 		const { io } = recording(root, undefined, {
 			notify(message) {
-				if (reloaded) throw new Error("ctx is stale after reload");
+				stale();
+				notes.push(message);
+			},
+			report(message) {
+				stale();
 				notes.push(message);
 			},
 			async reload() {
+				stale();
 				reloaded = true;
 			},
 		});
@@ -163,9 +184,29 @@ describe("runInit", () => {
 		expect(await runInit(io, packageRoot)).toBe("blocked");
 		expect(calls.some(isValidate)).toBe(false);
 		expect(io.reloads).toBe(0);
-		expect(io.notes.join("\n")).toContain("foreign");
+		const notice = io.notes.join("\n");
+		expect(notice).toContain("foreign");
+		expect(notice).toContain("openspec/config.yaml now has `schema: superspec`");
+		expect(notice).toContain("schema-auto-upgrade");
+		expect(notice).toContain("remove openspec/schemas/superspec/");
 		expect(readdirSync(dirname(schemaFile))).toEqual(["schema.yaml"]);
 		expect(readFileSync(schemaFile, "utf8")).toBe(before);
+	});
+
+	it("does not mention config.yaml when blocked and config was already set", async () => {
+		const root = tmp();
+		cpSync(join(fixtures, "unmarked"), root, { recursive: true });
+		writeFileSync(join(root, "openspec", "config.yaml"), "schema: superspec\n");
+		const { io } = recording(root);
+		expect(await runInit(io, packageRoot)).toBe("blocked");
+		expect(io.notes.join("\n")).not.toContain("config.yaml");
+	});
+
+	it("includes warnings in the persisted report", async () => {
+		const root = tmp();
+		const { io } = recording(root, undefined, { superpowersAvailable: () => false });
+		expect(await runInit(io, packageRoot)).toBe("activated");
+		expect(io.reports[0]).toContain("Superpowers skills were not found");
 	});
 
 	it("still runs legacy cleanup when blocked", async () => {

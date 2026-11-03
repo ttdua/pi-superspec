@@ -10,6 +10,8 @@ export interface InitIO {
 	exec(command: string, args: string[], cwd?: string): Promise<ExecResult>;
 	confirm(title: string, message: string): Promise<boolean>;
 	notify(message: string, level?: "info" | "warning" | "error"): void;
+	/** Persist a visible message in the session so it survives `reload()`. */
+	report(message: string): void;
 	reload(): Promise<void>;
 	superpowersAvailable(): boolean;
 }

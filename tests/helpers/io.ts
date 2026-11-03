@@ -2,8 +2,9 @@ import type { ExecResult, InitIO } from "../../extensions/init/io.ts";
 
 export function fakeIO(
 	overrides: Partial<InitIO> = {},
-): InitIO & { notes: string[]; reloads: number } {
+): InitIO & { notes: string[]; reports: string[]; reloads: number } {
 	const notes: string[] = [];
+	const reports: string[] = [];
 	let reloads = 0;
 	const base: InitIO = {
 		cwd: "/tmp/fake-project",
@@ -17,6 +18,9 @@ export function fakeIO(
 		notify(message: string, _level?: "info" | "warning" | "error"): void {
 			notes.push(message);
 		},
+		report(message: string): void {
+			reports.push(message);
+		},
 		async reload(): Promise<void> {
 			reloads += 1;
 		},
@@ -28,6 +32,7 @@ export function fakeIO(
 		...base,
 		...overrides,
 		notes,
+		reports,
 		get reloads() {
 			return reloads;
 		},

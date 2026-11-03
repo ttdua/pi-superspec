@@ -27,7 +27,8 @@ export async function runInit(io: InitIO, packageRoot: string): Promise<InitOutc
 		io.notify(preflight.message, "error");
 		return "preflight-failed";
 	}
-	for (const warning of await collectWarnings(io)) io.notify(warning, "warning");
+	const warnings = await collectWarnings(io);
+	for (const warning of warnings) io.notify(warning, "warning");
 
 	const root = findProjectRoot(io.cwd) ?? io.cwd;
 	if (!existsSync(join(root, "openspec"))) {
@@ -39,13 +40,20 @@ export async function runInit(io: InitIO, packageRoot: string): Promise<InitOutc
 		}
 	}
 
-	applyConfig(root);
+	// Config is applied before the schema is classified, so a blocked run may
+	// already have switched config.yaml; the blocked notice says so.
+	const config = applyConfig(root);
 	const state = installSchema(root, packageRoot);
 	if (state !== "absent" && state !== "identical") {
-		io.notify(
+		const lines = [
 			`Existing schema at openspec/schemas/superspec is ${state}; it was left unchanged. Activation stopped.`,
-			"warning",
+		];
+		if (config === "written") lines.push("Note: openspec/config.yaml now has `schema: superspec`.");
+		lines.push(
+			"Upgrading or repairing an existing schema is handled by the schema-auto-upgrade change. " +
+				"To reinstall now, back up any local edits, remove openspec/schemas/superspec/, and run /opsx-init again.",
 		);
+		io.notify(lines.join("\n"), "warning");
 		await cleanLegacy(io, root);
 		return "blocked";
 	}
@@ -54,11 +62,16 @@ export async function runInit(io: InitIO, packageRoot: string): Promise<InitOutc
 	const validation = await run(io, ["schema", "validate", "superspec"], root);
 	if (validation.code !== 0) {
 		const detail = output(validation);
-		io.notify(`openspec schema validate superspec failed${detail ? `:\n${detail}` : ""}`, "error");
+		io.notify(
+			`openspec schema validate superspec failed${detail ? `:\n${detail}` : ""}\n` +
+				"Installed files were kept; the project activates on the next session start even though this session was not reloaded.",
+			"error",
+		);
 		return "validation-failed";
 	}
-	io.notify("Schema superspec is valid.", "info");
-	io.notify("Superspec is set up. Next: /opsx-new <name>", "info");
+	// reload() rebuilds the chat from session entries, dropping notify() output,
+	// so the result is persisted as a session message before reloading.
+	io.report([...warnings, "Schema superspec is valid.", "Superspec is set up. Next: /opsx-new <name>"].join("\n"));
 	// reload() invalidates the command ctx; nothing may touch io after it.
 	await io.reload();
 	return "activated";

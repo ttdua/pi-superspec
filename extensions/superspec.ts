@@ -29,6 +29,10 @@ export default function (pi: ExtensionAPI) {
 				},
 				confirm: (title, message) => ctx.ui.confirm(title, message),
 				notify: (message, level) => ctx.ui.notify(message, level),
+				// A session message (not notify) so it survives the chat rebuild on reload;
+				// without triggerTurn it is appended to the session and starts no agent turn.
+				report: (message) =>
+					pi.sendMessage({ customType: "superspec-init", content: message, display: true }),
 				reload: () => ctx.reload(),
 				superpowersAvailable: () =>
 					pi.getCommands().some((c) => c.name === "skill:brainstorming"),
