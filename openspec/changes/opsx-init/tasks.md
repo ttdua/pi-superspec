@@ -5,8 +5,8 @@
 
 ## 2. Preflight and config merge
 
-- [ ] 2.1 Write failing tests for the version check (supported, too old, missing) and implement `extensions/init/preflight.ts`, including the git and Superpowers warnings
-- [ ] 2.2 Write failing tests for the `config.yaml` merge (replace, add, create, preserve keys and comments, nested `schema` untouched, no write when already set) and implement `extensions/init/config.ts`
+- [x] 2.1 Write failing tests for the version check (supported, too old, missing) and implement `extensions/init/preflight.ts`, including the git and Superpowers warnings
+- [x] 2.2 Write failing tests for the `config.yaml` merge (replace, add, create, preserve keys and comments, nested `schema` untouched, no write when already set) and implement `extensions/init/config.ts`
 
 ## 3. Schema install and lock
 
