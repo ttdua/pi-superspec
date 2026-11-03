@@ -71,7 +71,7 @@ describe("planning commands", () => {
 	it("skills that ask the user state a plain-text fallback", () => {
 		for (const c of ["new", "continue", "ff"]) {
 			const text = skill(c);
-			expect(text, c).toContain("rpiv-ask-user-question");
+			expect(text, c).toContain("ask_user_question");
 			expect(text, c).toContain("numbered options");
 		}
 	});
