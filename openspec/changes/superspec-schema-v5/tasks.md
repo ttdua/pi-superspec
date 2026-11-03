@@ -13,8 +13,8 @@
 
 ## 3. DAG and apply integration
 
-- [ ] 3.1 Test: DAG from `openspec status --json` equals the table parsed from `docs/domain-model.md`
-- [ ] 3.2 Test: `openspec instructions apply --json` in a temp project returns the apply block
+- [x] 3.1 Test: DAG from `openspec status --json` equals the table parsed from `docs/domain-model.md`
+- [x] 3.2 Test: `openspec instructions apply --json` in a temp project returns the apply block
 
 ## 4. Manifest and verification
 
