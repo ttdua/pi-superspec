@@ -33,7 +33,7 @@ Start the change once:
 /opsx-new add-user-auth
 ```
 
-`/opsx-new` runs `openspec new change`, checks status and shows the instructions for the first artifact. It creates no artifact itself. If you give no name it asks what you want to build. If the change already exists it suggests `/opsx-continue <name>` and stops.
+`/opsx-new` runs `openspec new change`, checks status and shows the instructions for the first artifact. It creates no artifact itself. The CLI may print `Creating change 'demo' with schema 'spec-driven'...`, but the change uses `superspec` from `openspec/config.yaml`; the next line reads `Schema: superspec` and `openspec status` reports `schemaName: superspec`. If you give no name it asks what you want to build. If the change already exists it suggests `/opsx-continue <name>` and stops.
 
 ### 1. Brainstorm
 
