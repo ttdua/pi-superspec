@@ -15,7 +15,7 @@
 
 ## 4. Legacy cleanup
 
-- [ ] 4.1 Write failing tests for detecting `.pi/prompts/opsx-*.md` and `.pi/skills/openspec-*` and for confirm, decline, non-interactive and unrelated-file cases; implement `extensions/init/legacy.ts`
+- [x] 4.1 Write failing tests for detecting `.pi/prompts/opsx-*.md` and `.pi/skills/openspec-*` and for confirm, decline, non-interactive and unrelated-file cases; implement `extensions/init/legacy.ts`
 
 ## 5. Orchestrator and command
 
