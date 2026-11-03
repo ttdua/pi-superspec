@@ -13,7 +13,7 @@ Continue working on a change by creating the next artifact.
 
 1. **If no change name provided, prompt for selection**
 
-   Run `openspec list --json` to get the available changes, sorted by most recently modified. If several changes exist, ask which one to work on. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+   Run `openspec list --json` to get the available changes, sorted by most recently modified. If exactly one change exists and no name was given, use it and announce it ("Using change `<name>`"). If several changes exist, ask which one to work on. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
 
    Present the top 3-4 most recently modified changes, showing:
    - Change name
@@ -23,7 +23,7 @@ Continue working on a change by creating the next artifact.
 
    Mark the most recently modified change as "(Recommended)".
 
-   **IMPORTANT**: Do NOT guess or auto-select a change. Always let the user choose.
+   **IMPORTANT**: When several changes exist, do NOT guess or auto-select one. Let the user choose.
 
 2. **Check current status**
    ```bash
@@ -52,7 +52,7 @@ Continue working on a change by creating the next artifact.
      - `context`: Project background (constraints for you; do NOT include in output)
      - `rules`: Artifact-specific rules (constraints for you; do NOT include in output)
      - `template`: The structure for the output file
-     - `instruction`: Schema-specific guidance
+     - `instruction`: Schema-specific guidance. If it names `superpowers:<x>`, follow the **Superpowers artifact rule** below before writing the artifact
      - `resolvedOutputPath`: Resolved path or pattern to write the artifact
      - `dependencies`: Completed artifacts to read for context
    - **Create the artifact file**:
@@ -60,6 +60,7 @@ Continue working on a change by creating the next artifact.
      - Use `template` as the structure and fill in its sections
      - Apply `context` and `rules` as constraints, but do NOT copy them into the file
      - Write to `resolvedOutputPath`. If it is a glob pattern, choose the concrete file path using the schema instruction and workspace planning context
+   - An artifact may span several files (for example the `specs` artifact: one spec per capability, as the schema instruction directs). Create all files for that one artifact; it still counts as one artifact
    - Create exactly one artifact, then show what was created and what is now unlocked
    - STOP after creating that one artifact so the user can review it
 
@@ -75,7 +76,7 @@ Continue working on a change by creating the next artifact.
 
 **Superpowers artifact rule**
 
-If an artifact `instruction` says to use `superpowers:<x>` (for example `superpowers:brainstorming` for the brainstorm artifact or `superpowers:writing-plans` for the plan artifact), drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the instruction says (never under `docs/superpowers/`) and ignore that skill's own closing step (invoking another skill or an execution handoff). If skill `<x>` is not available, STOP and tell the user to install Superpowers.
+If an artifact `instruction` says to use `superpowers:<x>` (for example `superpowers:brainstorming` for the brainstorm artifact or `superpowers:writing-plans` for the plan artifact), drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the instruction says (never under `docs/superpowers/`) and ignore that skill's own closing step (invoking another skill or an execution handoff). That skill's own approval gates, self-review, or commit steps must not produce a second artifact or run past the STOP after this artifact. If skill `<x>` is not available, STOP and tell the user to install Superpowers.
 
 **Output**
 

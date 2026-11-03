@@ -21,6 +21,8 @@ Start a new change using the artifact-driven workflow.
    **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
 
 2. **Create the change directory**
+
+   First run `openspec list --json`. If a change with that name already exists, do NOT create it: suggest `/opsx-continue <name>` instead and STOP.
    ```bash
    openspec new change "<name>"
    ```

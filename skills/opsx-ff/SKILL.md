@@ -27,7 +27,7 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
    ```
    Omit `--schema`; use the project's default schema.
 
-   If a change with that name already exists, tell the user and continue that change only with their go-ahead (ask first). Never overwrite existing artifacts.
+   If a change with that name already exists, tell the user and ask them to confirm continuing it. If confirmed, skip artifacts already `done`. Never overwrite existing artifacts.
 
 3. **Get the artifact build order**
    ```bash
@@ -64,8 +64,9 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
    **Interaction boundary**
    - The `brainstorm` artifact runs interactively: the user answers your questions and approves the design before you move on.
    - After the design is approved, create every remaining artifact in dependency order without stopping to ask for review. Continue until every artifact ID in `applyRequires` has `status: "done"` (re-run `openspec status --change "<name>" --json` after each artifact). The `plan` artifact is the last one required.
-   - In this unattended phase, ask only when required input is genuinely missing; otherwise make reasonable decisions to keep momentum. Do NOT ask the execution-handoff question that the writing-plans skill normally asks at its end.
-   - If the optional `design` artifact is ready, write it too (it is cheap and completes the graph), but do not repeat what the `brainstorm` artifact already says, as its instruction directs.
+   - In this unattended phase, required input is missing only if no reasonable default can be inferred from the brainstorm, earlier artifacts and the repo. Otherwise do not ask: make the decision and record any assumption in the artifact. Do NOT ask the execution-handoff question that the writing-plans skill normally asks at its end.
+   - Create all ready artifacts in dependency order, including `design` when it is ready (it is cheap and completes the graph); `design` is written before the loop stops, and the loop stops only once `plan` is done. Do not repeat in `design` what the `brainstorm` artifact already says, as its instruction directs.
+   - If no artifact is ready but `applyRequires` is not satisfied, show the status, STOP, and report why.
 
 5. **Show final status**
    ```bash
@@ -97,5 +98,4 @@ After completing all artifacts, summarize:
 - Do NOT start apply: never implement tasks or write product code; stop after the artifacts and point to `/opsx-apply`
 - Always read dependency artifacts before creating a new one
 - Run the `brainstorm` artifact interactively; do not fabricate the user's answers or approval
-- If context is critically unclear, ask the user, but prefer reasonable decisions to keep momentum
 - Verify each artifact file exists after writing before proceeding to the next
