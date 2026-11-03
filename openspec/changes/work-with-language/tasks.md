@@ -1,8 +1,8 @@
 ## 1. Config language helpers
 
-- [ ] 1.1 Add `mergeLanguage(text, value)` and `applyLanguage(root, value)` to `extensions/init/config.ts`: replace a top-level `language:` line, else insert after `schema:`, bare or JSON-quoted per the quoting rule, preserving BOM, CRLF and all other bytes (specs `config-merge`: Set language key, Preserve other content)
-- [ ] 1.2 Add `validateLanguage(value)` (trim, 1 to 64 characters, no control characters) and `readLanguage(root)` (bare or double-quoted value, invalid or missing yields undefined) (specs `document-language`: Language setting; `config-merge`: Read language key)
-- [ ] 1.3 Unit tests in `tests/init/config.test.ts` for every scenario of the two config-merge requirements above and the Language setting scenarios
+- [x] 1.1 Add `mergeLanguage(text, value)` and `applyLanguage(root, value)` to `extensions/init/config.ts`: replace a top-level `language:` line, else insert after `schema:`, bare or JSON-quoted per the quoting rule, preserving BOM, CRLF and all other bytes (specs `config-merge`: Set language key, Preserve other content)
+- [x] 1.2 Add `validateLanguage(value)` (trim, 1 to 64 characters, no control characters) and `readLanguage(root)` (bare or double-quoted value, invalid or missing yields undefined) (specs `document-language`: Language setting; `config-merge`: Read language key)
+- [x] 1.3 Unit tests in `tests/init/config.test.ts` for every scenario of the two config-merge requirements above and the Language setting scenarios
 
 ## 2. Routing note
 
