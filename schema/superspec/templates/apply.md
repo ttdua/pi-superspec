@@ -13,8 +13,10 @@
 
 ## Workspace
 
-- **Worktree**: `.worktrees/<change-name>/`
-- **Branch**: `<branch-name>`
+- **Worktree path**: `.worktrees/<change-name>/`
+- **Worktree branch**: `<change-name>`
+- **Feature branch**: `<branch checked out before apply step 0>`
+- **Base branch**: `<integration branch, typically main>`
 
 ---
 

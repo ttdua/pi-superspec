@@ -632,13 +632,19 @@ apply:
   instruction: |
     Before implementing, set up an isolated workspace and executor:
 
-    0. **Pre-flight — commit change artifacts to feature branch**:
+    0. **Pre-flight — commit change artifacts to feature branch**,
+       then create the worktree on a branch named <change-name>:
 
        Superspec's canonical starting state is a user-created feature
        branch (e.g., `spec/<change-name>`, `feat/<change-name>`). The
        artifact phases (brainstorm through plan) should have committed
        their files to this branch. Step 0 ensures the change directory
        is committed before the worktree is created.
+
+       Record the branch checked out now (`git branch --show-current`) as
+       the **feature branch**, and the project's integration branch
+       (typically `main` or `master`) as the **base branch**. Both go
+       into apply.md in step 3.
 
        Steps:
        a. Run `git status --porcelain openspec/changes/<name>/` to
@@ -681,7 +687,16 @@ apply:
 
     1. **Workspace**: Load the
        **superpowers:using-git-worktrees** skill to create an isolated
-       git worktree for this change.
+       git worktree for this change, on a new branch named
+       <change-name> (the worktree branch), created from the feature
+       branch after the step 0 commit.
+
+       **Change directory authority**: from this point until finalize,
+       the worktree copy of `openspec/changes/<change-name>/` is
+       authoritative. `tasks.md` ticks, `apply.md` and `verify.md` are
+       written and committed there, and `/opsx-verify` (with its
+       `openspec` calls) runs with the worktree as the working
+       directory.
 
     2. **Executor** — when subagents are available, you should
        **always use 2a**. 2b exists only as a fallback for platforms
@@ -729,39 +744,25 @@ apply:
        - Following TDD discipline manually (the executor will
          not enforce it)
        - Invoking **superpowers:requesting-code-review** yourself
-         after completing the plan, before proceeding to step 3
+         after completing the plan, before proceeding to step 3.
+         This MUST be a whole-branch review covering the full commit
+         range of the implementation.
 
-    3. **Receipt**: Write `apply.md` per `templates/apply.md`. If a
-       previous `apply.md` exists in the change directory, read its
-       `Iteration:` field and increment by one; otherwise set
-       iteration to `1`. Overwrite the file with current state:
-       worktree path, branch, commit range, tasks completed X of Y,
-       remaining tasks, executor identity, and an ISO timestamp.
-       The receipt is the artifact that satisfies the DAG so
-       `verify` becomes reachable.
+    3. **Receipt and stop**: Write `apply.md` per `templates/apply.md`
+       after the final whole-branch review. If a previous `apply.md`
+       exists in the change directory, read its `Iteration:` field and
+       increment by one; otherwise set iteration to `1`. Overwrite the
+       file with current state: worktree path, worktree branch
+       (<change-name>), feature branch (the branch checked out before
+       step 0), base branch (the integration branch), commit range,
+       tasks completed X of Y, remaining tasks, executor identity, and
+       an ISO timestamp. Commit it in the worktree. The receipt is the
+       artifact that satisfies the DAG so `verify` becomes reachable.
 
-    4. **Verification**: Once the receipt exists, produce the
-       `verify` artifact by invoking **openspec-verify-change**
-       to check completeness, correctness, and coherence. The DAG
-       blocks `verify` until apply.md exists.
-
-       Convergence loop — react to the verify outcome:
-       - PASS or PASS_WITH_WARNINGS → proceed via /opsx-continue to the
-         finalize artifact, which executes the git-side closeout
-         directly (merge worktree → feature branch, push the branch,
-         update the PR if one exists, post code-reviewer comment if a
-         PR is present) and writes finalize.md. The skill
-         superpowers:finishing-a-development-branch is retained as a
-         manual escape hatch for non-canonical flows. /opsx-archive
-         runs once finalize.md exists.
-       - FAIL with code-fixable items → return to step 2 (Executor),
-         re-run with the same iteration mechanics (apply.md is
-         overwritten, iteration counter increments), then re-run verify.
-       - FAIL with artifact-level items (e.g. spec drift) → fix the
-         offending artifact (specs / design / tasks / plan), then
-         re-enter step 2 with iteration N+1.
-       - Iteration > 5 → stop the loop and report to the user instead
-         of continuing automatically.
+       Apply stops after the final whole-branch review and the receipt.
+       It does NOT invoke `finishing-a-development-branch`, even if the
+       executor skill suggests it: merging, pushing and PR handling
+       belong to finalize, after verify. Next, run `/opsx-verify`.
 
     If any skill is unavailable, fall back to manual implementation
     using the standard task-by-task loop from tasks.md.
