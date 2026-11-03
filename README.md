@@ -15,6 +15,7 @@ You install the dependencies yourself; the package does not install them.
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.4 or newer.
 - [Superpowers](https://github.com/obra/superpowers) for pi.
 - Git is not required to run `/opsx-init` (outside a git repository it only warns), but the later workflow uses git: `/opsx-apply` creates a worktree and branch, and finalize closes out the branch.
+- Finalize uses the GitHub CLI (`gh`) to detect, create and comment on PRs. It is optional: without it, finalize treats the branch as having no PR and records the reviewer comment as skipped or failed; the merge and push are not rolled back.
 - Before `/opsx-apply`, be on a feature branch that is not your integration branch (`main` or `master`). On the integration branch `/opsx-apply` proceeds with a warning, and finalize's git-side closeout does not produce a usable PR, so you fall back to the manual `finishing-a-development-branch` escape hatch.
 - Finalize pushes the feature branch with `git push origin`, so the repository needs an `origin` remote you can push to.
 
@@ -33,7 +34,7 @@ Optional pi packages, each with the fallback used when it is absent:
 |---|---|---|
 | `pi-subagents` | a `subagent` tool, so `/opsx-apply` runs tasks with subagent-driven development | Superpowers `executing-plans` in the current session |
 | `rpiv-ask-user-question` | an `ask_user_question` tool for choosing between options | a plain question with numbered options |
-| `rpiv-todo` | a `todo` tool for tracking progress | a checklist in `tasks.md` or the SDD ledger |
+| `rpiv-todo` | a `todo` tool for tracking progress | a checklist stated in the agent's reply |
 
 Install them with `pi install` using each package's own instructions. Then install this package:
 

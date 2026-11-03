@@ -15,6 +15,7 @@ Commands are typed into pi. Arguments are free text; there are no flags.
 
   It checks `openspec --version`, runs `openspec init --tools none` when `openspec/` does not exist, sets `schema: superspec` in `openspec/config.yaml`, installs the bundled schema into `openspec/schemas/superspec/` (with the lock file `.pi-superspec.json`), validates it with `openspec schema validate superspec`, and then reloads pi by itself. On success you see `Schema superspec is valid.` and `Superspec is set up. Next: /opsx-new <name>`. The other `/opsx-*` commands now appear in the same session.
 - `/opsx-init` does not need git. Outside a git repository it only warns (`Not inside a git repository; continuing without git.`). The rest of the workflow does use git, so work in a repository with an `origin` remote you can push to.
+- Finalize uses the GitHub CLI (`gh`) to detect, create and comment on PRs. It is optional: when `gh pr view` finds nothing (or `gh` is missing) finalize treats it as no PR and records `PR comment status: skipped (no PR)`; if posting the reviewer comment fails (for example `gh` missing) it records `PR comment status: failed: <reason>` and does not roll back the merge or push.
 - Before `/opsx-apply`, create and switch to a feature branch (for example `feat/<name>`). Do not work on `main` or `master`:
   - On the integration branch, apply proceeds with a warning. Artifact commits land on that branch and finalize's git-side closeout does not produce a usable PR, so you fall back to the manual escape hatch (see [finalize](#9-finalize)).
   - On a detached HEAD, apply proceeds with a warning and the worktree is still created, but finalize's git-side closeout is skipped, so you use the escape hatch.
@@ -115,14 +116,16 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
   8. If no PR exists and the session is interactive, offers to open one with a suggested conventional-commit title. If a PR exists, it posts or edits (in place) a code-reviewer orientation comment on it. The comment is non-blocking: a failure is recorded in `finalize.md` and nothing is rolled back.
 - Output: `openspec/changes/<name>/finalize.md`. It records the outcome (`pr-updated` for the canonical path), the cleanup state, the PR URL and the PR comment status.
 - A policy in the project's `AGENTS.md` about merge strategy, PR requirements or push rules overrides any of these steps; the agent follows it and records the deviation in `finalize.md`.
-- Escape hatch: if a prerequisite is not met (you are on the integration branch or a detached HEAD, or there is no feature branch), or your workflow differs (solo and local-only, keep the worktree, discard the work), the agent invokes Superpowers `finishing-a-development-branch` and you pick the matching option. The escape hatch does no push of its own. You then hand-write `finalize.md` from the schema template and commit it; the reviewer-comment step still runs and skips itself when no PR exists.
+- Escape hatch: if a prerequisite is not met (you are on the integration branch or a detached HEAD, or there is no feature branch), or your workflow differs (solo and local-only, keep the worktree, discard the work), the agent invokes Superpowers `finishing-a-development-branch` and you pick the matching option. Whether anything is pushed depends on the option you pick: Option 2 (push and create PR) pushes; merge locally, keep as-is and discard do not. You then hand-write `finalize.md` from the schema template and commit it; the reviewer-comment step still runs and skips itself when no PR exists.
 
 ### 10. Archive
 
 - You type: `/opsx-archive` (optionally with the change name), in the main checkout, not the worktree, after finalize and before the PR merges.
 - The agent does: warns about incomplete artifacts and open `- [ ]` tasks and asks you to confirm; runs the delta-sync check and, if the living specs are behind, offers "Sync now (recommended)", "Archive without syncing" or "Cancel"; then archives with `openspec archive "<name>" --skip-specs -y`. If the CLI fails, it reports the error and stops; it never moves directories by hand.
 - Output: the change directory moves to `openspec/changes/archive/YYYY-MM-DD-<name>/`, and `openspec/specs/` is updated if you chose to sync.
-- After archive: the `pr-updated` note in the finalize receipt template says to run `/opsx-archive` on the feature branch, push the archive commits to update the PR, then merge the PR. That single merge lands the implementation and the archive together.
+- `/opsx-archive` never commits. It only moves the change directory and, if you chose to sync, edits `openspec/specs/`. After it finishes, commit the archive move and the spec sync yourself on the feature branch (stage and commit them), then push.
+- Where: after finalize the main checkout is already on the feature branch, so "archive on the feature branch" and "archive in the main checkout" are the same place.
+- For the `pr-updated` and `pr-created` outcomes, the finalize receipt template says to run `/opsx-archive` on the feature branch, push the archive commits to update the PR, then merge the PR; that single merge lands the implementation and the archive together. For the `merge-locally` outcome (escape hatch), the template says: "Run `/opsx-archive` on main to move the change directory into the archive; it syncs delta specs when needed." See `schema/superspec/templates/finalize.md`.
 
 To sync delta specs into `openspec/specs/` without archiving, use `/opsx-sync [name]`.
 
@@ -162,8 +165,8 @@ Either way, `apply.md` records the executor actually used.
 
 Two other optional pi packages change how the agent asks and tracks, and both have a fallback:
 
-- `rpiv-ask-user-question`: gives the agent a tool for asking you to choose between options. Without it, the agent asks a plain question with numbered options (recommended first) and waits.
-- `rpiv-todo`: gives the agent a todo tool for tracking progress. Without it, the agent states the checklist in its reply.
+- An optional package that provides the `ask_user_question` tool (see the [README](../README.md#install) for the packages). Without the tool, the agent asks a plain question with numbered options (recommended first) and waits.
+- An optional package that provides the `todo` tool. Without the tool, the agent states the checklist in its reply.
 
 ## Existing schemas
 

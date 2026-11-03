@@ -15,6 +15,7 @@ Bạn tự cài các dependency; package không cài chúng.
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.4 trở lên.
 - [Superpowers](https://github.com/obra/superpowers) cho pi.
 - Chạy `/opsx-init` không cần Git (ngoài git repository nó chỉ cảnh báo), nhưng workflow phía sau có dùng git: `/opsx-apply` tạo worktree và branch, còn finalize đóng branch lại.
+- Finalize dùng GitHub CLI (`gh`) để phát hiện, tạo và comment trên PR. Nó là tùy chọn: nếu thiếu, finalize coi branch như chưa có PR và ghi reviewer comment là skipped hoặc failed; merge và push không bị rollback.
 - Trước `/opsx-apply`, hãy ở trên một feature branch không phải integration branch của bạn (`main` hoặc `master`). Trên integration branch, `/opsx-apply` vẫn chạy nhưng kèm cảnh báo, và phần closeout phía git của finalize không tạo ra PR dùng được, nên bạn phải dùng cách thủ công `finishing-a-development-branch` (escape hatch).
 - Finalize push feature branch bằng `git push origin`, nên repository cần có remote `origin` mà bạn push được.
 
@@ -33,7 +34,7 @@ Các pi package tùy chọn, kèm phương án thay thế khi chúng không có:
 |---|---|---|
 | `pi-subagents` | tool `subagent`, giúp `/opsx-apply` chạy các task bằng subagent-driven development | Superpowers `executing-plans` trong session hiện tại |
 | `rpiv-ask-user-question` | tool `ask_user_question` để chọn giữa các lựa chọn | một câu hỏi thường với các lựa chọn đánh số |
-| `rpiv-todo` | tool `todo` để theo dõi tiến độ | một checklist trong `tasks.md` hoặc SDD ledger |
+| `rpiv-todo` | tool `todo` để theo dõi tiến độ | một checklist được nêu trong câu trả lời của agent |
 
 Cài chúng bằng `pi install` theo hướng dẫn riêng của từng package. Sau đó cài package này:
 
