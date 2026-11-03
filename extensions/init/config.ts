@@ -50,7 +50,12 @@ export function parseLanguage(text: string): string | undefined {
 
 export function readLanguage(root: string): string | undefined {
 	const file = join(root, "openspec", "config.yaml");
-	return existsSync(file) ? parseLanguage(readFileSync(file, "utf8")) : undefined;
+	if (!existsSync(file)) return undefined;
+	try {
+		return parseLanguage(readFileSync(file, "utf8"));
+	} catch {
+		return undefined;
+	}
 }
 
 export function mergeLanguage(text: string | undefined, value: string): string {

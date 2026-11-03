@@ -165,6 +165,13 @@ describe("context handler", () => {
 			expect(message.content[0].text).toBe(ROUTING_NOTE);
 		});
 
+		it("injects the plain note and does not throw when config.yaml is unreadable", () => {
+			const { dir } = project();
+			mkdirSync(join(dir, "openspec", "config.yaml"), { recursive: true });
+			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
+			expect(message.content[0].text).toBe(ROUTING_NOTE);
+		});
+
 		it("treats an invalid on-disk language as absent", () => {
 			const { dir } = project(`language: ${"x".repeat(100)}\n`);
 			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };

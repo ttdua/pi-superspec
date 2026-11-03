@@ -109,6 +109,14 @@ describe("parseLanguage / readLanguage", () => {
 	});
 });
 
+describe("readLanguage unreadable config", () => {
+	it("is undefined when config.yaml is a directory", () => {
+		const root = mkdtempSync(join(tmpdir(), "ps-"));
+		mkdirSync(join(root, "openspec", "config.yaml"), { recursive: true });
+		expect(readLanguage(root)).toBeUndefined();
+	});
+});
+
 describe("mergeLanguage", () => {
 	it("inserts after the schema line", () => {
 		expect(mergeLanguage("schema: superspec\ncontext: |\n  x\n", "vi")).toBe("schema: superspec\nlanguage: vi\ncontext: |\n  x\n");
