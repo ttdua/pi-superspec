@@ -1,0 +1,169 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
+import { describe, expect, it } from "vitest";
+
+const root = new URL("..", import.meta.url);
+const rootPath = fileURLToPath(root);
+
+const COMMANDS = ["apply", "verify", "sync", "archive"] as const;
+const SUPERPOWERS_RULE = "STOP and tell the user to install Superpowers";
+
+function read(path: string): string {
+	return readFileSync(new URL(path, root), "utf8");
+}
+
+function exists(path: string): boolean {
+	return existsSync(new URL(path, root));
+}
+
+function walk(dir: string): string[] {
+	if (!existsSync(dir)) return [];
+	return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+		const full = join(dir, entry.name);
+		return entry.isDirectory() ? walk(full) : [full];
+	});
+}
+
+function frontmatter(text: string): string {
+	const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+	return match ? match[1] : "";
+}
+
+const skill = (c: string) => read(`skills/opsx-${c}/SKILL.md`);
+
+describe("execution commands", () => {
+	it("ships all four skill and prompt pairs", () => {
+		for (const c of COMMANDS) {
+			expect(exists(`skills/opsx-${c}/SKILL.md`)).toBe(true);
+			expect(exists(`prompts/opsx-${c}.md`)).toBe(true);
+			const fm = frontmatter(skill(c));
+			expect(fm).toMatch(new RegExp(`^name: opsx-${c}\\s*$`, "m"));
+			expect(fm).toMatch(/^description:\s*\S+/m);
+		}
+	});
+
+	it("prompts delegate to their skill and pass $@", () => {
+		for (const c of COMMANDS) {
+			const prompt = read(`prompts/opsx-${c}.md`);
+			expect(prompt).toContain(`opsx-${c}`);
+			expect(prompt).toContain("SKILL.md");
+			expect(prompt).toContain("$@");
+			expect(prompt.trimEnd().split("\n").length).toBeLessThanOrEqual(15);
+		}
+	});
+
+	it("does not ship opsx-propose or opsx-bulk-archive", () => {
+		for (const c of ["propose", "bulk-archive"]) {
+			expect(exists(`skills/opsx-${c}`), c).toBe(false);
+			expect(exists(`prompts/opsx-${c}.md`), c).toBe(false);
+		}
+	});
+
+	it("contains no Claude tool names", () => {
+		const files = [
+			...walk(join(rootPath, "skills")),
+			...walk(join(rootPath, "prompts")),
+		];
+		expect(files.length).toBeGreaterThan(0);
+		for (const file of files) {
+			expect(readFileSync(file, "utf8"), file).not.toMatch(
+				/AskUserQuestion|TodoWrite|Task tool/,
+			);
+		}
+	});
+
+	it("frontmatter of every skill and prompt parses like pi does", () => {
+		const skills = walk(join(rootPath, "skills")).filter((f) =>
+			f.endsWith("SKILL.md"),
+		);
+		const prompts = walk(join(rootPath, "prompts")).filter((f) =>
+			f.endsWith(".md"),
+		);
+		expect(skills.length).toBeGreaterThan(0);
+		expect(prompts.length).toBeGreaterThan(0);
+		for (const file of [...skills, ...prompts]) {
+			const { frontmatter } = parseFrontmatter(readFileSync(file, "utf8"));
+			expect(typeof frontmatter.description, file).toBe("string");
+			expect(String(frontmatter.description).trim(), file).not.toBe("");
+			if (skills.includes(file)) {
+				expect(typeof frontmatter.name, file).toBe("string");
+				expect(String(frontmatter.name).trim(), file).not.toBe("");
+			}
+		}
+	});
+
+	it("skills that ask the user state a plain-text fallback", () => {
+		for (const c of COMMANDS) {
+			const text = skill(c);
+			expect(text, c).toContain("ask_user_question");
+			expect(text, c).toContain("numbered options");
+		}
+	});
+
+	it("apply handles blocked and all_done states", () => {
+		const text = skill("apply");
+		expect(text).toContain("openspec instructions apply");
+		expect(text).toContain("blocked");
+		expect(text).toContain("all_done");
+	});
+
+	it("apply stops after the receipt without finishing the branch", () => {
+		const text = skill("apply");
+		expect(text).toContain("finishing-a-development-branch");
+		expect(text).toContain("Do NOT invoke");
+	});
+
+	it("apply selects subagent-driven-development when the subagent tool exists", () => {
+		const text = skill("apply");
+		expect(text).toContain("subagent");
+		expect(text).toContain("subagent-driven-development");
+	});
+
+	it("apply falls back to executing-plans with a whole-branch review", () => {
+		const text = skill("apply");
+		expect(text).toContain("executing-plans");
+		expect(text).toContain("whole-branch review");
+	});
+
+	it("apply documents the post-PR iteration", () => {
+		const text = skill("apply");
+		expect(text).toContain("post-PR");
+		expect(text).toContain("receiving-code-review");
+		expect(text).toContain("iteration");
+	});
+
+	it("verify runs in the worktree and requires apply.md", () => {
+		const text = skill("verify");
+		expect(text).toContain("openspec instructions verify");
+		expect(text).toContain("worktree");
+		expect(text).toContain("apply.md");
+		expect(text).toContain("systematic-debugging");
+		expect(text).toContain("5 iterations");
+		expect(text).not.toContain("delta-sync");
+	});
+
+	it("sync merges deltas and does not archive", () => {
+		const text = skill("sync");
+		for (const op of ["RENAMED", "REMOVED", "MODIFIED", "ADDED"]) {
+			expect(text, op).toContain(op);
+		}
+		expect(text).toContain("openspec validate");
+		expect(text).toContain("Do NOT archive");
+	});
+
+	it("archive performs the delta-sync check", () => {
+		const text = skill("archive");
+		expect(text).toContain("delta-sync");
+		expect(text).toContain("openspec archive");
+		expect(text).toContain("sync");
+		expect(text).toContain("confirm");
+	});
+
+	it("apply and verify carry the Superpowers rule", () => {
+		for (const c of ["apply", "verify"]) {
+			expect(skill(c), c).toContain(SUPERPOWERS_RULE);
+		}
+	});
+});

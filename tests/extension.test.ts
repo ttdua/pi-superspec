@@ -46,6 +46,10 @@ describe("superspec extension", () => {
 			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
 		).toBe(true);
 		expect(existsSync(join(result.promptPaths[0], "opsx-new.md"))).toBe(true);
+		expect(
+			existsSync(join(result.skillPaths[0], "opsx-apply", "SKILL.md")),
+		).toBe(true);
+		expect(existsSync(join(result.promptPaths[0], "opsx-apply.md"))).toBe(true);
 	});
 
 	it("returns nothing in an unmarked project", () => {
