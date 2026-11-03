@@ -62,6 +62,10 @@ export function readLanguage(root: string): string | undefined {
 	}
 }
 
+export function resolveLanguage(root: string): string {
+	return readLanguage(root) ?? DEFAULT_LANGUAGE;
+}
+
 export function mergeLanguage(text: string | undefined, value: string): string {
 	// Keep a leading BOM in place so `^` matches the first real line.
 	if (text?.startsWith("\uFEFF")) return `\uFEFF${mergeLanguage(text.slice(1), value)}`;

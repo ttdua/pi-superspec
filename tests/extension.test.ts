@@ -159,23 +159,30 @@ describe("context handler", () => {
 			expect(text).not.toContain('\\"vi\\"');
 		});
 
-		it("injects exactly ROUTING_NOTE without a language", () => {
+		const injected = (dir: string) =>
+			(context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] }).content[0].text;
+
+		it("names en when config.yaml has no language", () => {
 			const { dir } = project("schema: superspec\n");
-			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
-			expect(message.content[0].text).toBe(ROUTING_NOTE);
+			expect(injected(dir)).toBe(routingNote("en"));
+			expect(injected(dir)).toContain('"en"');
+			expect(injected(dir)).not.toBe(ROUTING_NOTE);
 		});
 
-		it("injects the plain note and does not throw when config.yaml is unreadable", () => {
+		it("names en when config.yaml is missing", () => {
+			const { dir } = project();
+			expect(injected(dir)).toBe(routingNote("en"));
+		});
+
+		it("names en and does not throw when config.yaml is unreadable", () => {
 			const { dir } = project();
 			mkdirSync(join(dir, "openspec", "config.yaml"), { recursive: true });
-			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
-			expect(message.content[0].text).toBe(ROUTING_NOTE);
+			expect(injected(dir)).toBe(routingNote("en"));
 		});
 
-		it("treats an invalid on-disk language as absent", () => {
+		it("names en for an invalid on-disk language", () => {
 			const { dir } = project(`language: ${"x".repeat(100)}\n`);
-			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
-			expect(message.content[0].text).toBe(ROUTING_NOTE);
+			expect(injected(dir)).toBe(routingNote("en"));
 		});
 	});
 });

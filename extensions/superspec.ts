@@ -2,7 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { findProjectRoot, isActivated } from "./activation.ts";
-import { readLanguage } from "./init/config.ts";
+import { resolveLanguage } from "./init/config.ts";
 import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
 import {
@@ -47,7 +47,7 @@ export default function (pi: ExtensionAPI) {
 	pi.on("context", (event, ctx) => {
 		const root = findProjectRoot(ctx.cwd);
 		if (!root || !isActivated(root)) return undefined;
-		const messages = insertRoutingNote(event.messages, createRoutingNoteMessage(readLanguage(root)));
+		const messages = insertRoutingNote(event.messages, createRoutingNoteMessage(resolveLanguage(root)));
 		return messages && { messages };
 	});
 

@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, utimesSync,
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyConfig, applyLanguage, mergeConfig, mergeLanguage, parseLanguage, readLanguage, validateLanguage } from "../../extensions/init/config.ts";
+import { applyConfig, applyLanguage, mergeConfig, mergeLanguage, parseLanguage, readLanguage, resolveLanguage, validateLanguage } from "../../extensions/init/config.ts";
 
 describe("mergeConfig", () => {
 	it("replaces spec-driven", () => {
@@ -144,6 +144,34 @@ describe("readLanguage unreadable config", () => {
 		const root = mkdtempSync(join(tmpdir(), "ps-"));
 		mkdirSync(join(root, "openspec", "config.yaml"), { recursive: true });
 		expect(readLanguage(root)).toBeUndefined();
+	});
+});
+
+describe("resolveLanguage", () => {
+	const root = (config?: string) => {
+		const dir = mkdtempSync(join(tmpdir(), "ps-"));
+		if (config !== undefined) {
+			mkdirSync(join(dir, "openspec"));
+			writeFileSync(join(dir, "openspec", "config.yaml"), config);
+		}
+		return dir;
+	};
+	it("returns the configured language", () => {
+		expect(resolveLanguage(root("language: vi\n"))).toBe("vi");
+	});
+	it("returns en for a missing file", () => {
+		expect(resolveLanguage(root())).toBe("en");
+	});
+	it("returns en without the key, with an empty value, or with an invalid value", () => {
+		expect(resolveLanguage(root("schema: superspec\n"))).toBe("en");
+		expect(resolveLanguage(root("language:\n"))).toBe("en");
+		expect(resolveLanguage(root(`language: ${"x".repeat(100)}\n`))).toBe("en");
+		expect(resolveLanguage(root('language: "a\\u2028b"\n'))).toBe("en");
+	});
+	it("returns en when config.yaml is a directory", () => {
+		const dir = mkdtempSync(join(tmpdir(), "ps-"));
+		mkdirSync(join(dir, "openspec", "config.yaml"), { recursive: true });
+		expect(resolveLanguage(dir)).toBe("en");
 	});
 });
 
