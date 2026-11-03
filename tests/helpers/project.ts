@@ -14,14 +14,18 @@ export interface TempProject {
 	cleanup(): void;
 }
 
-export function hasOpenspec(): boolean {
-	const res = spawnSync("openspec", ["--version"], { encoding: "utf8" });
-	if (res.status !== 0) return false;
-	const m = /(\d+)\.(\d+)/.exec(res.stdout);
+export function meetsOpenspecFloor(versionOutput: string): boolean {
+	const m = /(\d+)\.(\d+)/.exec(versionOutput);
 	if (!m) return false;
 	const major = Number(m[1]);
 	const minor = Number(m[2]);
-	return major > 1 || (major === 1 && minor >= 4);
+	return major > 1 || (major === 1 && minor >= 16);
+}
+
+export function hasOpenspec(): boolean {
+	const res = spawnSync("openspec", ["--version"], { encoding: "utf8" });
+	if (res.status !== 0) return false;
+	return meetsOpenspecFloor(res.stdout);
 }
 
 export function makeProject(): TempProject {

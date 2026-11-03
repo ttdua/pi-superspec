@@ -6,7 +6,7 @@ Tick each box only when you observed the result named after the item's marker. I
 
 ## Preconditions
 
-- [ ] OpenSpec 1.4 or newer is installed. Expected: `openspec --version` prints a version of 1.4 or higher.
+- [ ] OpenSpec 1.16 or newer is installed. Expected: `openspec --version` prints a version of 1.16 or higher.
 - [ ] pi and the Superpowers package are installed (see the [README](../README.md#install)). Expected: in a pi session in any directory, the Superpowers skills (for example `brainstorming`) are available.
 - [ ] The GitHub CLI is authenticated against a throwaway remote. Expected: `gh auth status` reports that you are logged in.
 - [ ] A scratch git repository exists with an initial commit and an `origin` remote you can push to. Expected: `git log --oneline` shows at least one commit and `git remote -v` lists `origin`.

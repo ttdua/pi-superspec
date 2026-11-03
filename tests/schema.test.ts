@@ -16,7 +16,7 @@ import { parseArtifactTable } from "./helpers/artifact-table.js";
 
 const available = hasOpenspec();
 if (!available) {
-	console.warn("openspec >= 1.4 not found on PATH; skipping schema tests");
+	console.warn("openspec >= 1.16 not found on PATH; skipping schema tests");
 }
 const run = available ? describe : describe.skip;
 

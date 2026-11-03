@@ -6,7 +6,7 @@ Commands are typed into pi. Arguments are free text; there are no flags.
 
 ## Before you start
 
-- Install OpenSpec 1.4 or newer and the Superpowers package for pi, then install pi-superspec itself (see the [README](../README.md#install)).
+- Install OpenSpec 1.16 or newer and the Superpowers package for pi, then install pi-superspec itself (see the [README](../README.md#install)).
 - Only `/opsx-init` exists in a fresh repository. Run it once per repository:
 
   ```text
@@ -241,7 +241,7 @@ Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes 
 The project is not activated. A project is activated when `openspec/schemas/superspec/schema.yaml` contains the `x-pi-superspec` marker. Run `/opsx-init`, which installs the schema and reloads pi. If it ended with a validation error, the installed files are kept and the project activates on the next session start, so reload pi or start a new session. If it stopped on an existing schema, see [Existing schemas](#existing-schemas). A `foreign` schema without the marker does not activate the project. Also check that pi's current directory is inside the project: the root is the nearest parent directory that contains `openspec/`.
 
 **`openspec was not found`, `Could not parse the openspec version`, or `openspec <major>.<minor> is too old`.**
-`/opsx-init` stops and writes nothing. The message ends with `Install or upgrade OpenSpec (>= 1.4): brew install openspec`. Install or upgrade OpenSpec to 1.4 or newer, make sure `openspec --version` works in the shell pi uses, and run `/opsx-init` again.
+`/opsx-init` stops and writes nothing. The message ends with `Install or upgrade OpenSpec (>= 1.16): brew install openspec`. Install or upgrade OpenSpec to 1.16 or newer (the npm package of OpenSpec 1.16 needs Node 22.12 or newer; the Homebrew formula installs its own Node), make sure `openspec --version` works in the shell pi uses, and run `/opsx-init` again.
 
 **Superpowers not found.**
 `/opsx-init` warns `Superpowers skills were not found; install Superpowers for the full workflow.` In an activated project, each session start (including reload) also shows `pi-superspec needs Superpowers, which is not installed. Install it with: pi install git:github.com/obra/superpowers`. Run that command and reload pi. Without Superpowers the skills stop and tell you to install it.
