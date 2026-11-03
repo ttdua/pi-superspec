@@ -13,7 +13,7 @@ Start a new change using the artifact-driven workflow.
 
 1. **If no clear input provided, ask what they want to build**
 
-   Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait. Ask open-ended:
+   Ask one open-ended question in plain text and wait:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" -> `add-user-auth`).
@@ -50,11 +50,11 @@ After completing the steps, summarize:
 - Schema/workflow in use and its artifact sequence
 - Current status (0/N artifacts complete)
 - The template for the first artifact
-- Prompt: "Ready to create the first artifact? Run `/opsx-continue`, or describe what this change is about and I'll draft it."
+- Prompt: "Ready to create the first artifact? Run `/opsx-continue` (creates the next artifact), or `/opsx-ff` to fast-forward through all of them."
 
 **Guardrails**
 - Do NOT create any artifacts yet - just show the instructions
 - Do NOT advance beyond showing the first artifact template
-- If the name is invalid (not kebab-case), ask for a valid name
+- If the name is invalid (not kebab-case), ask for a valid name: use the `ask_user_question` tool if available, otherwise plain text with numbered options (recommended first), and wait
 - If a change with that name already exists, suggest `/opsx-continue` for that change instead
 - Never pass `--schema`; omit it so the project config applies

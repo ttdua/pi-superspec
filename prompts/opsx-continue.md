@@ -1,6 +1,6 @@
 ---
 description: Continue an OpenSpec change by creating the next artifact
 ---
-Read the SKILL.md of skill `opsx-continue` (see the available skills list, or `/skill:opsx-continue`) and follow it exactly.
+Read the SKILL.md at the path listed for skill `opsx-continue` in the available skills list, and follow it exactly.
 
 User input: $@

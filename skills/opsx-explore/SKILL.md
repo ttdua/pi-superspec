@@ -91,7 +91,7 @@ This tells you:
 
 Think freely. When insights crystallize, you might offer:
 
-- "This feels solid enough to start a change. Want me to create a proposal?"
+- "This feels solid enough to start a change. Want to run `/opsx-new <name>`?"
 - Or keep exploring - no pressure to formalize
 
 ### When a change exists
@@ -246,7 +246,7 @@ You: That changes everything.
 
 There's no required ending. Discovery might:
 
-- **Flow into a proposal**: "Ready to start? I can create a change proposal."
+- **Flow into a proposal**: "Ready to start? Run `/opsx-new <name>`."
 - **Result in artifact updates**: "Updated design.md with these decisions"
 - **Just provide clarity**: User has what they need, moves on
 - **Continue later**: "We can pick this up anytime"
@@ -263,7 +263,7 @@ When it feels like things are crystallizing, you might summarize:
 **Open questions**: [if any remain]
 
 **Next steps** (if ready):
-- Create a change proposal
+- Start a change with `/opsx-new <name>`
 - Keep exploring: just keep talking
 ```
 

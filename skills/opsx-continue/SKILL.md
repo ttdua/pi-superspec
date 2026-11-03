@@ -7,7 +7,7 @@ description: Continue an OpenSpec change by creating the next ready artifact, th
 
 Continue working on a change by creating the next artifact.
 
-**Input**: Optionally a change name. If omitted, infer it from conversation context only when it is unambiguous. If vague or ambiguous, you MUST prompt for the available changes.
+**Input**: Optionally a change name. A change name that is unambiguous from the conversation counts as provided. If none is given or inferable, or it is vague or ambiguous, you MUST prompt for the available changes.
 
 **Steps**
 
@@ -23,7 +23,7 @@ Continue working on a change by creating the next artifact.
 
    Mark the most recently modified change as "(Recommended)".
 
-   **IMPORTANT**: When several changes exist, do NOT guess or auto-select one. Let the user choose.
+   **IMPORTANT**: When several changes exist and no name is given or inferable, do NOT guess or auto-select one. Let the user choose.
 
 2. **Check current status**
    ```bash
@@ -41,6 +41,9 @@ Continue working on a change by creating the next artifact.
    - Show the final status including the schema used
    - Suggest: "All artifacts created! You can now run `/opsx-apply` or archive this change."
    - STOP
+
+   **If the next ready artifact is `apply`** (all of the schema's `applyRequires` are done):
+   - Do NOT create it. STOP and point the user to `/opsx-apply`
 
    **If artifacts are ready to create** (`status: "ready"`):
    - Pick the FIRST artifact with `status: "ready"`
