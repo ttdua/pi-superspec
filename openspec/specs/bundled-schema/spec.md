@@ -1,7 +1,7 @@
 # bundled-schema Specification
 
 ## Purpose
-TBD - created by archiving change superspec-schema-v5. Update Purpose after archive.
+Define the bundled `superspec` OpenSpec schema v5 shipped in `schema/superspec/`: identity and marker, artifact DAG, apply, verify and finalize rules, and harness-neutral wording.
 ## Requirements
 ### Requirement: Schema identity
 The bundled schema at `schema/superspec/schema.yaml` SHALL have `name: superspec`, an integer `version: 5`, and a top-level `x-pi-superspec` block whose `version` equals `version`. It MUST pass `openspec schema validate superspec` when copied into a project's `openspec/schemas/superspec/`. The directory SHALL credit upstream Superspec v4 and include its MIT license.
