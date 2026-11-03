@@ -25,13 +25,13 @@ The guide SHALL describe how apply behaves with `pi-subagents` (subagent-driven 
 - **WHEN** a reader looks for the no-subagent path
 - **THEN** the guide states that `executing-plans` is used and that a whole-branch review is still requested
 
-### Requirement: Usage guide upgrades and troubleshooting
-The guide SHALL explain schema upgrade behaviour (automatic in the main checkout of a trusted interactive session, notify-only otherwise, `/opsx-init --force` for edited schemas) and MUST include troubleshooting for at least: commands not appearing, OpenSpec version too old, and Superpowers not found.
+### Requirement: Usage guide schema states and troubleshooting
+The guide SHALL describe what `/opsx-init` does with an existing project schema as shipped: a fresh install writes the schema and lock file, an identical schema is left as is, and any other state (foreign, older, newer, edited) produces a warning and no writes. It MUST state that automatic upgrade, `--force` and backup are not yet shipped, and MUST include troubleshooting for at least: commands not appearing, OpenSpec version too old, and Superpowers not found.
 
 #### Scenario: Commands not appearing
 - **WHEN** a reader's `opsx-*` commands are missing
 - **THEN** the guide explains that the project must be activated by `/opsx-init` and the session reloaded
 
-#### Scenario: Edited schema
-- **WHEN** a reader has edited the project schema and sees an upgrade notice
-- **THEN** the guide explains that nothing is overwritten and how `--force` backs up first
+#### Scenario: Existing schema is not overwritten
+- **WHEN** a reader runs `/opsx-init` in a project whose schema differs from the bundled one
+- **THEN** the guide explains that nothing is written and that upgrade tooling is not yet shipped

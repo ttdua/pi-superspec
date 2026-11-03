@@ -23,8 +23,7 @@
 ## Review Focus
 
 - Clean repo with no `openspec/` and no git: README must say `/opsx-init` warns (not a git repo) and still proceeds.
-- Edited project schema: guide must say nothing is overwritten and `--force` backs up first.
-- Worktree session: guide must say automatic upgrade only happens in the main checkout.
+- Existing project schema that differs from the bundled one (edited, foreign, older, newer): guide must say `/opsx-init` warns and writes nothing, and that auto-upgrade, `--force` and backup are not yet shipped.
 - Project already initialised by upstream Superspec v4 (no marker): guide must say `/opsx-init` offers migration after backup.
 - Uninstall: README must not claim `openspec/schemas/superspec/` or the lock file is removed.
 
@@ -125,13 +124,13 @@
 - Produces: heading anchors `#fast-forward-with-opsx-ff`, `#troubleshooting` referenced by the e2e checklist.
 
 - [ ] **Step 1: Check (fails first):** Step 3 against a missing file.
-- [ ] **Step 2:** Write the guide with sections: `Before you start`, `Step by step` (one subsection per workflow step 1–10, each saying what the user does, what the agent produces, and the output file), `Fast-forward with /opsx-ff` (brainstorm interactive, rest unattended through plan, stops before apply, then `/opsx-apply`), `Executors` (with `pi-subagents`: SDD; without: `executing-plans` plus whole-branch review; `rpiv-ask-user-question` / `rpiv-todo` fallbacks), `Upgrades` (auto in main checkout, trusted, interactive; notify-only otherwise; edited schema → nothing overwritten, `/opsx-init --force` backs up first; no marker → migration offer after backup; newer than bundled → warning), `Troubleshooting` (commands missing → run `/opsx-init`, reload; OpenSpec < 1.4; Superpowers not found). Link to `workflow.md` rather than restating its conflict table.
+- [ ] **Step 2:** Write the guide with sections: `Before you start`, `Step by step` (one subsection per workflow step 1–10, each saying what the user does, what the agent produces, and the output file), `Fast-forward with /opsx-ff` (brainstorm interactive, rest unattended through plan, stops before apply, then `/opsx-apply`), `Executors` (with `pi-subagents`: SDD; without: `executing-plans` plus whole-branch review; `rpiv-ask-user-question` / `rpiv-todo` fallbacks), `Existing schemas` (as shipped, from `notes.md`: fresh install, identical → unchanged, any other state → warning and no writes; state plainly that auto-upgrade, `--force` and backup are not yet shipped; no invented behaviour), `Troubleshooting` (commands missing → run `/opsx-init`, reload; OpenSpec < 1.4; Superpowers not found). Link to `workflow.md` rather than restating its conflict table.
 - [ ] **Step 3: Checks (scenario → check)**
   - Ten steps covered: `for s in brainstorm proposal design specs tasks plan apply verify finalize archive; do grep -qi "$s" docs/usage-guide.md || echo MISSING $s; done` prints nothing
   - Output named per step: `grep -c 'brainstorm.md\|proposal.md\|design.md\|specs/\|tasks.md\|plan.md\|apply.md\|verify.md\|finalize.md' docs/usage-guide.md` prints 9 or more
   - ff stops before apply: `grep -A12 'Fast-forward' docs/usage-guide.md | grep -qi 'apply'`
   - Both executors: `grep -q 'executing-plans' docs/usage-guide.md && grep -q 'subagent' docs/usage-guide.md`
-  - Edited schema and troubleshooting: `grep -q -- '--force' docs/usage-guide.md && grep -qi 'troubleshooting' docs/usage-guide.md`
+  - Existing schema and troubleshooting: `grep -qi 'not yet shipped' docs/usage-guide.md && grep -qi 'troubleshooting' docs/usage-guide.md`
 - [ ] **Step 4:** Commit: `git add docs/usage-guide.md && git commit -m "docs: add usage guide"`
 
 ### Task 6: E2E checklist — implements 4.3
@@ -161,7 +160,7 @@
 
 - [ ] **Step 1: Check (fails first):** `for f in README.md README.vi.md LICENSE CHANGELOG.md CONTRIBUTING.md docs/usage-guide.md docs/e2e-checklist.md; do grep -q "$f" docs/architecture.md || echo MISSING $f; done` — Expected: lists missing files.
 - [ ] **Step 2:** Update the `docs/architecture.md` component tree to match the repository's top-level contents (extensions subtree, README pair, LICENSE, CHANGELOG, CONTRIBUTING, new docs); add a link to the guide and checklist; point the Testing section's manual end-to-end bullet at `e2e-checklist.md`.
-- [ ] **Step 3:** Fix every other item in `Doc drift` across the four docs; where a fix would need a code change, leave the doc accurate to the code and note the finding in `apply.md`.
+- [ ] **Step 3:** Fix every other item in `Doc drift` across the four docs. Ruling (user-approved): docs describe what shipped — schema auto-upgrade, `--force`, backup, write guards and "repair" are marked as planned (change `schema-auto-upgrade`, not yet shipped), including `docs/architecture.md` Goal 4 and the upgrade table; this deliberate change to a documented decision is stated in the doc itself; where a fix would need a code change, leave the doc accurate to the code and note the finding in `apply.md`.
 - [ ] **Step 4:** Delete `notes.md`.
 - [ ] **Step 5: Check (passes):** the Step 1 loop prints nothing; `ls | sort` and the architecture tree list the same top-level entries (`diff <(ls -A | grep -v '^\.git$\|node_modules\|^\.' | sort) <(<manual list from the tree>)` is reviewed by eye and recorded in `apply.md`).
 - [ ] **Step 6:** Commit: `git add -A docs openspec/changes/docs-release && git commit -m "docs: align project docs with shipped package"`

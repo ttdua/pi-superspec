@@ -5,7 +5,7 @@ The package has no README, root LICENSE, usage guide or end-to-end checklist, so
 ## What Changes
 
 - Add `README.md` (English) and `README.vi.md` (Vietnamese), cross-linked: what it is, prerequisites, optional packages, install, `/opsx-init` quick start, command table, uninstall behaviour, credits.
-- Add `docs/usage-guide.md` (English): a step-by-step walkthrough of one change, the `/opsx-ff` fast path, runs with and without `pi-subagents`, upgrades and troubleshooting.
+- Add `docs/usage-guide.md` (English): a step-by-step walkthrough of one change, the `/opsx-ff` fast path, runs with and without `pi-subagents`, existing-schema behaviour as shipped (auto-upgrade is not yet shipped) and troubleshooting.
 - Add `docs/e2e-checklist.md`: the manual end-to-end checklist from the Testing section.
 - Add root `LICENSE` (MIT), `CHANGELOG.md` and `CONTRIBUTING.md`; add `repository`, `homepage` and `bugs` to `package.json`.
 - Update `docs/architecture.md`, `docs/workflow.md`, `docs/domain-model.md` and `docs/glossary.md` wherever they differ from what shipped.
