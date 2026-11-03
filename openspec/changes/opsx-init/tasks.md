@@ -19,8 +19,8 @@
 
 ## 5. Orchestrator and command
 
-- [ ] 5.1 Write failing tests for the orchestrator order, `openspec init --tools none` only when `openspec/` is missing, validate failure skipping reload, and reload plus next-step output; implement `extensions/init/init.ts`
-- [ ] 5.2 Register `/opsx-init` in `extensions/superspec.ts`, adapting pi's command `ctx` to `InitIO`, and extend `tests/extension.test.ts` for registration
+- [x] 5.1 Write failing tests for the orchestrator order, `openspec init --tools none` only when `openspec/` is missing, validate failure skipping reload, and reload plus next-step output; implement `extensions/init/init.ts`
+- [x] 5.2 Register `/opsx-init` in `extensions/superspec.ts`, adapting pi's command `ctx` to `InitIO`, and extend `tests/extension.test.ts` for registration
 
 ## 6. Integration and verification
 
