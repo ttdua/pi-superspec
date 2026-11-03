@@ -359,6 +359,8 @@ describe("planning commands", () => {
 		const row = arch.split("\n").find((l) => l.startsWith("|") && l.includes("`plannotator`"));
 		expect(row).toBeDefined();
 		expect(row).toContain("--result-file");
+		expect(row).toContain("plannotator review");
+		expect(row).toContain("stdout is redirected");
 		expect(row).toContain("ask_user_question");
 	});
 });
