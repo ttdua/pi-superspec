@@ -6,9 +6,9 @@
 
 ## 2. Routing note
 
-- [ ] 2.1 Make `createRoutingNoteMessage` accept an optional language and append the document-language paragraph only when one is given; keep the marker at the start and the note identical when absent (spec `routing-note`: Document language paragraph)
-- [ ] 2.2 In `extensions/superspec.ts`, read the language from `config.yaml` on each `context` event and pass it through
-- [ ] 2.3 Tests in `tests/routing-note.test.ts` and `tests/extension.test.ts`: language set, absent, changed between events, marker preserved, no `tool_call` handler added
+- [x] 2.1 Make `createRoutingNoteMessage` accept an optional language and append the document-language paragraph only when one is given; keep the marker at the start and the note identical when absent (spec `routing-note`: Document language paragraph)
+- [x] 2.2 In `extensions/superspec.ts`, read the language from `config.yaml` on each `context` event and pass it through
+- [x] 2.3 Tests in `tests/routing-note.test.ts` and `tests/extension.test.ts`: language set, absent, changed between events, marker preserved, no `tool_call` handler added
 
 ## 3. Init flag and prompt
 
