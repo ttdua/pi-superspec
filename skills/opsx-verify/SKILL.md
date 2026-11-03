@@ -39,8 +39,9 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    ```bash
    openspec status --change "<name>" --json
    openspec instructions verify --change "<name>" --json
+   openspec instructions apply --change "<name>" --json
    ```
-   Run both from the worktree. From status, read `schemaName`, `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`. If status reports `actionContext.mode: "workspace-planning"`, explain that full workspace verification is not supported here and STOP; do not edit linked repos. The verify instructions return `contextFiles` and the instruction text.
+   Run all three from the worktree. From status, read `schemaName`, `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`. If status reports `actionContext.mode: "workspace-planning"`, explain that full workspace verification is not supported here and STOP; do not edit linked repos. The verify instructions return `contextFiles` and the instruction text.
 
 5. **Read context and follow the verify instruction**
 

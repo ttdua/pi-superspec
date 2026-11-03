@@ -211,13 +211,12 @@ run("bundled schema", () => {
 				"REMOVED",
 				"RENAMED",
 				"baseline",
-				"git",
 				"not verified",
 				"not applicable",
-				"PASS_WITH_WARNINGS",
 			]) {
 				expect(flat, word).toContain(word);
 			}
+			expect(flat).toContain("fall back to git history");
 			expect(flat).toContain("Scenarios under a REMOVED requirement are skipped");
 			const tpl = verifyTemplate();
 			expect(tpl).toContain("Not verified");

@@ -1,5 +1,20 @@
 ## MODIFIED Requirements
 
+### Requirement: Apply follows the schema apply block
+The `opsx-apply` skill SHALL read the change's apply instruction with `openspec instructions apply --change <name> --json` and follow it, handling `blocked` by cause (missing artifacts: `/opsx-continue`; missing tracking file: repaired per "Apply pauses on scope changes") and `all_done` by pointing to `/opsx-verify` and `/opsx-archive`. It MUST stop after the final whole-branch review and the `apply.md` receipt and MUST NOT invoke `finishing-a-development-branch`.
+
+#### Scenario: Blocked change
+- **WHEN** `/opsx-apply` runs on a change whose apply instruction reports `blocked` because artifacts are missing
+- **THEN** the agent shows the message, suggests `/opsx-continue`, and changes no code
+
+#### Scenario: Blocked by a missing tracking file
+- **WHEN** the apply instruction reports `blocked` because the tracking file is missing
+- **THEN** the agent repairs it as described in "Apply pauses on scope changes" instead of pointing to `/opsx-continue`
+
+#### Scenario: Stops after the receipt
+- **WHEN** the executor finishes and the whole-branch review passes
+- **THEN** `apply.md` is written and committed in the worktree and the agent points to `/opsx-verify` without merging, pushing or finishing the branch
+
 ### Requirement: Sync merges delta specs without archiving
 The `opsx-sync` skill SHALL merge the change's delta specs into `openspec/specs/<capability>/spec.md` (applying RENAMED, REMOVED, MODIFIED, then ADDED), report what changed, and MUST NOT move the change to the archive. It SHALL read `openspec instructions specs --change <name> --json` once and apply its `rules` as constraints.
 

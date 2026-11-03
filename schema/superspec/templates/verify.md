@@ -91,6 +91,8 @@ Scenarios under a REMOVED requirement are skipped. Mark any check as `Not verifi
 - [ ] PASS_WITH_WARNINGS: proceed, noting: `<explanation>`
 - [ ] FAIL: fix the cause, then re-apply (iteration N+1)
 
+Any check recorded as Not verified caps the outcome at PASS_WITH_WARNINGS.
+
 **Next step**:
 
 <describe the next action>

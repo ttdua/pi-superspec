@@ -132,7 +132,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 ### 10. Archive
 
 - You type: `/opsx-archive` (optionally with the change name), in a pi session reopened in the main checkout (not the worktree, which finalize may have removed), after finalize and before the PR (if any) merges.
-- The agent does: warns about incomplete artifacts and open `- [ ]` tasks and asks you to confirm; runs the delta-sync check and, if the living specs are behind, offers "Sync now (recommended)", "Archive without syncing" or "Cancel"; then archives with `openspec archive "<name>" --skip-specs -y`. If the CLI fails, it reports the error and stops; it never moves directories by hand.
+- The agent does: warns about incomplete artifacts and open `- [ ]` tasks and asks you to confirm; runs the delta-sync check and, if the living specs are behind, offers "Sync now (recommended)", "Archive without syncing" or "Cancel"; when a sync is blocked only "Archive without syncing" or "Cancel" are offered, and after a sync it re-compares every delta before archiving; when a sync is blocked only "Archive without syncing" or "Cancel" are offered, and after a sync it re-compares every delta before archiving; then archives with `openspec archive "<name>" --skip-specs -y`. If the CLI fails, it reports the error and stops; it never moves directories by hand.
 - Output: the change directory moves to `openspec/changes/archive/YYYY-MM-DD-<name>/`, and `openspec/specs/` is updated if you chose to sync.
 - `/opsx-archive` never commits. It only moves the change directory and, if you chose to sync, edits `openspec/specs/`. After it finishes, commit the archive move and the spec sync yourself on the feature branch (stage and commit them), then push.
 - Where: after finalize the main checkout is already on the feature branch, so "archive on the feature branch" and "archive in the main checkout" are the same place.
@@ -233,7 +233,7 @@ In the last row, `foreign` is a schema without the `x-pi-superspec` marker and v
 
 The warning reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked.
 
-Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again.
+Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again. Upgrading from v5 to v6: schema version 6 ships with this release, so a project with v5 installed is classified `older`, `/opsx-init` warns, and the schema must be reinstalled by hand as described here.
 
 ## Troubleshooting
 

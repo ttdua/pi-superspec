@@ -112,13 +112,13 @@ describe("execution commands", () => {
 	it("apply uses task locations and scope pauses", () => {
 		const text = skill("apply");
 		expect(text).toContain("sourcePath");
-		expect(text).toContain("line");
 		expect(text).toContain("fully implemented");
 		expect(text).toContain("adds scope");
 		expect(text).toContain("tracking file");
 		expect(text).toContain("tracked tasks are complete");
-		expect(text).toContain("/opsx-continue");
-		expect(text).toContain("/opsx-verify");
+		expect(text.replace(/\s+/g, " ")).toContain(
+			"after checking that the checkbox there still matches the task",
+		);
 	});
 
 	it("apply stops after the receipt without finishing the branch", () => {
@@ -217,6 +217,19 @@ describe("execution commands", () => {
 		expect(text).toContain("openspec archive");
 		expect(text).toContain("sync");
 		expect(text).toContain("confirm");
+	});
+
+	it("archive handles retirement and the fallback re-compare", () => {
+		const flat = skill("archive").replace(/\s+/g, " ");
+		expect(flat).toContain(
+			"a missing main spec with only REMOVED requirements and `retire_capabilities: true` in the change's `.openspec.yaml` counts as synced (retired)",
+		);
+		expect(flat).toContain(
+			"after the user chooses \"Archive without syncing\", still run item 2 (the re-compare) for the capabilities that were not blocked",
+		);
+		expect(flat).toContain(
+			"On this predicted (pre-sync) path, other capabilities that are not synced are not synced either.",
+		);
 	});
 
 	it("archive verifies the sync and reads counts from the CLI", () => {

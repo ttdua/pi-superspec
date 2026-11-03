@@ -47,18 +47,18 @@ This skill runs in the main checkout, after the branch is finalized and before t
    - every REMOVED header is absent from the main spec;
    - every RENAMED `TO` header exists in the main spec.
 
-   A missing main spec is not unsynced by itself; decide by the delta operations as `opsx-sync` defines. If the delta has only ADDED requirements, the capability is not synced yet (sync creates the spec). If it has MODIFIED or RENAMED operations, or only REMOVED ones, sync would block that capability.
+   A missing main spec is not unsynced by itself; decide by the delta operations as `opsx-sync` defines. If the delta has only ADDED requirements, the capability is not synced yet (sync creates the spec). If it has MODIFIED or RENAMED operations, or only REMOVED ones, sync would block that capability. Exception: a missing main spec with only REMOVED requirements and `retire_capabilities: true` in the change's `.openspec.yaml` counts as synced (retired).
 
    Treat entries that are already applied as synced, so the check is idempotent: after a sync, a second check reports "already synced" and never asks again.
 
    Classify the result, checking in this order:
 
    - **All synced**: report "already synced" and go straight to step 5 without syncing.
-   - **Sync blocked** (checked before "Not synced"): if the sync is blocked for any capability, either predicted from the delta operations above or reported "Blocked: <reason>" by `opsx-sync`, report the blocked capabilities and offer only "Archive without syncing" or "Cancel" (ask as in step 1); never offer "Sync now" for a blocked capability. If the answer is none of the offered choices, ask again and do not archive. On "Archive without syncing", continue and note the blocked capabilities in the summary. On "Cancel", STOP. Other capabilities that are not synced are not synced either on this path.
+   - **Sync blocked** (checked before "Not synced"): if the sync is blocked for any capability, either predicted from the delta operations above or reported "Blocked: <reason>" by `opsx-sync`, report the blocked capabilities and offer only "Archive without syncing" or "Cancel" (ask as in step 1); never offer "Sync now" for a blocked capability. If the answer is none of the offered choices, ask again and do not archive. On "Archive without syncing", continue and note the blocked capabilities in the summary. On "Cancel", STOP. On this predicted (pre-sync) path, other capabilities that are not synced are not synced either.
    - **Not synced** (no capability blocked): report the differences per capability (what would be added, modified, removed, renamed), then ask the user how to proceed with options "Sync now (recommended)", "Archive without syncing", "Cancel" (ask as in step 1, recommended first). If the answer is none of the offered choices, ask again and do not archive. On "Archive without syncing", continue and note it in the summary. On "Cancel", STOP. On "Sync now", read `skills/opsx-sync/SKILL.md` (or run `/skill:opsx-sync`) and follow its merge and validate steps for this change, but do not stop at its report: return here and continue with the post-sync steps below.
 
    **After "Sync now"**, in order:
-   1. If the sync report lists any capability as "Blocked: <reason>" (a fallback when the block was not predicted), take the "Sync blocked" path above for those capabilities: offer only "Archive without syncing" or "Cancel".
+   1. If the sync report lists any capability as "Blocked: <reason>" (a fallback when the block was not predicted), take the "Sync blocked" path above for those capabilities: offer only "Archive without syncing" or "Cancel". On this fallback path, after the user chooses "Archive without syncing", still run item 2 (the re-compare) for the capabilities that were not blocked.
    2. Compare every delta again with its main spec. Report "Synced" only if all match; if any differs, stop and do not archive. Capabilities reported Blocked are excluded from this re-compare, because the user already chose to archive without syncing them.
 
    This check lives here, not in `/opsx-verify`.
