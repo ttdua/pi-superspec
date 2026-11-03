@@ -7,7 +7,7 @@
 
 - [x] 2.1 Harness-neutral wording and `/opsx-` spelling across schema and templates, with a forbidden-names test
 - [x] 2.2 design stub instruction and test
-- [ ] 2.3 Apply block: stop after final review, worktree branch `<change-name>`, worktree authority, `executing-plans` review; update `templates/apply.md` branch facts; tests
+- [x] 2.3 Apply block: stop after final review, worktree branch `<change-name>`, worktree authority, `executing-plans` review; update `templates/apply.md` branch facts; tests
 - [ ] 2.4 Single verify check list in the instruction and `templates/verify.md`; sync check deferred to archive; tests
 - [ ] 2.5 Finalize reads `apply.md`, AGENTS.md override; tests
 
