@@ -9,7 +9,7 @@
 - [x] 2.2 design stub instruction and test
 - [x] 2.3 Apply block: stop after final review, worktree branch `<change-name>`, worktree authority, `executing-plans` review; update `templates/apply.md` branch facts; tests
 - [x] 2.4 Single verify check list in the instruction and `templates/verify.md`; sync check deferred to archive; tests
-- [ ] 2.5 Finalize reads `apply.md`, AGENTS.md override; tests
+- [x] 2.5 Finalize reads `apply.md`, AGENTS.md override; tests
 
 ## 3. DAG and apply integration
 
