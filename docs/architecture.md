@@ -20,7 +20,6 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 4. The bundled schema is versioned (marker and lock file record the version).
    Upgrading a project's older copy automatically and safely is planned, not shipped
    (see [Schema identity, version and upgrade](#schema-identity-version-and-upgrade)).
-   This change deliberately corrects this goal, which earlier claimed the upgrade.
 5. One unified workflow where every OpenSpec/Superpowers conflict has an explicit
    resolution.
 
@@ -135,8 +134,7 @@ It does not repair or upgrade an existing schema (planned, see below).
 > leaves `openspec/schemas/superspec/` unchanged and stops activation. To reinstall
 > now, back up local edits, remove `openspec/schemas/superspec/` and run `/opsx-init`
 > again. Planned (change `schema-auto-upgrade`, not yet shipped): the table and the
-> write guards below, including `--force`, backups, repair and migration. This change
-> deliberately corrects this section, which earlier described that design as shipped.
+> write guards below, including `--force`, backups, repair and migration.
 
 Shipped classification (`extensions/init/schema-install.ts`), checked in this order:
 `absent` (install), `foreign` (no marker with a version), `older`, `newer`, `edited`

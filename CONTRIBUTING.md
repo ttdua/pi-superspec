@@ -12,7 +12,7 @@ The product schema that this package ships lives in `schema/superspec/`. The cop
 
 Run both before opening a pull request:
 
-```
+```sh
 npm test
 npm run typecheck
 ```

@@ -16,10 +16,19 @@ Commands are typed into pi. Arguments are free text; there are no flags.
   It checks `openspec --version`, runs `openspec init --tools none` when `openspec/` does not exist, sets `schema: superspec` in `openspec/config.yaml`, installs the bundled schema into `openspec/schemas/superspec/` (with the lock file `.pi-superspec.json`), validates it with `openspec schema validate superspec`, and then reloads pi by itself. On success you see `Schema superspec is valid.` and `Superspec is set up. Next: /opsx-new <name>`. The other `/opsx-*` commands now appear in the same session.
 - `/opsx-init` does not need git. Outside a git repository it only warns (`Not inside a git repository; continuing without git.`). The rest of the workflow does use git, so work in a repository with an `origin` remote you can push to.
 - Finalize uses the GitHub CLI (`gh`) to detect, create and comment on PRs. It is optional: when `gh pr view` finds nothing (or `gh` is missing) finalize treats it as no PR and records `PR comment status: skipped (no PR)`; if posting the reviewer comment fails (for example `gh` missing) it records `PR comment status: failed: <reason>` and does not roll back the merge or push.
+- pi itself is the agent that runs these commands; install it first (see the [README](../README.md#prerequisites)).
 - Before `/opsx-apply`, commit the `/opsx-init` output (`openspec/config.yaml` and `openspec/schemas/superspec/`, including `.pi-superspec.json`) on your feature branch. Apply's pre-flight commits only `openspec/changes/<name>/`, and the worktree is created from the feature branch, so uncommitted init files would be missing from the worktree where verify and finalize run.
-- Before `/opsx-apply`, create and switch to a feature branch (for example `feat/<name>`). Do not work on `main` or `master`:
+- Before `/opsx-apply`, create and switch to a feature branch (for example `feat/<name>`) and push it once with `git push -u origin feat/<name>`. Finalize runs a plain `git pull` on the feature branch (the schema has no guard around it), and git refuses to pull a branch that has no upstream. Do not work on `main` or `master`:
   - On the integration branch, apply proceeds with a warning. Artifact commits land on that branch and finalize's git-side closeout does not produce a usable PR, so you fall back to the manual escape hatch (see [finalize](#9-finalize)).
   - On a detached HEAD, apply proceeds with a warning and the worktree is still created, but finalize's git-side closeout is skipped, so you use the escape hatch.
+
+Which directory pi runs in matters. pi finds the project root from the directory it was started in (the nearest parent that contains `openspec/`), so:
+
+- Steps 1 to 7 run in the main checkout.
+- `/opsx-apply` prints the worktree path and records it in `apply.md`.
+- `/opsx-verify` finds the worktree itself with `git worktree list`, so it works from the worktree or the main checkout.
+- `/opsx-continue` has no worktree discovery. For finalize, start (or restart) pi with the worktree path as its working directory. From the main checkout it reads the main checkout's copy of the change, which has no `apply.md`, so `apply` looks like the next ready artifact and the agent points you back to `/opsx-apply`; `/opsx-apply` then finds the worktree and can report all tasks done and suggest `/opsx-verify` then `/opsx-archive`, which would skip finalize.
+- Finalize removes the worktree when it sits under `.worktrees/`, `worktrees/` or `~/.config/superpowers/worktrees/`. A pi session whose working directory was that worktree must be reopened in the main checkout before `/opsx-archive`.
 
 Throughout this guide, `<name>` is the change name (kebab-case) and `openspec/changes/<name>/` is the change directory.
 
@@ -33,7 +42,7 @@ Start the change once:
 /opsx-new add-user-auth
 ```
 
-`/opsx-new` runs `openspec new change`, checks status and shows the instructions for the first artifact. It creates no artifact itself. The CLI may print `Creating change 'demo' with schema 'spec-driven'...`, but the change uses `superspec` from `openspec/config.yaml`; the next line reads `Schema: superspec` and `openspec status` reports `schemaName: superspec`. If you give no name it asks what you want to build. If the change already exists it suggests `/opsx-continue <name>` and stops.
+`/opsx-new` runs `openspec new change`, checks status and shows the instructions for the first artifact. It creates no artifact itself. The CLI may print `Creating change '<name>' with schema 'spec-driven'...`, but the change uses `superspec` from `openspec/config.yaml`; the next line reads `Schema: superspec` and `openspec status` reports `schemaName: superspec`. If you give no name it asks what you want to build. If the change already exists it suggests `/opsx-continue <name>` and stops.
 
 ### 1. Brainstorm
 
@@ -96,7 +105,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 
 ### 8. Verify
 
-- You type: `/opsx-verify`, with the worktree as the working directory. It needs `apply.md`; without it the command stops and tells you to run `/opsx-apply`.
+- You type: `/opsx-verify`. It finds the worktree itself, so it works from the worktree or the main checkout. It needs `apply.md`; without it the command stops and tells you to run `/opsx-apply`.
 - The agent produces: six checks (structural validation, task completion, requirement evidence, scenario coverage with a fresh run of the project test command, design coherence, clean tree), and an outcome under Overall Decision.
 - Output: `openspec/changes/<name>/verify.md` in the worktree, with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. It is overwritten on each run.
 - On `PASS` or `PASS_WITH_WARNINGS`: warnings are recorded but do not block. Go on to finalize.
@@ -105,7 +114,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 
 ### 9. Finalize
 
-- You type: `/opsx-continue`, with the worktree as the working directory. Finalize is not a command: it is the `finalize` artifact, created by `/opsx-continue` after a passing verify.
+- You type: `/opsx-continue`, in a pi session started with the worktree path as its working directory (see Before you start). Finalize is not a command: it is the `finalize` artifact, created by `/opsx-continue` after a passing verify.
 - The agent produces the git-side closeout. First it finds the worktree for branch `<name>` with `git worktree list --porcelain` (asking you if none matches) and reads the branch facts from `apply.md`. If `apply.md` or a field is missing, it asks you; it does not infer branches from git history. Then:
   1. Runs the project tests in the worktree; it stops on failure.
   2. Switches to the feature branch in the main checkout and runs `git pull`.
@@ -121,7 +130,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 
 ### 10. Archive
 
-- You type: `/opsx-archive` (optionally with the change name), in the main checkout, not the worktree, after finalize and before the PR merges.
+- You type: `/opsx-archive` (optionally with the change name), in a pi session reopened in the main checkout (not the worktree, which finalize may have removed), after finalize and before the PR (if any) merges.
 - The agent does: warns about incomplete artifacts and open `- [ ]` tasks and asks you to confirm; runs the delta-sync check and, if the living specs are behind, offers "Sync now (recommended)", "Archive without syncing" or "Cancel"; then archives with `openspec archive "<name>" --skip-specs -y`. If the CLI fails, it reports the error and stops; it never moves directories by hand.
 - Output: the change directory moves to `openspec/changes/archive/YYYY-MM-DD-<name>/`, and `openspec/specs/` is updated if you chose to sync.
 - `/opsx-archive` never commits. It only moves the change directory and, if you chose to sync, edits `openspec/specs/`. After it finishes, commit the archive move and the spec sync yourself on the feature branch (stage and commit them), then push.

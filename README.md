@@ -14,6 +14,7 @@ You install the dependencies yourself; the package does not install them.
 
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.4 or newer.
 - [Superpowers](https://github.com/obra/superpowers) for pi.
+- pi, the coding agent this package extends.
 - Git is not required to run `/opsx-init` (outside a git repository it only warns), but the later workflow uses git: `/opsx-apply` creates a worktree and branch, and finalize closes out the branch.
 - Finalize uses the GitHub CLI (`gh`) to detect, create and comment on PRs. It is optional: without it, finalize treats the branch as having no PR and records the reviewer comment as skipped or failed; the merge and push are not rolled back.
 - Before `/opsx-apply`, be on a feature branch that is not your integration branch (`main` or `master`). On the integration branch `/opsx-apply` proceeds with a warning, and finalize's git-side closeout does not produce a usable PR, so you fall back to the manual `finishing-a-development-branch` escape hatch.
@@ -49,10 +50,10 @@ Run these in your repository, in order. The change commands stop for your review
 1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It runs `openspec init --tools none` if `openspec/` does not exist yet. It needs OpenSpec 1.4 or newer, and only warns if the directory is not a git repository or Superpowers is missing.
 2. `/opsx-new <name>`: creates the change and shows the first artifact instructions. It creates no artifact.
 3. `/opsx-continue`: creates the next artifact, one per run, then stops for review. Repeat until all artifacts up to the plan exist; when apply is the next ready artifact it stops and points you to `/opsx-apply`. (`/opsx-ff` creates them all in one go; the brainstorm step still asks for your approval.)
-4. Create and switch to a feature branch (for example `feat/<name>`) if you are not on one yet. Commit the `/opsx-init` output (`openspec/config.yaml` and `openspec/schemas/superspec/`) on it, because `/opsx-apply` commits only the change directory and the worktree is created from the feature branch. Then run `/opsx-apply`. It creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.
-5. `/opsx-verify`: run it with the worktree as the working directory. It writes `verify.md` with `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. On `FAIL`, run `/opsx-apply` again for a fix iteration.
-6. Finalize: not a command. After a passing verify, run `/opsx-continue` with the worktree as the working directory to create the `finalize` artifact. The git-side closeout merges the worktree branch back into the feature branch, removes the worktree and pushes the feature branch.
-7. `/opsx-archive`: run it in the main checkout (not the worktree), after finalize and before the PR merges. The change directory lives on the feature branch after finalize; see the guide for the exact sequence.
+4. Create and switch to a feature branch (for example `feat/<name>`) if you are not on one yet. Commit the `/opsx-init` output (`openspec/config.yaml` and `openspec/schemas/superspec/`) on it, because `/opsx-apply` commits only the change directory and the worktree is created from the feature branch. Push the branch once with `git push -u origin feat/<name>`, because finalize runs a plain `git pull` on it and that fails on a branch with no upstream. Then run `/opsx-apply`. It creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.
+5. `/opsx-verify`: it finds the worktree itself (`git worktree list`), so it works from either checkout; the path is printed by `/opsx-apply` and recorded in `apply.md`. It writes `verify.md` with `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. On `FAIL`, run `/opsx-apply` again for a fix iteration.
+6. Finalize: not a command. After a passing verify, start (or restart) pi with the worktree path as its working directory, then run `/opsx-continue` to create the `finalize` artifact. `/opsx-continue` does not look for the worktree: from the main checkout it reads the main checkout's copy of the change, which has no `apply.md`, so it would point you back to `/opsx-apply`. The git-side closeout merges the worktree branch back into the feature branch, removes the worktree (when it sits under `.worktrees/`, `worktrees/` or `~/.config/superpowers/worktrees/`) and pushes the feature branch.
+7. `/opsx-archive`: reopen pi in the main checkout (not the worktree, which finalize may have removed), after finalize and before the PR (if any) merges. The change directory lives on the feature branch after finalize; see the guide for the exact sequence.
 
 The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 
@@ -86,7 +87,7 @@ The package writes nothing under `.pi/`. Reinstalling it re-activates the projec
 ## Credits and license
 
 - [Superspec](https://github.com/danielhanold/superspec) by Daniel Hanold, which this package adapts for pi.
-- JiangWay `sdd-plus-superpowers`, the origin of Superspec.
+- [JiangWay `sdd-plus-superpowers`](https://github.com/JiangWay/OpenSpec/tree/main/schemas/sdd-plus-superpowers), the origin of Superspec.
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) by Fission AI.
 
 MIT licensed. See [LICENSE](LICENSE).

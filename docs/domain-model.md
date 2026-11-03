@@ -39,8 +39,7 @@ BundledSchema. States relative to the bundled one, as classified by the code:
 *newer*, *edited* (same version, files differ). *older* takes precedence over
 *edited*; there is no older-pristine/older-edited split. Only *absent* is installed
 over; every state except *identical* blocks `/opsx-init`. Splitting *older* by the
-lock hashes is planned (`schema-auto-upgrade`, not shipped). This change deliberately
-corrects the earlier state list to match the shipped behaviour.
+lock hashes is planned (`schema-auto-upgrade`, not shipped).
 
 ## SchemaLock
 
