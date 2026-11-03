@@ -15,6 +15,8 @@ You install the dependencies yourself; the package does not install them.
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.4 or newer.
 - [Superpowers](https://github.com/obra/superpowers) for pi.
 - Git is not required to run `/opsx-init` (outside a git repository it only warns), but the later workflow uses git: `/opsx-apply` creates a worktree and branch, and finalize closes out the branch.
+- Before `/opsx-apply`, be on a feature branch that is not your integration branch (`main` or `master`). On the integration branch `/opsx-apply` proceeds with a warning, and finalize's git-side closeout does not produce a usable PR, so you fall back to the manual `finishing-a-development-branch` escape hatch.
+- Finalize pushes the feature branch with `git push origin`, so the repository needs an `origin` remote you can push to.
 
 ## Install
 
@@ -41,15 +43,15 @@ pi install https://github.com/ttdua/pi-superspec
 
 ## Quick start
 
-Run these in your repository, in order. Each step stops for your review before the next.
+Run these in your repository, in order. The change commands stop for your review before the next step.
 
 1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It runs `openspec init --tools none` if `openspec/` does not exist yet. It needs OpenSpec 1.4 or newer, and only warns if the directory is not a git repository or Superpowers is missing.
 2. `/opsx-new <name>`: creates the change and shows the first artifact instructions. It creates no artifact.
-3. `/opsx-continue`: creates the next artifact, one per run, then stops for review. Repeat until all artifacts up to the plan exist. (`/opsx-ff` creates them all in one go; the brainstorm step still asks for your approval.)
-4. `/opsx-apply`: creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.
-5. `/opsx-verify`: writes `verify.md` with `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. On `FAIL`, run `/opsx-apply` again for a fix iteration.
-6. Finalize: not a command. After a passing verify, run `/opsx-continue` to create the `finalize` artifact (git-side closeout of the feature branch).
-7. `/opsx-archive`: archives the completed change from the main checkout.
+3. `/opsx-continue`: creates the next artifact, one per run, then stops for review. Repeat until all artifacts up to the plan exist; when apply is the next ready artifact it stops and points you to `/opsx-apply`. (`/opsx-ff` creates them all in one go; the brainstorm step still asks for your approval.)
+4. Create and switch to a feature branch (for example `feat/<name>`) if you are not on one yet, then run `/opsx-apply`. It creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.
+5. `/opsx-verify`: run it with the worktree as the working directory. It writes `verify.md` with `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. On `FAIL`, run `/opsx-apply` again for a fix iteration.
+6. Finalize: not a command. After a passing verify, run `/opsx-continue` with the worktree as the working directory to create the `finalize` artifact. The git-side closeout merges the worktree branch back into the feature branch, removes the worktree and pushes the feature branch.
+7. `/opsx-archive`: run it in the main checkout (not the worktree), after finalize and before the PR merges. The change directory lives on the feature branch after finalize; see the guide for the exact sequence.
 
 The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 
@@ -67,7 +69,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 | `/opsx-sync` | Merges delta specs into `openspec/specs/` without archiving. |
 | `/opsx-archive` | Syncs if needed, then archives a completed change. |
 
-All commands except `/opsx-init` exist only in an initialised project. The commands opsx-propose and opsx-bulk-archive are not shipped.
+All commands except `/opsx-init` exist only in an initialised project. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped.
 
 If `openspec/schemas/superspec/` already exists and differs from the bundled schema, `/opsx-init` warns and writes nothing there. Upgrade tooling is not yet shipped.
 
