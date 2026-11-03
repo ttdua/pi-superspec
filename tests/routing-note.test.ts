@@ -1,0 +1,126 @@
+import { describe, expect, it } from "vitest";
+import {
+	BOOTSTRAP_MARKER,
+	createRoutingNoteMessage,
+	hasSuperpowers,
+	insertRoutingNote,
+	ROUTING_NOTE,
+	ROUTING_NOTE_MARKER,
+	SUPERPOWERS_MISSING_WARNING,
+} from "../extensions/routing-note.ts";
+
+type Msg = { role: string; content: unknown };
+
+const bootstrapParts: Msg = {
+	role: "user",
+	content: [{ type: "text", text: `<EXTREMELY_IMPORTANT>${BOOTSTRAP_MARKER}</EXTREMELY_IMPORTANT>` }],
+};
+const bootstrapString: Msg = { role: "user", content: `${BOOTSTRAP_MARKER} body` };
+const summary: Msg = { role: "compactionSummary", content: "summary" };
+const user: Msg = { role: "user", content: "hello" };
+const note: Msg = { role: "user", content: [{ type: "text", text: ROUTING_NOTE }] };
+
+describe("insertRoutingNote", () => {
+	it("places the note directly after a parts-array bootstrap", () => {
+		expect(insertRoutingNote([user, bootstrapParts, user], note)).toEqual([user, bootstrapParts, note, user]);
+	});
+
+	it("handles bootstrap with string content", () => {
+		expect(insertRoutingNote([bootstrapString, user], note)).toEqual([bootstrapString, note, user]);
+	});
+
+	it("inserts after leading compaction summaries when no bootstrap", () => {
+		expect(insertRoutingNote([summary, summary, user], note)).toEqual([summary, summary, note, user]);
+	});
+
+	it("orders summary, bootstrap, note, user", () => {
+		expect(insertRoutingNote([summary, bootstrapParts, user], note)).toEqual([summary, bootstrapParts, note, user]);
+	});
+
+	it("returns [note] for an empty array", () => {
+		expect(insertRoutingNote([], note)).toEqual([note]);
+	});
+
+	it("puts the note last when there are only summaries", () => {
+		expect(insertRoutingNote([summary], note)).toEqual([summary, note]);
+	});
+
+	it("returns undefined when the marker is already present", () => {
+		const existing: Msg = { role: "user", content: [{ type: "text", text: ROUTING_NOTE }] };
+		expect(insertRoutingNote([existing, user], note)).toBeUndefined();
+		expect(insertRoutingNote([{ role: "user", content: ROUTING_NOTE_MARKER }], note)).toBeUndefined();
+	});
+
+	it("still inserts when the marker is only quoted by non-user or mid-text", () => {
+		const assistant: Msg = { role: "assistant", content: [{ type: "text", text: `see ${ROUTING_NOTE_MARKER}` }] };
+		const toolResult: Msg = { role: "toolResult", content: [{ type: "text", text: ROUTING_NOTE }] };
+		const midUser: Msg = { role: "user", content: `please explain the ${ROUTING_NOTE_MARKER} text` };
+		expect(insertRoutingNote([assistant], note)).toEqual([note, assistant]);
+		expect(insertRoutingNote([toolResult], note)).toEqual([note, toolResult]);
+		expect(insertRoutingNote([midUser], note)).toEqual([note, midUser]);
+	});
+
+	it("treats a user message starting with the marker as the note", () => {
+		expect(insertRoutingNote([{ role: "user", content: `${ROUTING_NOTE_MARKER}\nbody` }, user], note)).toBeUndefined();
+		expect(insertRoutingNote([user, { role: "user", content: [{ type: "text", text: ROUTING_NOTE }] }], note)).toBeUndefined();
+	});
+
+	it("ignores bootstrap markers quoted by non-user messages", () => {
+		const toolResult: Msg = { role: "toolResult", content: [{ type: "text", text: BOOTSTRAP_MARKER }] };
+		const assistant: Msg = { role: "assistant", content: BOOTSTRAP_MARKER };
+		expect(insertRoutingNote([summary, toolResult, assistant, user], note)).toEqual([summary, note, toolResult, assistant, user]);
+	});
+
+	it("places the note after the first user bootstrap message", () => {
+		expect(insertRoutingNote([bootstrapParts, user, bootstrapString], note)).toEqual([bootstrapParts, note, user, bootstrapString]);
+	});
+
+	it("is stable regardless of handler order", () => {
+		const first = insertRoutingNote([user], note);
+		expect(first).toEqual([note, user]);
+		const withBootstrap = [bootstrapParts, ...(first as Msg[])];
+		expect(withBootstrap).toEqual([bootstrapParts, note, user]);
+		expect(insertRoutingNote(withBootstrap, note)).toBeUndefined();
+		expect(insertRoutingNote([bootstrapParts, user], note)).toEqual([bootstrapParts, note, user]);
+	});
+
+	it("does not mutate the input array", () => {
+		const input = [user];
+		insertRoutingNote(input, note);
+		expect(input).toEqual([user]);
+	});
+});
+
+describe("ROUTING_NOTE", () => {
+	it("begins with its marker and mentions the key guidance", () => {
+		expect(ROUTING_NOTE.startsWith(ROUTING_NOTE_MARKER)).toBe(true);
+		expect(ROUTING_NOTE).toContain("/opsx-new");
+		expect(ROUTING_NOTE).toContain("docs/superpowers/");
+		expect(ROUTING_NOTE).toContain("TDD");
+	});
+
+	it("builds a user message with a text part", () => {
+		const message = createRoutingNoteMessage();
+		expect(message.role).toBe("user");
+		expect(message.content).toEqual([{ type: "text", text: ROUTING_NOTE }]);
+		expect(typeof message.timestamp).toBe("number");
+	});
+});
+
+describe("hasSuperpowers", () => {
+	it("is true when skill:brainstorming is registered", () => {
+		expect(hasSuperpowers([{ name: "skill:brainstorming" }])).toBe(true);
+	});
+
+	it("is false without it", () => {
+		expect(hasSuperpowers([])).toBe(false);
+		expect(hasSuperpowers([{ name: "opsx-init" }])).toBe(false);
+	});
+});
+
+describe("SUPERPOWERS_MISSING_WARNING", () => {
+	it("mentions Superpowers and the install command", () => {
+		expect(SUPERPOWERS_MISSING_WARNING).toContain("Superpowers");
+		expect(SUPERPOWERS_MISSING_WARNING).toContain("pi install git:github.com/obra/superpowers");
+	});
+});

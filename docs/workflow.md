@@ -96,7 +96,10 @@ comment under the same policy as finalize.
 
 ## Routing note (activated projects)
 
-Injected through the `context` event, after the Superpowers bootstrap message:
+Injected through the `context` event, after the Superpowers bootstrap message when
+present, otherwise at the head after compaction summaries (Superpowers no longer injects
+its bootstrap from the second agent run). If Superpowers is not installed, `session_start`
+warns once per session start (including reload) with `pi install git:github.com/obra/superpowers`:
 
 - Work that adds or changes behaviour → propose creating a change with `/opsx-new`
   before brainstorming.
