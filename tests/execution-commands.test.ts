@@ -219,6 +219,26 @@ describe("execution commands", () => {
 		expect(text).toContain("confirm");
 	});
 
+	it("archive verifies the sync and reads counts from the CLI", () => {
+		const flat = skill("archive").replace(/\s+/g, " ");
+		expect(flat).toContain(
+			"Compare every delta again with its main spec. Report \"Synced\" only if all match; if any differs, stop and do not archive.",
+		);
+		expect(flat).toContain(
+			"take `completedTasks` and `totalTasks` from `openspec list --json`; if that output is invalid, stop with an error",
+		);
+		expect(flat).toContain("An artifact with status `skipped` counts as complete.");
+		expect(flat).toContain(
+			"A missing main spec is not unsynced by itself; decide by the delta operations as `opsx-sync` defines",
+		);
+		expect(flat).toContain(
+			"If the sync is blocked for any capability, offer only \"Archive without syncing\" or \"Cancel\"",
+		);
+		expect(flat).toContain(
+			"If the answer is none of the offered choices, ask again and do not archive.",
+		);
+	});
+
 	it("apply and verify carry the Superpowers rule", () => {
 		for (const c of ["apply", "verify"]) {
 			expect(skill(c), c).toContain(SUPERPOWERS_RULE);
