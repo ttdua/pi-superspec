@@ -64,11 +64,13 @@ This skill runs in the main checkout, after the branch is finalized and before t
 
    Then archive:
 
+   By default the CLI also updates main specs. This skill owns the spec update (through the `opsx-sync` logic in step 4); the CLI is only used to move the change to the archive. So always pass `--skip-specs`, in every case: after "Sync now", when all deltas are already synced, when there are no delta specs, and after "Archive without syncing" (so the CLI does not sync behind the user's back):
+
    ```bash
-   openspec archive "<name>"
+   openspec archive "<name>" --skip-specs
    ```
 
-   Add `-y` (`--yes`) only to skip the CLI's own confirmation prompts, since the user has already confirmed above. Add `--skip-specs` only when the CLI would otherwise touch specs that you already synced or deliberately skipped, and the CLI help confirms the flag. If the archive target already exists or the CLI fails, report the error and STOP; do not move directories by hand.
+   Add `-y` (`--yes`) only to skip the CLI's own confirmation prompts, since the user has already confirmed above. If the archive target already exists or the CLI fails, report the error and STOP; do not move directories by hand.
 
 6. **Summarise**
 
@@ -92,5 +94,5 @@ Warnings accepted: <incomplete artifacts / open tasks, or "none">
 - Warn on incomplete artifacts and open tasks, ask to confirm, archive only on confirmation
 - Run the delta-sync check whenever delta specs exist; a second check after a sync must report "already synced"
 - Offer "Sync now" first; when everything is synced, archive without syncing
-- Archive with `openspec archive "<name>"`; never move the change directory by hand
+- Archive with `openspec archive "<name>" --skip-specs`; the skill owns the spec update, the CLI only moves the change; never move the change directory by hand
 - Run in the main checkout, after finalize and before the PR merges
