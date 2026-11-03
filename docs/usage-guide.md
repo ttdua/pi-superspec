@@ -34,7 +34,7 @@ Throughout this guide, `<name>` is the change name (kebab-case) and `openspec/ch
 
 ## Step by step
 
-The ten steps match [workflow.md](workflow.md). The artifact steps (1 to 6) each end with the agent stopping for your review; you then run `/opsx-continue` again. Read the new file, edit it or ask for changes, then continue.
+The ten steps match [workflow.md](workflow.md). The artifact steps (1 to 6) each end with a review gate on the new artifact and then a stop; you then run `/opsx-continue` again. Read the new file, edit it or ask for changes, then continue.
 
 Start the change once:
 
@@ -46,10 +46,10 @@ Start the change once:
 
 ### 1. Brainstorm
 
-- You type: `/opsx-continue`, then answer the questions. Brainstorming is interactive: one question at a time, two or three approaches, and your approval of the design.
+- You type: `/opsx-continue`, then answer the questions. Brainstorming is interactive: one question at a time, two or three approaches, then a review gate on the written design.
 - The agent produces: the agreed design (goals, non-goals, approaches considered, the chosen one, open questions), using the Superpowers `brainstorming` skill redirected into the change.
 - Output: `openspec/changes/<name>/brainstorm.md`. Technical decisions belong in `design.md`, not here.
-- Stop: review `brainstorm.md` before continuing.
+- Stop: a review gate opens on `brainstorm.md`. That gate is your approval of the design; there is no separate approval step. Continue once it is approved.
 
 For free-form thinking before a change exists, use `/opsx-explore [topic]`. It never writes application code.
 
@@ -117,6 +117,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 - You type: `/opsx-continue`, in a pi session started with the worktree path as its working directory (see Before you start). Finalize is not a command: it is the `finalize` artifact, created by `/opsx-continue` after a passing verify.
 - The agent produces the git-side closeout. First it finds the worktree for branch `<name>` with `git worktree list --porcelain` (asking you if none matches) and reads the branch facts from `apply.md`. If `apply.md` or a field is missing, it asks you; it does not infer branches from git history. Then:
   1. Runs the project tests in the worktree; it stops on failure.
+  1b. Runs the code review gate (step 2b of the schema): the worktree diff against the feature branch is reviewed before the feature branch is touched. On notes or requested changes it stops; fix the code on the worktree branch, update `apply.md` as iteration N+1 (raise `Iteration:`, extend the commit range), run `/opsx-verify` again and re-enter finalize.
   2. Switches to the feature branch in the main checkout and runs `git pull`.
   3. Merges the worktree branch back into the feature branch with `git merge --ff-only`. If that cannot fast-forward, it stops; reconcile by hand (rebase the worktree branch onto the feature branch) and re-enter finalize.
   4. Re-runs the tests on the merged result.
@@ -126,7 +127,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
   8. If no PR exists and the session is interactive, offers to open one with a suggested conventional-commit title. If a PR exists, it posts or edits (in place) a code-reviewer orientation comment on it. The comment is non-blocking: a failure is recorded in `finalize.md` and nothing is rolled back.
 - Output: `openspec/changes/<name>/finalize.md`. It records the outcome (`pr-updated` for the canonical path), the cleanup state, the PR URL and the PR comment status.
 - A policy in the project's `AGENTS.md` about merge strategy, PR requirements or push rules overrides any of these steps; the agent follows it and records the deviation in `finalize.md`.
-- Escape hatch: if a prerequisite is not met (you are on the integration branch or a detached HEAD, or there is no feature branch), or your workflow differs (solo and local-only, keep the worktree, discard the work), the agent invokes Superpowers `finishing-a-development-branch` and you pick the matching option. Whether anything is pushed depends on the option you pick: Option 2 (push and create PR) pushes; merge locally, keep as-is and discard do not. You then hand-write `finalize.md` from the schema template and commit it; the reviewer-comment step still runs and skips itself when no PR exists.
+- Escape hatch: if a prerequisite is not met (you are on the integration branch or a detached HEAD, or there is no feature branch), or your workflow differs (solo and local-only, keep the worktree, discard the work), the agent invokes Superpowers `finishing-a-development-branch` and you pick the matching option. Whether anything is pushed depends on the option you pick: Option 2 (push and create PR) pushes; merge locally, keep as-is and discard do not. Before merge locally or Option 2 runs, the code review gate runs as in step 1b, against the branch that option merges into or opens the PR against; `Code review: skipped (<reason>)` is recorded only for keep as-is, discard, or when you waive the gate in chat. You then hand-write `finalize.md` from the schema template and commit it; the reviewer-comment step still runs and skips itself when no PR exists.
 
 ### 10. Archive
 
@@ -170,8 +171,8 @@ Structural tokens stay in English: headings, requirement and scenario names, `WH
 ```
 
 - It creates the change if needed. If a change with that name already exists, it asks you to confirm continuing it and skips artifacts that are already done; it never overwrites.
-- Brainstorm runs interactively: you answer its questions and approve the design before it moves on. It does not invent your answers or your approval.
-- After approval it creates the remaining artifacts in dependency order without stopping for review: proposal, design, specs, tasks and plan. It stops when `plan` is done.
+- Brainstorm runs interactively: you answer its questions, and the review gate on `brainstorm.md` is your approval of the design before it moves on. It does not invent your answers or your approval.
+- Once `brainstorm.md` passes its own review gate, it creates the remaining artifacts in dependency order without stopping for review: proposal, design, specs, tasks and plan. When `plan` is done it runs one final review gate over those five files (`brainstorm.md` is not repeated).
 - It stops before apply. It never creates `apply.md`, never implements tasks and writes no product code. Its last message is "All artifacts created!" followed by "Run `/opsx-apply` to start implementing."
 - Next: review the artifacts, then run `/opsx-apply`, and continue from [step 7](#7-apply).
 
@@ -179,7 +180,7 @@ What ff does not do:
 
 - It does not ask the execution-handoff question; `/opsx-apply` chooses the executor.
 - In the unattended phase it asks only when a required input cannot be inferred from the brainstorm, earlier artifacts and the repo. Otherwise it makes the call and records the assumption in the artifact. If no artifact is ready but the plan is not complete, it shows the status and stops.
-- It does not give you a review stop between artifacts. If you want to review each artifact, use `/opsx-continue`.
+- It does not give you a review stop between artifacts, only the brainstorm gate and the final gate. If you want to review each artifact, use `/opsx-continue`, which gates each artifact it creates.
 - It does not create a feature branch for you; do that before `/opsx-apply`.
 
 ## Executors

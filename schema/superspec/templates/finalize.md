@@ -33,6 +33,14 @@
 
 ---
 
+## Code review
+
+- **Code review**: `approved` | `approved with notes` | `skipped (<reason>)` (`skipped` only where finalize step 2b allows it: the user waived the gate in chat, or the outcome is `kept-as-is` or `discarded`)
+- **Reviewer tier**: `<tier of the reviewer that gave the decision>`
+- **Commit range reviewed**: `<base>..<head>`
+
+---
+
 ## Tests
 
 - **Baseline status at finish**: `passing` | `N/A (no test runner)`
