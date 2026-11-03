@@ -32,6 +32,30 @@ function frontmatter(text: string): string {
 
 const skill = (c: string) => read(`skills/opsx-${c}/SKILL.md`);
 
+function reviewGate(text: string): string {
+	const lines = text.split("\n");
+	const start = lines.findIndex((l) => l.trim() === "**Review gate**");
+	if (start === -1) return "";
+	let end = lines.length;
+	for (let i = start + 1; i < lines.length; i++) {
+		if (/^\*\*[^*\n]+\*\*$/.test(lines[i].trim())) {
+			end = i;
+			break;
+		}
+	}
+	return lines.slice(start, end).join("\n").trim();
+}
+
+function inOrder(text: string, parts: string[]): void {
+	let last = -1;
+	for (const part of parts) {
+		const at = text.indexOf(part);
+		expect(at, part).toBeGreaterThan(-1);
+		expect(at, part).toBeGreaterThan(last);
+		last = at;
+	}
+}
+
 describe("planning commands", () => {
 	it("ships all four skill and prompt pairs", () => {
 		for (const c of COMMANDS) {
@@ -125,6 +149,120 @@ describe("planning commands", () => {
 		const text = skill("continue");
 		expect(text).toContain("exactly one");
 		expect(text).toContain("STOP");
+	});
+
+	describe("continue review gate", () => {
+		const text = skill("continue");
+		const gate = reviewGate(text);
+
+		it("continue has a review gate section", () => {
+			expect(gate.length).toBeGreaterThan(0);
+		});
+
+		it("gate lists the four outcomes", () => {
+			for (const o of [
+				"approved",
+				"approved_with_notes",
+				"changes_requested",
+				"dismissed",
+			]) {
+				expect(gate, o).toContain(o);
+			}
+			const sentence = gate
+				.split(/(?<=\.)\s/)
+				.find((s) => s.includes("dismissed") && s.includes("not an approval"));
+			expect(sentence).toBeDefined();
+			expect(sentence).toContain("ask");
+		});
+
+		it("gate picks the reviewer in order", () => {
+			inOrder(gate, [
+				"`plannotator` tool",
+				"command -v plannotator",
+				"ask_user_question",
+				"plain text",
+			]);
+		});
+
+		it("gate falls through when a tier fails", () => {
+			expect(gate).toMatch(/falls? to the next tier/);
+			expect(gate).toContain("cannot run a background command");
+		});
+
+		it("gate runs the CLI with a fresh result file", () => {
+			for (const s of [
+				"plannotator annotate",
+				"--gate",
+				"--json",
+				"--result-file",
+				"does not exist yet",
+				"fresh path for every gate",
+			]) {
+				expect(gate, s).toContain(s);
+			}
+			expect(gate).toMatch(/outside the change directory/);
+		});
+
+		it("gate classifies by decision only", () => {
+			expect(gate).toContain("`decision`");
+			expect(gate).toContain("never from message text");
+			expect(gate).toContain("unknown `decision` is `dismissed`");
+		});
+
+		it("gate handles notes", () => {
+			expect(gate).toContain("wording");
+			expect(gate).toContain("short diff");
+			expect(gate).toContain("When unsure, reopen");
+		});
+
+		it("gate defines the cascade", () => {
+			expect(gate).toContain("openspec status --change");
+			expect(gate).toContain("only the files that changed");
+		});
+
+		it("gate covers code review", () => {
+			for (const s of [
+				"plannotator review",
+				"stdout",
+				"`git diff --stat`",
+				"feature branch recorded in `apply.md`",
+				"`receiving-code-review`",
+				"`/opsx-verify`",
+			]) {
+				expect(gate, s).toContain(s);
+			}
+			expect(gate).toMatch(/always reopens?/);
+			expect(gate).toMatch(/changed behaviour or a requirement/);
+		});
+
+		it("gate does not depend on its position or on continue", () => {
+			expect(gate).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
+		});
+
+		it("continue runs the gate before it stops", () => {
+			const start = text.indexOf("**Act based on status**");
+			const end = text.indexOf("\n**Review gate**");
+			expect(start).toBeGreaterThan(-1);
+			expect(end).toBeGreaterThan(start);
+			const step3 = text.slice(start, end);
+			inOrder(step3, [
+				"Create the artifact file",
+				"Review gate",
+				"STOP after creating that one artifact",
+			]);
+		});
+
+		it("continue does not advance after approval", () => {
+			const guard = text.slice(text.indexOf("**Guardrails**"));
+			expect(guard).toContain("Approval does not create the next artifact");
+		});
+
+		it("continue runs the code review gate for finalize", () => {
+			expect(text).toContain("finalize");
+			expect(text.toLowerCase()).toContain("code review");
+			expect(gate).toContain("finalize");
+			expect(gate.toLowerCase()).toContain("code review");
+		});
 	});
 
 	it("ff stops before apply and points to /opsx-apply", () => {
