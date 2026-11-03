@@ -118,11 +118,11 @@ While creating the `finalize` artifact, the agent SHALL obtain the reviewer's ap
 - **THEN** finalize does not proceed and the agent asks the user in chat
 
 ### Requirement: Code review changes requested
-When the code review outcome is `changes_requested`, the agent SHALL stop finalize before the feature branch is touched, fix the code on the worktree branch following `receiving-code-review`, append an iteration entry to `apply.md`, run `/opsx-verify` again, and re-enter finalize so the gate runs again. When the outcome is `approved_with_notes`, the agent MUST apply the notes on the worktree branch, append an iteration entry to `apply.md`, run `/opsx-verify` again and re-enter finalize before the feature branch is touched. After `approved_with_notes` the gate MUST be reopened only if a note changed behaviour or a requirement or the agent is unsure; after `changes_requested` it MUST always be reopened. The diff base MUST be the feature branch recorded in `apply.md`.
+When the code review outcome is `changes_requested`, the agent SHALL stop finalize before the feature branch is touched, fix the code on the worktree branch following `receiving-code-review`, update `apply.md` as iteration N+1 (raise `Iteration:` and extend the commit range, as the apply template directs), run `/opsx-verify` again, and re-enter finalize so the gate runs again. When the outcome is `approved_with_notes`, the agent MUST apply the notes on the worktree branch, update `apply.md` as iteration N+1, run `/opsx-verify` again and re-enter finalize before the feature branch is touched. After `approved_with_notes` the gate MUST be reopened only if a note changed behaviour or a requirement or the agent is unsure; after `changes_requested` it MUST always be reopened. The diff base MUST be the feature branch recorded in `apply.md`.
 
 #### Scenario: Requested change loop
 - **WHEN** the reviewer requests changes on the diff
-- **THEN** no merge, push or PR happens, the fix is committed on the worktree branch, `apply.md` gains an iteration entry, and verify runs again before finalize resumes
+- **THEN** no merge, push or PR happens, the fix is committed on the worktree branch, `apply.md` is updated as iteration N+1, and verify runs again before finalize resumes
 
 #### Scenario: Notes on approval
 - **WHEN** the reviewer approves the diff with notes
