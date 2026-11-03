@@ -4,7 +4,7 @@ import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ROUTING_NOTE, ROUTING_NOTE_MARKER, routingNote } from "../extensions/routing-note.ts";
-import superspec from "../extensions/superspec.ts";
+import superspec, { createInitIO } from "../extensions/superspec.ts";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 
@@ -209,5 +209,27 @@ describe("session_start handler", () => {
 
 	it("does not warn without a UI", () => {
 		expect(start(join(fixtures, "marked"), [], false)).toHaveLength(0);
+	});
+});
+
+describe("createInitIO", () => {
+	function io(input: (title: string, placeholder?: string) => Promise<string | undefined>) {
+		const pi = {} as Parameters<typeof createInitIO>[0];
+		const ctx = { cwd: "/tmp/x", hasUI: true, ui: { input } } as unknown as Parameters<typeof createInitIO>[1];
+		return createInitIO(pi, ctx);
+	}
+
+	it("prompt delegates to ctx.ui.input with title and placeholder", async () => {
+		const calls: unknown[][] = [];
+		const result = await io(async (...args) => {
+			calls.push(args);
+			return "vi";
+		}).prompt("Language", "e.g. Vietnamese");
+		expect(result).toBe("vi");
+		expect(calls).toEqual([["Language", "e.g. Vietnamese"]]);
+	});
+
+	it("prompt resolves undefined when the user cancels", async () => {
+		expect(await io(async () => undefined).prompt("Language")).toBeUndefined();
 	});
 });
