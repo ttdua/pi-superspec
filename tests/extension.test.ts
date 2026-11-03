@@ -9,9 +9,23 @@ const fixtures = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 
 type Handler = (event: { cwd: string; reason: string }) => unknown;
 
-function load(): Handler {
+interface Command {
+	description?: string;
+	handler: (args: string, ctx: unknown) => Promise<void>;
+}
+
+function loadAll(): { handlers: Map<string, Handler>; commands: Map<string, Command> } {
 	const handlers = new Map<string, Handler>();
-	superspec({ on: (name: string, h: Handler) => handlers.set(name, h) } as never);
+	const commands = new Map<string, Command>();
+	superspec({
+		on: (name: string, h: Handler) => handlers.set(name, h),
+		registerCommand: (name: string, options: Command) => commands.set(name, options),
+	} as never);
+	return { handlers, commands };
+}
+
+function load(): Handler {
+	const { handlers } = loadAll();
 	const handler = handlers.get("resources_discover");
 	if (!handler) throw new Error("resources_discover handler not registered");
 	return handler;
@@ -42,5 +56,15 @@ describe("superspec extension", () => {
 
 	it("returns nothing outside any project", () => {
 		expect(discover(mkdtempSync(join(tmpdir(), "ps-")))).toEqual({});
+	});
+
+	it("registers the opsx-init command in a directory with no openspec/", () => {
+		const dir = mkdtempSync(join(tmpdir(), "ps-"));
+		const { commands } = loadAll();
+		expect(existsSync(join(dir, "openspec"))).toBe(false);
+		const command = commands.get("opsx-init");
+		expect(command).toBeDefined();
+		expect(typeof command?.handler).toBe("function");
+		expect(command?.description).toBe("Set up this repository for the Superspec workflow");
 	});
 });
