@@ -1,9 +1,9 @@
-import { existsSync, mkdtempSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ROUTING_NOTE_MARKER } from "../extensions/routing-note.ts";
+import { ROUTING_NOTE, ROUTING_NOTE_MARKER, routingNote } from "../extensions/routing-note.ts";
 import superspec from "../extensions/superspec.ts";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
@@ -123,6 +123,53 @@ describe("context handler", () => {
 
 	it("registers no tool_call handler", () => {
 		expect(loadAll().handlers.has("tool_call")).toBe(false);
+	});
+
+	describe("document language", () => {
+		function project(config?: string): { dir: string; setConfig(text: string): void } {
+			const dir = mkdtempSync(join(tmpdir(), "ps-"));
+			cpSync(join(fixtures, "marked"), dir, { recursive: true });
+			const setConfig = (text: string) => {
+				mkdirSync(join(dir, "openspec"), { recursive: true });
+				writeFileSync(join(dir, "openspec", "config.yaml"), text);
+			};
+			if (config !== undefined) setConfig(config);
+			return { dir, setConfig };
+		}
+		const noteText = (cwd: string, run = context) => {
+			const result = run(cwd, [BOOTSTRAP, PROMPT]);
+			return JSON.stringify(result?.messages[1]);
+		};
+
+		it("adds the language paragraph when config.yaml sets a language", () => {
+			const { dir } = project("schema: superspec\nlanguage: vi\n");
+			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
+			expect(message.content[0].text).toBe(routingNote("vi"));
+		});
+
+		it("picks up a config edit on the next event without reload", () => {
+			const { dir, setConfig } = project("language: vi\n");
+			const h = handler("context");
+			const run = (cwd: string, messages: unknown[]) =>
+				h({ type: "context", messages }, { cwd }) as { messages: unknown[] } | undefined;
+			expect(noteText(dir, run)).toContain('\\"vi\\"');
+			setConfig("language: en\n");
+			const text = noteText(dir, run);
+			expect(text).toContain('\\"en\\"');
+			expect(text).not.toContain('\\"vi\\"');
+		});
+
+		it("injects exactly ROUTING_NOTE without a language", () => {
+			const { dir } = project("schema: superspec\n");
+			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
+			expect(message.content[0].text).toBe(ROUTING_NOTE);
+		});
+
+		it("treats an invalid on-disk language as absent", () => {
+			const { dir } = project(`language: ${"x".repeat(100)}\n`);
+			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
+			expect(message.content[0].text).toBe(ROUTING_NOTE);
+		});
 	});
 });
 
