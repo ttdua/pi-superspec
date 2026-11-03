@@ -427,6 +427,70 @@ describe("planning commands", () => {
 		});
 	});
 
+	describe("partial artifacts and skipped reporting", () => {
+		const flat = (c: string) => skill(c).replace(/\s+/g, " ");
+
+		it("continue reads isPlanningComplete and falls back to isComplete", () => {
+			expect(flat("continue")).toContain(
+				"`isPlanningComplete`: Whether all planning artifacts are complete; older CLI versions expose the same value as `isComplete`, so fall back to `isComplete` when `isPlanningComplete` is absent",
+			);
+		});
+
+		it("continue treats a skipped artifact as satisfied", () => {
+			expect(flat("continue")).toContain(
+				'An artifact with status "skipped" is satisfied: it has no files, so never create it and do not look for its files',
+			);
+		});
+
+		it("continue completes a partial glob artifact with only the missing files", () => {
+			const t = flat("continue");
+			expect(t).toContain(
+				"compare the files the proposal calls for with `artifactPaths.<id>.existingOutputPaths`",
+			);
+			expect(t).toContain(
+				"write only the missing files as that call's one artifact, then run the Review gate",
+			);
+		});
+
+		it("continue points to /opsx-apply when planning is complete", () => {
+			expect(flat("continue")).toContain(
+				"**If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**",
+			);
+		});
+
+		it("continue always re-reads dependencies from disk", () => {
+			expect(flat("continue")).toContain(
+				"always re-read them from disk, even if you saw them earlier in the conversation",
+			);
+		});
+
+		it("ff inspects the repository before drafting and avoids generic tasks", () => {
+			const t = flat("ff");
+			expect(t).toContain(
+				"Inspect the relevant repository code, tests and docs before drafting",
+			);
+			expect(t).toContain(
+				'tasks reference real files or tests you found, never a generic "explore the codebase" step',
+			);
+		});
+
+		it("ff always creates design even though its instruction calls it optional", () => {
+			expect(flat("ff")).toContain(
+				"Always create `design`, even if its `instruction` calls it optional, and the final gate packet still lists it",
+			);
+		});
+
+		it("ff lists each other skipped artifact with its reason", () => {
+			const t = flat("ff");
+			expect(t).toContain(
+				'skip no other artifact unless `status` already reports it `skipped`',
+			);
+			expect(t).toContain(
+				"list each other `skipped` artifact with its reason in the final summary",
+			);
+		});
+	});
+
 	it("explore forbids writing implementation code", () => {
 		expect(skill("explore")).toContain("Do NOT write code");
 	});
