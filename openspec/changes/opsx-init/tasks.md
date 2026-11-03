@@ -26,4 +26,4 @@
 
 - [x] 6.1 Add an integration test on an empty temp git repo with a real `openspec` (skipped when absent): valid and activated after run one, no file changes after run two, custom `config.yaml` keys survive
 - [x] 6.2 Run `npm test` and `npm run typecheck`
-- [ ] 6.3 Run `pi -e .` in an empty git repo, execute `/opsx-init`, and confirm the opsx commands appear after reload
+- [x] 6.3 Run `pi -e .` in an empty git repo, execute `/opsx-init`, and confirm the opsx commands appear after reload
