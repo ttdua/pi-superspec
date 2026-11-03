@@ -53,8 +53,10 @@ separate changes.
 6. **Tooling.** Vitest for tests, `tsc --noEmit` for type checking, npm scripts
    `test` and `typecheck`, ESM (`"type": "module"`), no build step. Alternatives
    `node:test` + `tsx` and `bun test` rejected (see brainstorm).
-7. **Fixtures.** Checked-in directories `tests/fixtures/{marked,unmarked,no-openspec}`;
-   tests read but never mutate them.
+7. **Fixtures.** Checked-in directories `tests/fixtures/{marked,unmarked,comment-only,indented-only}`;
+   tests read but never mutate them. The "no root" and "nearest wins" cases build trees
+   in an OS temp dir, because this repo's own `openspec/` is an ancestor of every in-repo
+   fixture.
 
 ## Risks / Trade-offs
 

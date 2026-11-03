@@ -22,7 +22,7 @@ pi-superspec/
 └── tests/
     ├── activation.test.ts
     ├── extension.test.ts         # handler wiring against a fake pi API
-    └── fixtures/{marked,unmarked,no-openspec}/...
+    └── fixtures/{marked,unmarked,comment-only,indented-only}/...
 ```
 
 **Behaviour**
@@ -50,7 +50,7 @@ pi-superspec/
   marker detection (marked, unmarked, schema file missing, key only in a comment or
   nested value), and the handler returns paths for marked and `{}` for unmarked.
 - Manual "done when": `pi -e .` from inside a marked fixture shows the placeholder
-  command; from an unmarked fixture it does not. Recorded in `verify.md`.
+  command; from an unmarked fixture it does not. Recorded in `tasks.md` 4.2.
 
 ## Alternatives Considered
 
