@@ -124,7 +124,8 @@ It does not repair or upgrade an existing schema (planned, see below).
    schema writes no language and is not asked). With `--lang <value>` (or `--lang=<value>`), write or
    overwrite `language:` directly after `schema:`. The value is everything after the
    flag, quotes stripped, 1 to 64 characters, no control characters; an invalid or
-   missing value, or any other argument, stops with an error before any file is written.
+   missing value stops with an error before any file is written; an argument that does not
+   start with `--lang` is rejected as unknown, and text after `--lang` is part of the value.
    Without the flag, when `language:` is missing or invalid and a UI is available, ask
    once per run; an empty answer or cancel writes nothing. Without a UI it never asks.
    A valid existing value is never changed without the flag.

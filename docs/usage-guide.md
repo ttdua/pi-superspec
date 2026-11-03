@@ -151,7 +151,7 @@ Set the language once and agents write the prose of your OpenSpec documents (cha
 /opsx-init --lang vi
 ```
 
-`--lang <value>` (or `--lang=<value>`) writes or overwrites `language:` in `openspec/config.yaml`, directly after `schema:`. The value is everything after the flag, quotes around it are stripped, and it must be 1 to 64 characters with no control characters. An invalid or missing value stops with an error before any file is written, and other arguments are rejected as unknown.
+`--lang <value>` (or `--lang=<value>`) writes or overwrites `language:` in `openspec/config.yaml`, directly after `schema:`. Everything after `--lang` is taken as the value (so `--lang vi --force` sets the language to `vi --force`), quotes around it are stripped, and it must be 1 to 64 characters with no control characters. An invalid or missing value stops with an error before any file is written, and arguments that do not start with `--lang` are rejected as unknown.
 
 Without the flag, `/opsx-init` asks once per run for the language when `language:` is missing or invalid and pi has a UI. An empty answer or cancel writes nothing, so it asks again on the next run. Without a UI it never asks, and an existing valid value is never changed without the flag. A project blocked on an existing schema writes no language and does not ask.
 

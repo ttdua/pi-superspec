@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Language setting
-A project MAY declare its document language with a top-level `language: <value>` key in `openspec/config.yaml`. The value SHALL be a single-line string of 1 to 64 characters, trimmed, containing no control characters. A missing key, or a value that violates these rules, MUST be treated as no language set.
+A project MAY declare its document language with a top-level `language: <value>` key in `openspec/config.yaml`. The value SHALL be a single-line string of 1 to 64 characters, trimmed, containing no Unicode control characters (category Cc) and no line or paragraph separators (U+2028, U+2029). A missing key, or a value that violates these rules, MUST be treated as no language set.
 
 #### Scenario: Valid value
 - **WHEN** `config.yaml` contains `language: vi`
@@ -10,6 +10,10 @@ A project MAY declare its document language with a top-level `language: <value>`
 #### Scenario: Free-form name
 - **WHEN** `config.yaml` contains `language: Tiếng Việt`
 - **THEN** the project's document language is `Tiếng Việt`
+
+#### Scenario: Unicode separator
+- **WHEN** the value contains U+2028
+- **THEN** no document language is set
 
 #### Scenario: Missing key
 - **WHEN** `config.yaml` has no top-level `language:` line

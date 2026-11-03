@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Set language key
-When `/opsx-init` is given a document language, it SHALL ensure `openspec/config.yaml` contains a top-level `language:` line with that value. It MUST replace an existing top-level `language:` line in place, or insert the line directly after the top-level `schema:` line when none exists. The value MUST be written bare when it consists only of letters, digits, spaces and the characters `_ . ( ) -`, and otherwise as a double-quoted JSON string.
+When `/opsx-init` is given a document language, it SHALL ensure `openspec/config.yaml` contains a top-level `language:` line with that value. It MUST replace an existing top-level `language:` line in place, or insert the line directly after the top-level `schema:` line when none exists. The value MUST be written bare only when its first character is a letter or digit and every other character is a letter, digit, space or one of `_ . ( ) -`, and otherwise as a double-quoted JSON string.
 
 #### Scenario: Add missing key
 - **WHEN** `config.yaml` has `schema: superspec` and no `language:` line, and the language `vi` is requested
@@ -15,12 +15,16 @@ When `/opsx-init` is given a document language, it SHALL ensure `openspec/config
 - **WHEN** the requested language is `zh: simplified`
 - **THEN** the line is written as `language: "zh: simplified"`
 
+#### Scenario: Leading dash needs quotes
+- **WHEN** the requested language is `- vi`
+- **THEN** the line is written as `language: "- vi"`
+
 #### Scenario: Nested language key untouched
 - **WHEN** an indented `language:` key exists under another key
 - **THEN** it is not modified and a top-level line is added
 
 ### Requirement: Read language key
-The package SHALL read the document language from the top-level `language:` line of `openspec/config.yaml`, accepting a bare or a double-quoted value. A missing file, a missing key, or a value that violates the rules of the `document-language` capability MUST yield no language.
+The package SHALL read the document language from the top-level `language:` line of `openspec/config.yaml`, accepting a bare or a double-quoted value; a double-quoted value MAY be followed by an optional trailing comment. A missing file, a missing key, or a value that violates the rules of the `document-language` capability MUST yield no language.
 
 #### Scenario: Bare value
 - **WHEN** the file contains `language: vi`
@@ -29,6 +33,10 @@ The package SHALL read the document language from the top-level `language:` line
 #### Scenario: Quoted value
 - **WHEN** the file contains `language: "zh: simplified"`
 - **THEN** the language read is `zh: simplified`
+
+#### Scenario: Quoted value with comment
+- **WHEN** the file contains `language: "Tiếng Việt" # docs`
+- **THEN** the language read is `Tiếng Việt`
 
 #### Scenario: Missing file
 - **WHEN** `openspec/config.yaml` does not exist
