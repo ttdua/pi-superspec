@@ -4,6 +4,14 @@
 	"description": "Superspec workflow (OpenSpec + Superpowers) for the pi coding agent",
 	"type": "module",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ttdua/pi-superspec.git"
+	},
+	"homepage": "https://github.com/ttdua/pi-superspec#readme",
+	"bugs": {
+		"url": "https://github.com/ttdua/pi-superspec/issues"
+	},
 	"keywords": [
 		"pi-package"
 	],
