@@ -159,4 +159,57 @@ run("bundled schema", () => {
 			}
 		});
 	});
+
+	describe("verify artifact", () => {
+		const verifyInstruction = (): string => {
+			const out = project.openspec([
+				"instructions",
+				"verify",
+				"--change",
+				"x",
+				"--json",
+			]);
+			expect(out.status, out.stdout + out.stderr).toBe(0);
+			return JSON.parse(out.stdout).instruction as string;
+		};
+		const verifyTemplate = () =>
+			readFileSync(join(SCHEMA_DIR, "templates", "verify.md"), "utf8");
+
+		it("verify has the six checks and no sync check", () => {
+			const instruction = verifyInstruction();
+			const template = verifyTemplate();
+			for (const [name, text] of [
+				["instruction", instruction],
+				["template", template],
+			]) {
+				expect(text, name).toContain("openspec validate <change>");
+				expect(text, name).not.toContain("--all");
+				expect(text.toLowerCase(), name).not.toContain("delta spec sync");
+			}
+			expect(instruction).toContain("PASS_WITH_WARNINGS");
+			expect(instruction).toContain("5 iterations");
+			expect(instruction).toContain("systematic-debugging");
+			for (let n = 1; n <= 6; n++) {
+				expect(instruction, `check ${n}`).toMatch(
+					new RegExp(`^\\s*${n}\\. \\*\\*`, "m"),
+				);
+				expect(template, `section ${n}`).toMatch(
+					new RegExp(`^## ${n}\\. `, "m"),
+				);
+			}
+			expect(template).not.toMatch(/^## 7\. /m);
+			expect(template).toContain("## Overall Decision");
+			expect(instruction.replace(/\s+/g, " ")).toContain(
+				"project test command",
+			);
+		});
+
+		it("sync check is deferred to archive", () => {
+			const flat = verifyInstruction().replace(/\s+/g, " ");
+			const sentences = flat.split(/(?<=\.)\s/);
+			expect(
+				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
+			).toBe(true);
+		});
+	});
 });
