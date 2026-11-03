@@ -18,6 +18,7 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 - Execution commands: `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive`.
 - Review gates: `/opsx-continue` runs a review gate on the artifact it creates and then stops; `/opsx-ff` gates `brainstorm.md`, runs the remaining artifacts unattended, then runs one final gate over proposal, design, specs, tasks and plan. The reviewer is the `plannotator` tool, then the Plannotator CLI in the background, then `ask_user_question`, then plain text; a closed review is not an approval.
 - Code review gate in finalize (step 2b): the worktree diff is reviewed before the feature branch is checked out, merged or pushed.
+- `/opsx-init --generate` (prints a hint only) and `/opsx-generate-specs`, which drafts specs for an existing codebase into a `bootstrap-specs` change using `pi-subagents` scouts when installed, or sequentially otherwise; requirements backed only by code are labelled `Confidence: inferred`.
 - Routing note injected into the session context that directs behaviour-changing work through `/opsx-new` before brainstorming.
 - Warning at session start when Superpowers is not installed.
 - Optional `language` key in `openspec/config.yaml` for the language of OpenSpec document prose.

@@ -61,7 +61,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 
 | Command | What it does |
 |---|---|
-| `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. Optional `--lang <language>` sets the language of OpenSpec documents (default `en`). |
+| `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. Optional `--lang <language>` sets the language of OpenSpec documents (default `en`). Optional `--generate` only prints a hint to run `/opsx-generate-specs` next; it does no agent work. |
 | `/opsx-explore` | Explores ideas and clarifies requirements before or during a change. Writes no application code. |
 | `/opsx-new` | Starts a change and shows the first artifact instructions. |
 | `/opsx-continue` | Creates the next artifact, runs a review gate on it, then stops. |
@@ -70,6 +70,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 | `/opsx-verify` | Verifies the applied change and writes `verify.md`. |
 | `/opsx-sync` | Merges delta specs into `openspec/specs/` without archiving. |
 | `/opsx-archive` | Syncs if needed, then archives a completed change. |
+| `/opsx-generate-specs` | For an existing codebase: maps the code into capabilities, asks you to confirm them once, then drafts a delta spec for each in a `bootstrap-specs` change. Stops before `/opsx-ff bootstrap-specs`. |
 
 All commands except `/opsx-init` exist only in an initialised project. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped.
 

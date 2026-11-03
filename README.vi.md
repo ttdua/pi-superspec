@@ -61,7 +61,7 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 
 | Command | Chức năng |
 |---|---|
-| `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. Tùy chọn `--lang <language>` đặt ngôn ngữ của các tài liệu OpenSpec. |
+| `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. Tùy chọn `--lang <language>` đặt ngôn ngữ của các tài liệu OpenSpec. Tùy chọn `--generate` chỉ in gợi ý chạy `/opsx-generate-specs` tiếp theo, không làm việc nào của agent. |
 | `/opsx-explore` | Khám phá ý tưởng và làm rõ yêu cầu trước hoặc trong một change. Không viết application code. |
 | `/opsx-new` | Bắt đầu một change và hiển thị hướng dẫn của artifact đầu tiên. |
 | `/opsx-continue` | Tạo artifact kế tiếp, chạy review gate cho nó, rồi dừng. |
@@ -70,6 +70,7 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 | `/opsx-verify` | Verify change đã apply và ghi `verify.md`. |
 | `/opsx-sync` | Merge delta spec vào `openspec/specs/` mà không archive. |
 | `/opsx-archive` | Sync nếu cần, rồi archive một change đã hoàn thành. |
+| `/opsx-generate-specs` | Cho codebase có sẵn: map code thành các capability, hỏi bạn xác nhận một lần, rồi soạn delta spec cho từng capability trong change `bootstrap-specs`. Dừng trước `/opsx-ff bootstrap-specs`. |
 
 Mọi lệnh trừ `/opsx-init` chỉ tồn tại trong một project đã khởi tạo. Các lệnh `opsx-propose` và `opsx-bulk-archive` không được đi kèm.
 

@@ -183,6 +183,27 @@ What ff does not do:
 - It does not give you a review stop between artifacts, only the brainstorm gate and the final gate. If you want to review each artifact, use `/opsx-continue`, which gates each artifact it creates.
 - It does not create a feature branch for you; do that before `/opsx-apply`.
 
+## Existing codebase: bootstrap specs
+
+For a project that already has code but no specs, draft a first set from the code:
+
+```text
+/opsx-init --generate
+/opsx-generate-specs
+/opsx-ff bootstrap-specs
+/opsx-apply
+/opsx-verify
+/opsx-archive
+```
+
+- `/opsx-init --generate` initialises the project as usual and then only prints the next step. It does no agent work.
+- `/opsx-generate-specs` maps the code into at most 12 capability candidates, drops any whose name already exists in `openspec/specs/`, and asks one confirmation question: keep, drop or rename candidates. No scout runs before you answer, and cancelling creates nothing.
+- Scouts, one per confirmed capability, use `pi-subagents` when the session has the `subagent` tool, in parallel where it allows. Without it they run one after another in the current session, which is slower and fills context.
+- The drafts are written to `openspec/changes/bootstrap-specs/` (`specs/<capability>/spec.md`, plus `brainstorm.md`, `proposal.md` and a `design.md` stub). The command stops there and does not write `tasks.md` or `plan.md`.
+- Every requirement has an `Evidence:` line. `Confidence: inferred` means only the code backs the requirement: no test or document states that behaviour. Treat it as a guess about intent. The review gate in `/opsx-ff bootstrap-specs` is where you confirm each one or remove it.
+- Existing specs are never overwritten: `openspec/specs/` is not touched, and the delta specs are merged only by `/opsx-archive` (or `/opsx-sync`).
+- Then run `/opsx-ff bootstrap-specs` and continue from [step 7](#7-apply).
+
 ## Executors
 
 `/opsx-apply` picks the executor for the plan:

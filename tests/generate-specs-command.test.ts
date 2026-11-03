@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const root = new URL("..", import.meta.url);
@@ -81,5 +81,23 @@ describe("opsx-generate-specs command", () => {
 
 	it("never writes tasks.md", () => {
 		expect(read(SKILL)).toContain("Do not write tasks.md");
+	});
+	it("lists every prompt command in a table row of both READMEs, and --generate on the init row", () => {
+		const names = readdirSync(new URL("prompts/", root))
+			.filter((file) => /^opsx-.+\.md$/.test(file))
+			.map((file) => file.replace(/\.md$/, ""));
+		for (const readme of ["README.md", "README.vi.md"]) {
+			const rows = read(readme)
+				.split(/\r?\n/)
+				.filter((line) => line.startsWith("|"));
+			for (const name of names) {
+				expect(
+					rows.some((row) => row.includes(`\`/${name}\``)),
+					`${readme} lacks a table row for /${name}`,
+				).toBe(true);
+			}
+			const init = rows.find((row) => row.includes("`/opsx-init`"));
+			expect(init, `${readme} lacks the init row`).toContain("--generate");
+		}
 	});
 });
