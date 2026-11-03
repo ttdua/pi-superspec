@@ -19,7 +19,7 @@
 
 - [x] 4.1 Write `docs/usage-guide.md`: step-by-step walkthrough through archive
 - [x] 4.2 Add the `/opsx-ff` section, executor variants (with and without `pi-subagents`), upgrades and troubleshooting
-- [ ] 4.3 Write `docs/e2e-checklist.md` with the two runs and expected results
+- [x] 4.3 Write `docs/e2e-checklist.md` with the two runs and expected results
 
 ## 5. Docs consistency
 
