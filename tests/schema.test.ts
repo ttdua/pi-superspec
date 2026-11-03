@@ -115,12 +115,12 @@ run("bundled schema", () => {
 			expect(text).toMatch(
 				/does NOT invoke[^.]*finishing-a-development-branch/,
 			);
-			for (const line of text.split("\n")) {
-				expect(line.trim()).not.toMatch(
-					/^(Load|Invoke|Run|Use)\b.*finishing-a-development-branch/i,
-				);
-			}
-			expect(text).not.toContain("Verification");
+			const flat = text.replace(/\s+/g, " ");
+			const hits = [...flat.matchAll(/finishing-a-development-branch/g)];
+			expect(hits).toHaveLength(1);
+			const before = flat.slice(0, hits[0].index);
+			expect(before).toMatch(/does NOT invoke [`*\w:-]*$/);
+			expect(text.toLowerCase()).not.toContain("verification");
 		});
 
 		it("apply names worktree branch and worktree authority", () => {
@@ -130,9 +130,14 @@ run("bundled schema", () => {
 		});
 
 		it("fallback executor still requests a whole-branch review", () => {
-			expect(applyInstruction()).toMatch(
-				/requesting-code-review[\s\S]*whole-branch|whole-branch[\s\S]*requesting-code-review/,
-			);
+			const text = applyInstruction();
+			const start = text.indexOf("2b.");
+			const end = text.indexOf("3. **Receipt");
+			expect(start).toBeGreaterThan(-1);
+			expect(end).toBeGreaterThan(start);
+			const flat = text.slice(start, end).replace(/\s+/g, " ");
+			expect(flat).toContain("requesting-code-review");
+			expect(flat).toContain("whole-branch review");
 		});
 
 		it("apply.md template records branch facts", () => {
