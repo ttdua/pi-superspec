@@ -212,4 +212,44 @@ run("bundled schema", () => {
 			).toBe(true);
 		});
 	});
+
+	describe("finalize artifact", () => {
+		const finalizeInstruction = (): string => {
+			const out = project.openspec([
+				"instructions",
+				"finalize",
+				"--change",
+				"x",
+				"--json",
+			]);
+			expect(out.status, out.stdout + out.stderr).toBe(0);
+			return JSON.parse(out.stdout).instruction as string;
+		};
+
+		it("finalize reads apply.md, not git log", () => {
+			const instruction = finalizeInstruction();
+			expect(instruction).toContain("git worktree list --porcelain");
+			expect(instruction).toContain("apply.md");
+			expect(instruction).toContain("refs/heads/<change-name>");
+			expect(instruction).not.toContain('git -C "$WORKTREE" log');
+			expect(instruction).not.toContain("rev-list --count");
+		});
+
+		it("finalize honours AGENTS.md", () => {
+			const instruction = finalizeInstruction();
+			expect(instruction).toContain("AGENTS.md");
+			expect(instruction).toContain("overrides");
+		});
+
+		it("finalize template points to archive and sync in one sentence", () => {
+			const flat = readFileSync(
+				join(SCHEMA_DIR, "templates", "finalize.md"),
+				"utf8",
+			).replace(/\s+/g, " ");
+			const sentences = flat.split(/(?<=\.)\s/);
+			expect(
+				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
+			).toBe(true);
+		});
+	});
 });

@@ -246,6 +246,11 @@ artifacts:
     description: Git-side closeout — merge worktree back into feature branch, push, optionally open PR, post code-reviewer comment
     template: finalize.md
     instruction: |
+      If the project's `AGENTS.md` states a policy for integrating
+      or closing out work (merge strategy, PR requirements, push
+      rules), that policy overrides any step below; follow it and
+      record the deviation in finalize.md.
+
       The git-side closeout is Superspec's canonical finalize flow:
       merge the implementation worktree branch back into your feature
       branch locally, push the feature branch (which updates the
@@ -257,14 +262,13 @@ artifacts:
       canonical closeout works either way.
 
       Prerequisites for the git-side closeout (canonical path):
-      - You are on a feature branch in the main checkout (apply
-        step 0 should have recommended this — check `git branch
-        --show-current`).
-      - The feature branch is NOT the integration branch (main /
-        master); if it is, skip the git-side closeout and use the
-        escape hatch at the bottom of this instruction.
-      - Apply ran in a worktree at `.worktrees/<change-name>/` with
-        a worktree branch named `<change-name>`.
+      - Apply wrote apply.md in the change directory (inside the
+        worktree) with a Workspace section naming the worktree
+        path, worktree branch, feature branch and base branch.
+      - The feature branch recorded in apply.md is NOT the
+        integration branch (main / master); if it is, skip the
+        git-side closeout and use the escape hatch at the bottom
+        of this instruction.
 
       Optional precondition (recommended for team workflows):
       - A PR for this feature branch already exists on the remote.
@@ -286,15 +290,20 @@ artifacts:
 
       Git-side closeout execution steps:
 
-      1. Compute paths and discover branch names:
+      1. Locate the worktree and read the branch facts from apply.md:
 
-         WORKTREE=$(git worktree list --porcelain | awk '/^worktree / {wt=$2} /^branch refs\/heads\/<change-name>/ {print wt; exit}')
+         WORKTREE=$(git worktree list --porcelain | awk '/^worktree / {wt=$2} $0 == "branch refs/heads/<change-name>" {print wt; exit}')
          # If WORKTREE is empty, list `git worktree list` and ask the
          # user which path corresponds to this change.
-         WORKTREE_BRANCH="<change-name>"
-         FEATURE_BRANCH=$(git -C "$WORKTREE" log --format=%D -1 HEAD~$(git -C "$WORKTREE" rev-list --count HEAD ^"<integration-branch>") | tr ',' '\n' | grep -oE '^ *[^ ]+' | head -1)
-         # Fallback: ask the user to confirm FEATURE_BRANCH if
-         # detection is ambiguous.
+
+         Then read these values from the Workspace section of
+         `$WORKTREE/openspec/changes/<change-name>/apply.md`:
+         - WORKTREE_BRANCH = the "Worktree branch" field
+         - FEATURE_BRANCH  = the "Feature branch" field
+         - BASE_BRANCH     = the "Base branch" field
+         # If apply.md or any of these fields is missing or still a
+         # placeholder, ask the user to supply the value. Do not
+         # infer branches from git history.
 
       2. Verify tests pass in the worktree:
 
