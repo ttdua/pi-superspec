@@ -10,8 +10,8 @@
 
 ## 3. Schema install and lock
 
-- [ ] 3.1 Write failing tests for hashing and the lock file (sorted keys, trailing newline, deterministic bytes, lock excluded from `files`) and implement them in `extensions/init/schema-install.ts`
-- [ ] 3.2 Write failing tests for classifying an existing schema dir (absent, identical, foreign, edited, older, newer) and implement install-or-report with no writes in the non-install cases
+- [x] 3.1 Write failing tests for hashing and the lock file (sorted keys, trailing newline, deterministic bytes, lock excluded from `files`) and implement them in `extensions/init/schema-install.ts`
+- [x] 3.2 Write failing tests for classifying an existing schema dir (absent, identical, foreign, edited, older, newer) and implement install-or-report with no writes in the non-install cases
 
 ## 4. Legacy cleanup
 
