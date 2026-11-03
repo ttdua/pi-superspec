@@ -84,34 +84,6 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    - Raise `Iteration:` by one, rewrite `apply.md` (new commit range, executor, tasks X of Y), and commit it in the worktree.
    - STOP. Do NOT invoke `finishing-a-development-branch`. Tell the user to run `/opsx-verify`.
 
-**Superpowers rule** below.
-
-5. **Choose the executor**
-
-   - If the `subagent` tool from `pi-subagents` exists in this session, follow **2a**: read the `subagent-driven-development` skill and execute `plan.md` through it.
-   - If it does not exist, follow **2b**: read the `executing-plans` skill, tell the user that TDD and review are not enforced for you, follow TDD manually, and request a whole-branch review (`requesting-code-review`) over the full commit range before writing `apply.md`.
-   - Never invent subagent calls.
-
-   **Change-directory authority:** step 0 commits the change directory on the feature branch and creates the worktree on branch `<change-name>`. From then until finalize the worktree copy of the change directory is authoritative: `tasks.md` ticks, `apply.md`, and `verify.md` are written and committed there, and every `openspec` call runs with the worktree as working directory.
-
-   Record the executor actually used in `apply.md`. `tasks.md` is authoritative for progress: tick each box in the worktree copy as the task completes.
-
-   **Pause if:** a task is unclear (ask), implementation reveals a design issue (suggest updating artifacts), or an error or blocker occurs (report and wait). Do not guess.
-
-6. **Write the receipt and STOP**
-
-   After the final whole-branch review, write `apply.md` as the schema's receipt directs (worktree path, branch facts, commit range, iteration, executor, tasks X of Y) and commit it in the worktree. Then STOP. Do NOT invoke `finishing-a-development-branch`; finishing belongs to the later finalize step. Tell the user to run `/opsx-verify`.
-
-7. **Post-PR mode**
-
-   Used when a PR is open and the user brings review feedback.
-   - Read the `receiving-code-review` skill and follow it.
-   - Which copy is current: finalize removes the worktree, so the feature branch in the main checkout now holds the change directory (including `apply.md`, `verify.md`, `finalize.md`). Work and run `openspec` calls there. If the worktree still exists, it is still authoritative; use it instead.
-   - Fix on the feature branch in the main checkout, using TDD for each fix.
-   - Append a `post-PR iteration N+1` entry with the new commit range to `apply.md`.
-   - Tell the user to run `/opsx-verify`, then update `finalize.md`.
-   - Push and reviewer-comment follow the policy in `finalize.md`; a policy in the project `AGENTS.md` overrides it.
-
 **Superpowers rule**
 
 If an instruction says to use `superpowers:<x>`, drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the apply instruction says (never under `docs/superpowers/`) and ignore that skill's own closing handoff (invoking another skill or a next-step handoff). If skill `<x>` is not available, STOP and tell the user to install Superpowers.
