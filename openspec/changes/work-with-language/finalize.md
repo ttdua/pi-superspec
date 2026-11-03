@@ -35,7 +35,7 @@
 
 ## Tests
 
-- **Baseline status at finish**: `passing` (15 files, 220 tests; typecheck clean)
+- **Baseline status at finish**: `passing` (15 files, 229 tests; typecheck clean, after iteration 2; the first PR push had 220 tests)
 
 ---
 

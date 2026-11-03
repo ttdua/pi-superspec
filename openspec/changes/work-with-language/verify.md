@@ -5,9 +5,9 @@
 > Failed checks must be fixed in the corresponding artifact, then re-run verify.
 
 **Change**: `work-with-language`
-**Verified at**: `2026-11-03 12:21 UTC`
-**Iteration**: `1`
-**Verifier**: `Claude (controller session, /opsx:verify)`
+**Verified at**: `2026-11-03 13:05 UTC`
+**Iteration**: `2`
+**Verifier**: `Claude (controller session)`
 
 ---
 
@@ -18,8 +18,9 @@
 **Result**:
 
 ```text
-items: 14, passed: 14, failed: 0 (13 specs, 1 change: work-with-language)
-Also run at HEAD 330a0cc: npm test = 15 files / 220 tests passed, npm run typecheck clean.
+openspec validate --all --strict: 14 passed, 0 failed (13 specs, 1 change: work-with-language)
+npm test: 15 files / 229 tests passed. npm run typecheck: clean.
+git diff c8e9782 -- schema openspec/schemas package.json package-lock.json: empty.
 ```
 
 If any items failed, list id + issues:
@@ -34,13 +35,13 @@ If any items failed, list id + issues:
 
 - [ ] All `- [ ]` have been changed to `- [x]`
 
-14 of 15 checkboxes are `- [x]`.
+21 of 22 checkboxes are `- [x]`.
 
 **Incomplete tasks** (if any):
 
 | Task | Reason incomplete | Blocks archive? |
 |---|---|---|
-| 5.2 Manual end-to-end check from `docs/e2e-checklist.md` with `language: vi` (agent writes Vietnamese prose, keeps structural tokens English, `openspec validate` passes on the resulting change) | Manual: needs a live pi agent session with the extension loaded, which the implementation subagents and this verifier cannot provide. Not performed. The pieces it relies on are covered by automated tests (config read/write, routing note content, `/opsx-init --lang` followed by a real `openspec schema validate superspec` and `openspec status`), but the agent's actual behavior under the routing note is unverified, including whether SDD subagents see the note (design.md open question). | Yes, until the user runs the check or explicitly waives it. |
+| 5.2 Manual end-to-end check from `docs/e2e-checklist.md` with a live agent (agent writes prose in the configured language, keeps structural tokens English, `openspec validate` passes on the resulting change) | Manual: needs a live pi agent session with the extension loaded, which the implementation subagents and this verifier cannot provide. Not performed. The pieces it relies on are covered by automated tests (config read, write and resolve, routing note content for set, missing, invalid and unreadable language, `/opsx-init` with and without `--lang` followed by a real `openspec schema validate superspec` and `openspec status`), but the agent's actual behavior under the routing note is unverified, including whether SDD subagents see the note (design.md open question). | Yes, until the user runs the check or explicitly waives it. |
 
 ---
 
@@ -50,7 +51,7 @@ If any items failed, list id + issues:
 |---|---|---|
 | document-language | ✗ pending sync | New capability; `openspec/specs/document-language/` does not exist yet. Created at archive. |
 | config-merge | ✗ pending sync | Two ADDED requirements and the MODIFIED "Preserve other content" are not in `openspec/specs/config-merge/spec.md` yet. |
-| init-command | ✗ pending sync | Three ADDED requirements (including "Language step order") and the MODIFIED "Idempotency" are not in the main spec yet. |
+| init-command | ✗ pending sync | Four ADDED requirements (Language option, Language prompt, Default language, Language step order) and the MODIFIED "Idempotency" are not in the main spec yet. |
 | routing-note | ✗ pending sync | ADDED "Document language paragraph" is not in the main spec yet. |
 
 All four are expected before archive; `/opsx:archive` (or `/opsx:sync`) applies them.
@@ -61,17 +62,16 @@ All four are expected before archive; `/opsx:archive` (or `/opsx:sync`) applies 
 
 | Sample item | design description | specs counterpart | Gap |
 |---|---|---|---|
-| Storage and value rules | Decision 1: top-level `language:`, 1 to 64 chars, no Cc / U+2028 / U+2029, bare only when first character is a letter or digit, trailing comment allowed on quoted values | document-language "Language setting"; config-merge "Set language key", "Read language key" | None; amended consistently in the final fix wave. |
-| Init flag and prompt | Decision 2: flag writes or overwrites; prompt only without flag, key absent, UI available | init-command "Language option", "Language prompt", "Idempotency" | design says the language step "runs inside the existing config step, so it respects the existing blocked-state notice"; code runs it as a separate step after the blocked return and `cleanLegacy`, so a blocked run writes nothing and never asks. The init-command spec does not state blocked-run behavior. |
-| Injection | Decision 3: paragraph appended to the routing note, read on every `context` event, absent key leaves the note byte-identical | routing-note "Document language paragraph" | None. Confirmed by tests and by the final reviewer (pi applies `context` per call). |
-| Docs | Decision 4: domain-model, architecture, usage guide | no spec (project docs) | None; docs reviewed against the code in Task 7. |
-| "ask once" | design: "ask once through a new InitIO text prompt" | init-command "Language prompt" | Implemented as once per run; a skipped prompt asks again on the next run (documented in the usage guide). Wording only. |
+| Storage and value rules | Decision 1: top-level `language:`, 1 to 64 chars, no Cc / U+2028 / U+2029, bare only when first character is a letter or digit, trailing comment allowed on quoted values | document-language "Language setting"; config-merge "Set language key", "Read language key" | None. |
+| Init flag, prompt and default | Decision 2: flag writes or overwrites; without a flag and without a valid value the prompt (default `en`) or, with no UI, `en` is written; blocked run writes nothing | init-command "Language option", "Language prompt", "Default language", "Language step order", "Idempotency" | None. Checked against `setLanguage` and the tests added in Task 9. |
+| Injection and effective language | Decision 3: paragraph always present, language is the valid value or `en` | routing-note "Document language paragraph"; document-language "Language setting", "Default language" | None. Checked against `resolveLanguage` and the `context` handler (Task 10). |
+| Docs | Decision 4: domain-model, architecture, usage guide, READMEs, CHANGELOG | no spec (project docs) | None; reviewed against the code in Tasks 7, 9 and 10. |
 
 **Drift warnings** (non-blocking):
 
-- Resolved after the first verify run (re-checked `openspec validate --all --strict`: 14 of 14 valid, `npm test`: 220 passed): design.md Decision 2 now says the language step runs after the schema classification and asks once per run; the init-command spec gained the requirement "Language step order" (blocked run writes no language and does not ask); plan.md Global Constraints now name Unicode control characters and U+2028 / U+2029.
-- Remaining: none.
+- None. The earlier drift items were resolved before this run.
 - Deferred by user decision, not drift: M2 (language line in the init report), M3 (notice that `--lang` is dropped for a blocked project), M4 (architecture.md glyph and wording nits), single-quoted YAML values.
+- Minor polish from the Task 10 review, not applied: doc comment at `extensions/routing-note.ts:12` could point to `resolveLanguage`; the new `resolveLanguage` test bundles several cases in one `it`; the usage-guide paragraph about the effective language could sit next to the default-language paragraph.
 
 ---
 
@@ -80,21 +80,20 @@ All four are expected before archive; `/opsx:archive` (or `/opsx:sync`) applies 
 - [x] No unstaged files in the worktree
 - [ ] All related commits have been pushed
 
-Nothing has been pushed: pushing needs the user's explicit go-ahead.
+PR #5 was opened from this branch. The iteration 2 commits (`57c2ae8` onward) are not pushed yet: pushing needs the user's explicit go-ahead.
 
-**Commit range** (if known): `c8e9782..330a0cc` (18 commits including the apply receipt)
+**Commit range** (if known): `c8e9782..1773560`
 
 ---
 
 ## Overall Decision
 
 - [ ] ✅ PASS — ready to proceed via /opsx:continue to the finalize artifact, then /opsx:archive
-- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: task 5.2 (manual end-to-end check with a live agent) has not been performed and blocks archive until the user runs it or waives it (the user asked to continue to a PR with 5.2 still open; it is not waived); the delta specs are not yet synced.
-- [ ] ❌ FAIL — return to the failed artifact, fix, then re-run verify
+- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: task 5.2 (manual end-to-end check with a live agent) has not been performed and blocks archive until the user runs it or waives it; the delta specs are not yet synced; the iteration 2 commits are not pushed to PR #5.
 
 **Next step**:
 
-Decide on task 5.2: run the `docs/e2e-checklist.md` flow once with `language: vi` in a scratch project and tell me the outcome, or waive it explicitly. Optionally have the two drift items fixed in design.md and the init-command spec first. Then `/opsx:continue` for the finalize artifact (merge, push and PR need explicit approval), then `/opsx:archive`.
+Decide on task 5.2: run the `docs/e2e-checklist.md` flow once in a scratch project (an `/opsx-init` run now gives `language: en`; use `--lang vi` or edit the key to test another language) and report the outcome, or waive it explicitly. Then push the iteration 2 commits to update PR #5, and run `/opsx:archive` (sync the four delta specs).
 
 > **Convergence loop reminder**:
 > - PASS / PASS_WITH_WARNINGS → `/opsx:continue` advances to the finalize

@@ -5,9 +5,11 @@
 > Overwritten on each apply iteration; iteration counter grows.
 
 **Change**: `work-with-language`
-**Iteration**: `1`
-**Applied at**: `2026-11-03 12:18 UTC`
+**Iteration**: `2`
+**Applied at**: `2026-11-03 13:03 UTC`
 **Executor**: `subagent-driven-development`
+
+Iteration 2 added the default language `en` at the request of the user: `/opsx-init` writes `language: en` when none is chosen (Task 9), and a missing or invalid `language:` is read as `en`, so the routing note always carries the language paragraph (Task 10). Iteration 1 covered Tasks 1 to 8 and the final-review fix wave.
 
 ---
 
@@ -20,15 +22,15 @@
 
 ## Commits
 
-- **Range**: `c8e9782..3fe5ba5`
-- **Count**: `17`
+- **Range**: `c8e9782..1773560`
+- **Count**: `27`
 
 ---
 
 ## Tasks
 
-- **Completed**: `14 of 15` checkboxes in tasks.md flipped to `- [x]`
-- **Remaining**: `5.2` (manual end-to-end check with a real agent and `language: vi`, deferred to verify)
+- **Completed**: `21 of 22` checkboxes in tasks.md flipped to `- [x]`
+- **Remaining**: `5.2` (manual end-to-end check with a real agent, deferred to verify)
 
 ---
 
