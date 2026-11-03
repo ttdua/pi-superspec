@@ -1,6 +1,6 @@
 ---
 name: opsx-ff
-description: Fast-forward an OpenSpec change. Run the brainstorm artifact interactively, then create all remaining artifacts needed for implementation without stopping. Use when the user wants a complete plan quickly.
+description: Fast-forward an OpenSpec change. Run the brainstorm artifact interactively and gate it, then create all remaining artifacts needed for implementation without stopping, then gate the final packet. Use when the user wants a complete plan quickly.
 ---
 
 <!-- Adapted from OpenSpec 1.4.1 openspec-ff-change (MIT) for pi. -->
@@ -63,10 +63,13 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
 
    **Interaction boundary**
    - The `brainstorm` artifact runs interactively: the user answers your questions and approves the design before you move on.
-   - After the design is approved, create every remaining artifact in dependency order without stopping to ask for review. Continue until every artifact ID in `applyRequires` has `status: "done"` (re-run `openspec status --change "<name>" --json` after each artifact). The `plan` artifact is the last one required.
+   - Review gate on `brainstorm.md`: right after `brainstorm.md` is written, run the **Review gate** on that one file. It is approved as a file at its own gate before the unattended phase. Do not generate later artifacts until the gate outcome is `approved` (or `approved_with_notes` handled per the gate).
+   - After that gate is approved, create every remaining artifact in dependency order without stopping to ask for review. Continue until every artifact ID in `applyRequires` has `status: "done"` (re-run `openspec status --change "<name>" --json` after each artifact). The `plan` artifact is the last one required.
    - In this unattended phase, required input is missing only if no reasonable default can be inferred from the brainstorm, earlier artifacts and the repo. Otherwise do not ask: make the decision and record any assumption in the artifact. If it is missing, ask with the `ask_user_question` tool if available (otherwise plain text with numbered options) and wait. Do NOT ask the execution-handoff question that the writing-plans skill normally asks at its end.
    - Create all ready artifacts in dependency order, including `design` when it is ready (it is cheap and completes the graph); `design` is written before the loop stops, and the loop stops only once `plan` is done. Do not repeat in `design` what the `brainstorm` artifact already says, as its instruction directs.
    - If no artifact is ready but `applyRequires` is not satisfied, show the status, STOP, and report why.
+   - The brainstorm gate and the final gate are the only planned stops; the unattended phase asks only when required input is missing.
+   - Final gate: once `plan` is done, run the **Review gate** once on the final packet. The packet is exactly `proposal.md`, `design.md`, every `specs/<capability>/spec.md` (each by path), `tasks.md` and `plan.md`, passed as an explicit ordered list, never a folder. It does not repeat `brainstorm.md`, which was approved at its own gate. On `changes_requested`, revise, cascade per the gate and reopen it. If `brainstorm.md` is revised after the unattended phase, the next gate opens on all five artifacts (proposal, design, specs, tasks, plan).
 
 5. **Show final status**
    ```bash
@@ -75,15 +78,47 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
 
 **Superpowers artifact rule**
 
-If an artifact `instruction` says to use `superpowers:<x>` (for example `superpowers:brainstorming` for the brainstorm artifact or `superpowers:writing-plans` for the plan artifact), drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the instruction says (never under `docs/superpowers/`) and ignore that skill's own closing step (invoking another skill, a next-skill handoff, or an execution handoff). Apart from the interaction the brainstorm artifact requires, that skill's own approval gates, self-review, or commit steps must not cause a stop before the plan is written. If skill `<x>` is not available, STOP and tell the user to install Superpowers.
+If an artifact `instruction` says to use `superpowers:<x>` (for example `superpowers:brainstorming` for the brainstorm artifact or `superpowers:writing-plans` for the plan artifact), drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the instruction says (never under `docs/superpowers/`) and ignore that skill's own closing step (invoking another skill, a next-skill handoff, or an execution handoff). Apart from the interaction the brainstorm artifact requires, that skill's own approval gates, self-review, or commit steps must not cause a stop. The only permitted stops are the review gate on `brainstorm.md` and the final review gate. If skill `<x>` is not available, STOP and tell the user to install Superpowers.
+
+**Review gate**
+
+A review gate asks the reviewer to decide on written work before the workflow moves on. It ends in exactly one outcome:
+
+| Outcome | Plannotator result | Answer in chat |
+|---|---|---|
+| `approved` | `decision: approved`, no `feedback` | "Approve" |
+| `approved_with_notes` | `decision: approved`, non-empty `feedback` | "Approve with notes" plus the notes |
+| `changes_requested` | `decision: annotated` | "Request changes" plus the notes |
+| `dismissed` | `decision: dismissed` | no answer |
+
+Only `approved` and `approved_with_notes` let the workflow continue. The `dismissed` outcome is not an approval, so ask the user in chat how to proceed and do not continue until they answer.
+
+- **Choose the reviewer** each time a gate opens, in this order:
+  1. The `plannotator` tool, when it is in your available tools. Call it with the gate enabled on the target files, end your turn, and continue when its decision message arrives.
+  2. The Plannotator CLI, when `command -v plannotator` succeeds. Run it in the background as described under "Run the CLI" and read the result file.
+  3. The `ask_user_question` tool, when available. Offer the three options "Approve", "Approve with notes" and "Request changes", with notes as free text.
+  4. Otherwise plain text: three numbered options (recommended first), then wait for the answer.
+- **When a tier fails to open** (the CLI exits with code 2, the tool returns an error, or you cannot run a background command), tell the user and fall to the next tier. A failed tier falls to the next tier without a retry loop.
+- **Run the CLI**: `plannotator annotate <file>... --gate --json --result-file <scratch>/review-<n>.json`, passing every reviewed file as an explicit path in artifact order (never a folder). The result file must be a fresh path for every gate: a path that does not exist yet, in the session scratch directory or in a new `mktemp -d` directory, and outside the change directory. Do not use `--require-approval`. Wait for the process to finish, then read the result file.
+- **Classify the result** from the `decision` field (`approved`, `annotated`, `dismissed`) and `feedback`, never from message text or the exit code (except exit code 2, which means the tier failed). An unknown `decision` is `dismissed`, and so is a result file that is missing or unreadable.
+- **Handle notes** for `approved_with_notes` and `changes_requested`: apply every note to the reviewed files. After `approved_with_notes`, if every note is only wording, formatting or clarification, and none changes a requirement, scope, decision, scenario or the meaning of another artifact, continue and show a short diff of what changed. Otherwise open the gate again on the changed files. When unsure, reopen. After `changes_requested`, always open the gate again.
+- **Cascade a revision**: find the dependents of each revised artifact from the dependency data (`requires` and `dependencies`) in `openspec status --change "<name>" --json`, not from file times. Edit the dependents so they stay consistent (do not regenerate them from scratch) and open the next gate on only the files that changed. If `brainstorm.md` is revised after the generation of the later artifacts, say so and open the next gate on every artifact that depends on it.
+- **Code review gate**: while creating the `finalize` artifact, the schema asks for a code review gate after the in-worktree test run and before the feature branch is touched. It uses the same outcomes and tier order, with these differences:
+  1. Tier 1 calls the `plannotator` tool with the `review` action on the worktree, with the base set to the feature branch recorded in `apply.md` and the gate enabled.
+  2. Tier 2 runs `plannotator review --base <feature branch> --gate --json <worktree>` in the background. This command has no `--result-file`, so redirect its stdout to a fresh scratch file (same rules as for the result file of "Run the CLI") and read `decision` from that JSON. Classify from `decision` only; never infer the outcome from `message`. Use `message` only as the reviewer's notes to apply. This JSON has no `feedback` field, so this tier can only produce `approved`, `changes_requested` or `dismissed`.
+  3. Tiers 3 and 4 show `git diff --stat` and the commit range against the feature branch recorded in `apply.md`, tell the user the diff must be read in their own tool, and ask for the three options.
+  4. On `approved`, continue finalize. On `approved_with_notes` or `changes_requested`, stop before the feature branch is checked out, merged, pushed or opened as a PR. Fix the code on the worktree branch following `receiving-code-review` and TDD, append an iteration entry to `apply.md`, run `/opsx-verify` again, and re-enter finalize.
+  5. After `approved_with_notes`, the code review gate reopens only if a note changed behaviour or a requirement, or you are unsure; wording-only notes resume finalize after the re-verify, re-entering it at step 3 (the checkout of the feature branch), not at step 2b. After `changes_requested` the gate always reopens.
+  6. Record the outcome (`approved`, `approved with notes` or `skipped` with a reason), the reviewer tier and the commit range reviewed in `finalize.md`.
 
 **Output**
 
-After completing all artifacts, summarize:
+After completing all artifacts and running the final gate, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
 - What is ready: "All artifacts created!"
-- Prompt: "Run `/opsx-apply` to start implementing."
+- The final review gate outcome
+- Give the pointer only after the final gate is approved; do not point to `/opsx-apply` before then. Prompt: "Run `/opsx-apply` to start implementing."
 
 **Artifact Creation Guidelines**
 

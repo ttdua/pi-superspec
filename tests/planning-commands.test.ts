@@ -281,6 +281,62 @@ describe("planning commands", () => {
 		expect(text).toContain("interactively");
 	});
 
+	describe("ff review gates", () => {
+		const text = skill("ff");
+
+		it("ff and continue share an identical review gate", () => {
+			const gate = reviewGate(text);
+			expect(gate.length).toBeGreaterThan(0);
+			expect(gate).toBe(reviewGate(skill("continue")));
+		});
+
+		it("ff gates brainstorm.md before later artifacts", () => {
+			const gateAt = text.indexOf("Review gate");
+			const laterAt = text.indexOf("create every remaining artifact");
+			expect(gateAt).toBeGreaterThan(-1);
+			expect(laterAt).toBeGreaterThan(-1);
+			expect(gateAt).toBeLessThan(laterAt);
+			expect(text.slice(gateAt, laterAt)).toContain("brainstorm.md");
+		});
+
+		it("ff final gate lists the packet explicitly", () => {
+			for (const s of [
+				"proposal.md",
+				"design.md",
+				"every `specs/<capability>/spec.md`",
+				"tasks.md",
+				"plan.md",
+				"explicit ordered list",
+				"never a folder",
+				"does not repeat `brainstorm.md`",
+			]) {
+				expect(text, s).toContain(s);
+			}
+		});
+
+		it("ff points to /opsx-apply only after the final gate", () => {
+			const prompt = text.indexOf('Prompt: "Run `/opsx-apply`');
+			const guard = text.indexOf("only after the final gate is approved");
+			expect(prompt).toBeGreaterThan(-1);
+			expect(guard).toBeGreaterThan(-1);
+			expect(guard).toBeLessThan(prompt);
+		});
+
+		it("ff artifact rule no longer forbids the gate", () => {
+			expect(text).not.toContain("must not cause a stop before the plan is written");
+			const rule = text.slice(
+				text.indexOf("**Superpowers artifact rule**"),
+				text.indexOf("\n**Review gate**\n"),
+			);
+			expect(rule.length).toBeGreaterThan(0);
+			expect(rule).toContain("review gate");
+		});
+
+		it("ff reopens everything when brainstorm changes late", () => {
+			expect(text).toContain("all five");
+		});
+	});
+
 	it("explore forbids writing implementation code", () => {
 		expect(skill("explore")).toContain("Do NOT write code");
 	});
