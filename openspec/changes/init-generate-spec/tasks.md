@@ -1,8 +1,8 @@
 ## 1. `--generate` in /opsx-init
 
-- [ ] 1.1 Extend `parseInitArgs` in `extensions/init/args.ts` to remove a standalone `--generate` token, return `generate: true`, and keep `--lang` parsing unchanged; reject `--generate=<x>` and a repeated `--generate` (tests in `tests/init/args.test.ts`)
+- [x] 1.1 Extend `parseInitArgs` in `extensions/init/args.ts` to remove a standalone `--generate` token, return `generate: true`, and keep `--lang` parsing unchanged; reject `--generate=<x>` and a repeated `--generate` (tests in `tests/init/args.test.ts`)
 - [ ] 1.2 In `extensions/init/init.ts`, add the `/opsx-generate-specs` next step to the activation report only when the flag is set; no hint for blocked, preflight-failed or validation-failed outcomes (tests in `tests/init/init.test.ts`)
-- [ ] 1.3 Update the usage text in the unknown-argument error to `/opsx-init [--lang <language>] [--generate]`
+- [x] 1.3 Update the usage text in the unknown-argument error to `/opsx-init [--lang <language>] [--generate]`
 - [ ] 1.4 Add an integration test: `--generate` on an empty temp git repo activates, and a second run leaves every file byte-identical (`tests/init/integration.test.ts`)
 
 ## 2. `/opsx-generate-specs` skill and prompt
