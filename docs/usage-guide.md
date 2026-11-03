@@ -208,7 +208,7 @@ In the last row, `foreign` is a schema without the `x-pi-superspec` marker and v
 
 The warning reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked.
 
-Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes no arguments. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again.
+Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again.
 
 ## Troubleshooting
 

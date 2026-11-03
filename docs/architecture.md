@@ -107,7 +107,8 @@ context (activated project)
 
 ## `/opsx-init`
 
-Always available, idempotent: re-running on an initialised project changes nothing.
+Always available, idempotent: re-running on an initialised project changes nothing
+unless you pass `--lang` or answer the language prompt.
 It does not repair or upgrade an existing schema (planned, see below).
 
 1. Require `openspec --version` ≥ 1.4; otherwise print the install line and stop.
