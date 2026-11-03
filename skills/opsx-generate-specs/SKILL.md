@@ -46,15 +46,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
    Omit `--schema`. If `bootstrap-specs` already exists (check `openspec list --json`), ask whether to continue it. If confirmed, read `openspec status --change "bootstrap-specs" --json`, skip every artifact that is `done`, and never overwrite it.
 
-6. **SCOUT each capability**
-
-   Run one scout per confirmed capability, each given its capability name and directories.
-   - If the `subagent` tool from `pi-subagents` exists, dispatch the scouts as subagents, in parallel where the tool allows, on a fast model when the tool lets a model be chosen. Scouts write their own files.
-   - Otherwise scout the capabilities one after another in this session, and write each spec file before starting the next. This is slower and fills context; say so once. Never invent subagent calls.
-
-   After the scouts finish, check that every expected file exists. Redo any that is missing.
-
-7. **Scout contract**
+6. **Scout contract**
 
    Each scout writes `openspec/changes/bootstrap-specs/specs/<capability>/spec.md` containing only a `## ADDED Requirements` section. Rules:
    - Every requirement uses `SHALL` or `MUST` and has at least one `#### Scenario:` with `WHEN` and `THEN` lines.
@@ -63,9 +55,17 @@ Generate draft specs for an existing codebase. The result is a change named `boo
    - Describe observable behaviour, not module or function structure.
    - Read tests and documentation as well as source.
 
-8. **Language**
+7. **Language**
 
    Read `language:` from `openspec/config.yaml`. Write all generated prose in that language. Keep the keywords `SHALL`, `MUST`, `WHEN`, `THEN`, `Requirement` and `Scenario` in English.
+
+8. **SCOUT each capability**
+
+   Run one scout per confirmed capability. Give every scout, in its brief: the capability name and directories, the full scout contract from step 6 (copy its text), the output path `openspec/changes/bootstrap-specs/specs/<capability>/spec.md`, and the document language from step 7. A subagent has no other context.
+   - If the `subagent` tool from `pi-subagents` exists, dispatch the scouts as subagents, in parallel where the tool allows, on a fast model when the tool lets a model be chosen. Scouts write their own files.
+   - Otherwise scout the capabilities one after another in this session, applying the same contract, path and language, and write each spec file before starting the next. This is slower and fills context; say so once. Never invent subagent calls.
+
+   After the scouts finish, check that every expected file exists. Redo any that is missing.
 
 9. **Write the other artifacts**
 

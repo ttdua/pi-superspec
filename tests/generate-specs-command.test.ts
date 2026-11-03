@@ -62,6 +62,23 @@ describe("opsx-generate-specs command", () => {
 		}
 	});
 
+	it("defines the scout contract and language before dispatch and passes them on", () => {
+		const skill = read(SKILL);
+		const contract = skill.indexOf("**Scout contract**");
+		const language = skill.indexOf("**Language**");
+		const dispatch = skill.indexOf("**SCOUT each capability**");
+		expect(contract).toBeGreaterThan(-1);
+		expect(language).toBeGreaterThan(-1);
+		expect(dispatch).toBeGreaterThan(-1);
+		expect(contract).toBeLessThan(dispatch);
+		expect(language).toBeLessThan(dispatch);
+		const section = skill.slice(dispatch, skill.indexOf("**Write the other artifacts**"));
+		expect(section).toContain("specs/<capability>/spec.md");
+		expect(section).toMatch(/scout contract/i);
+		expect(section).toMatch(/document language/i);
+		expect(section).toMatch(/every scout/i);
+	});
+
 	it("never writes tasks.md", () => {
 		expect(read(SKILL)).toContain("Do not write tasks.md");
 	});
