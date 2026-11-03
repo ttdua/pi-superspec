@@ -4,7 +4,12 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { findProjectRoot, isActivated } from "./activation.ts";
 import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
-import { hasSuperpowers } from "./routing-note.ts";
+import {
+	createRoutingNoteMessage,
+	hasSuperpowers,
+	insertRoutingNote,
+	SUPERPOWERS_MISSING_WARNING,
+} from "./routing-note.ts";
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -16,6 +21,19 @@ export default function (pi: ExtensionAPI) {
 			skillPaths: [join(packageRoot, "skills")],
 			promptPaths: [join(packageRoot, "prompts")],
 		};
+	});
+
+	pi.on("context", (event, ctx) => {
+		const root = findProjectRoot(ctx.cwd);
+		if (!root || !isActivated(root)) return undefined;
+		const messages = insertRoutingNote(event.messages, createRoutingNoteMessage());
+		return messages && { messages };
+	});
+
+	pi.on("session_start", (_event, ctx) => {
+		const root = findProjectRoot(ctx.cwd);
+		if (!root || !isActivated(root) || !ctx.hasUI) return;
+		if (!hasSuperpowers(pi.getCommands())) ctx.ui.notify(SUPERPOWERS_MISSING_WARNING, "warning");
 	});
 
 	pi.registerCommand("opsx-init", {
