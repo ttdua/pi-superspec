@@ -1,7 +1,7 @@
 ## 1. Ground truth
 
-- [ ] 1.1 Read `extensions/`, `prompts/`, `skills/` and `schema/superspec/schema.yaml` and record every user-visible behaviour the docs will state (init output, upgrade cases, `--force`, command arguments)
-- [ ] 1.2 List where `docs/*.md` differ from the shipped package
+- [x] 1.1 Read `extensions/`, `prompts/`, `skills/` and `schema/superspec/schema.yaml` and record every user-visible behaviour the docs will state (init output, upgrade cases, `--force`, command arguments)
+- [x] 1.2 List where `docs/*.md` differ from the shipped package
 
 ## 2. Release metadata
 
