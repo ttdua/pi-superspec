@@ -50,7 +50,7 @@ If any items failed, list id + issues:
 |---|---|---|
 | document-language | ✗ pending sync | New capability; `openspec/specs/document-language/` does not exist yet. Created at archive. |
 | config-merge | ✗ pending sync | Two ADDED requirements and the MODIFIED "Preserve other content" are not in `openspec/specs/config-merge/spec.md` yet. |
-| init-command | ✗ pending sync | Two ADDED requirements and the MODIFIED "Idempotency" are not in the main spec yet. |
+| init-command | ✗ pending sync | Three ADDED requirements (including "Language step order") and the MODIFIED "Idempotency" are not in the main spec yet. |
 | routing-note | ✗ pending sync | ADDED "Document language paragraph" is not in the main spec yet. |
 
 All four are expected before archive; `/opsx:archive` (or `/opsx:sync`) applies them.
@@ -69,9 +69,8 @@ All four are expected before archive; `/opsx:archive` (or `/opsx:sync`) applies 
 
 **Drift warnings** (non-blocking):
 
-- design.md Decision 2: replace "inside the existing config step" with "after the schema classification, so a blocked run writes no language and does not ask".
-- init-command spec: add a scenario for the blocked-run behavior (currently implemented, tested and documented but not specified).
-- plan.md Global Constraints still say "no control characters" without U+2028 / U+2029 (spec and design carry the full rule).
+- Resolved after the first verify run (re-checked `openspec validate --all --strict`: 14 of 14 valid, `npm test`: 220 passed): design.md Decision 2 now says the language step runs after the schema classification and asks once per run; the init-command spec gained the requirement "Language step order" (blocked run writes no language and does not ask); plan.md Global Constraints now name Unicode control characters and U+2028 / U+2029.
+- Remaining: none.
 - Deferred by user decision, not drift: M2 (language line in the init report), M3 (notice that `--lang` is dropped for a blocked project), M4 (architecture.md glyph and wording nits), single-quoted YAML values.
 
 ---
@@ -90,7 +89,7 @@ Nothing has been pushed: pushing needs the user's explicit go-ahead.
 ## Overall Decision
 
 - [ ] ✅ PASS — ready to proceed via /opsx:continue to the finalize artifact, then /opsx:archive
-- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: task 5.2 (manual end-to-end check with a live agent) has not been performed and blocks archive until the user runs it or waives it; the delta specs are not yet synced; design.md Decision 2 and the init-command spec drift slightly from the implemented blocked-run behavior.
+- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: task 5.2 (manual end-to-end check with a live agent) has not been performed and blocks archive until the user runs it or waives it (the user asked to continue to a PR with 5.2 still open; it is not waived); the delta specs are not yet synced.
 - [ ] ❌ FAIL — return to the failed artifact, fix, then re-run verify
 
 **Next step**:

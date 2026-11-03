@@ -38,6 +38,17 @@ When no `--lang` flag was given, `config.yaml` has no valid `language:` and a UI
 - **WHEN** the command runs without a UI and without `--lang`
 - **THEN** the user is not asked and no `language:` line is written
 
+### Requirement: Language step order
+The language step SHALL run after the project schema has been installed or found identical and legacy cleanup is done, and before schema validation. When the existing schema blocks activation, `/opsx-init` MUST NOT write the language and MUST NOT ask for it, even when `--lang` is given.
+
+#### Scenario: Blocked project with a flag
+- **WHEN** the project has a foreign schema and `/opsx-init --lang vi` runs
+- **THEN** the run is blocked and `config.yaml` has no `language:` line
+
+#### Scenario: Blocked project without a flag
+- **WHEN** the project has a foreign schema, a UI is available and no flag is given
+- **THEN** the user is not asked for a language
+
 ## MODIFIED Requirements
 
 ### Requirement: Idempotency

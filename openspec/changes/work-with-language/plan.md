@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No new dependency; `schema/superspec/` and `openspec/schemas/superspec/` MUST NOT change (no schema version bump).
-- Language value: single line, trimmed, 1 to 64 characters, no control characters; anything else counts as "no language".
+- Language value: single line, trimmed, 1 to 64 characters, no Unicode control characters (category Cc) and no U+2028 or U+2029; anything else counts as "no language".
 - Written bare when it matches `/^[\p{L}\p{N}][\p{L}\p{N} _.()-]*$/u`, otherwise as a double-quoted JSON string; inserted directly after the top-level `schema:` line.
 - Structural tokens that stay English: section headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`, checkbox syntax, delta operation headers, file names, capability names.
 - The routing note keeps its marker (`pi-superspec routing note`) at the start, and without a valid language it is byte-identical to today's `ROUTING_NOTE`.
