@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, utimesSync,
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyConfig, mergeConfig } from "../../extensions/init/config.ts";
+import { applyConfig, mergeConfig, parseLanguage, readLanguage, validateLanguage } from "../../extensions/init/config.ts";
 
 describe("mergeConfig", () => {
 	it("replaces spec-driven", () => {
@@ -60,5 +60,44 @@ describe("applyConfig", () => {
 		writeFileSync(file, "schema: spec-driven\n");
 		expect(applyConfig(root)).toBe("written");
 		expect(readFileSync(file, "utf8")).toBe("schema: superspec\n");
+	});
+});
+
+describe("validateLanguage", () => {
+	it("trims a valid value", () => {
+		expect(validateLanguage("  vi ")).toBe("vi");
+		expect(validateLanguage("Tiếng Việt")).toBe("Tiếng Việt");
+		expect(validateLanguage("a".repeat(64))).toBe("a".repeat(64));
+	});
+	it("rejects empty, too long and multi-line values", () => {
+		expect(validateLanguage("")).toBeUndefined();
+		expect(validateLanguage("   ")).toBeUndefined();
+		expect(validateLanguage("a".repeat(65))).toBeUndefined();
+		expect(validateLanguage("a\nb")).toBeUndefined();
+	});
+});
+
+describe("parseLanguage / readLanguage", () => {
+	it("reads a top-level language", () => {
+		expect(parseLanguage("schema: superspec\nlanguage: vi\n")).toBe("vi");
+		expect(parseLanguage("language: vi\r\n")).toBe("vi");
+		expect(parseLanguage("\uFEFFlanguage: vi\n")).toBe("vi");
+	});
+	it("handles quoted values and comments", () => {
+		expect(parseLanguage('language: "zh: simplified"\n')).toBe("zh: simplified");
+		expect(parseLanguage("language: vi # note\n")).toBe("vi");
+	});
+	it("ignores nested, empty and invalid values", () => {
+		expect(parseLanguage("x:\n  language: vi\n")).toBeUndefined();
+		expect(parseLanguage("language: \n")).toBeUndefined();
+		expect(parseLanguage('language: ""\n')).toBeUndefined();
+		expect(parseLanguage('language: "abc\n')).toBeUndefined();
+	});
+	it("readLanguage reads the file, missing file is undefined", () => {
+		const root = mkdtempSync(join(tmpdir(), "lang-"));
+		expect(readLanguage(root)).toBeUndefined();
+		mkdirSync(join(root, "openspec"));
+		writeFileSync(join(root, "openspec", "config.yaml"), "schema: superspec\nlanguage: vi\n");
+		expect(readLanguage(root)).toBe("vi");
 	});
 });

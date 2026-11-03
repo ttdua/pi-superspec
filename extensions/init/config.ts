@@ -22,3 +22,33 @@ export function applyConfig(root: string): "written" | "unchanged" {
 	writeFileSync(file, next);
 	return "written";
 }
+
+export const MAX_LANGUAGE_LENGTH = 64;
+
+export function validateLanguage(value: string): string | undefined {
+	const trimmed = value.trim();
+	if (trimmed === "" || trimmed.length > MAX_LANGUAGE_LENGTH || /[\r\n]/.test(trimmed)) return undefined;
+	return trimmed;
+}
+
+export function parseLanguage(text: string): string | undefined {
+	// A leading BOM would stop `^` from matching the first line.
+	const body = text.startsWith("﻿") ? text.slice(1) : text;
+	const match = /^language:(.*)$/m.exec(body);
+	if (!match) return undefined;
+	const raw = match[1].trim();
+	if (raw.startsWith('"')) {
+		try {
+			const parsed: unknown = JSON.parse(raw);
+			return typeof parsed === "string" ? validateLanguage(parsed) : undefined;
+		} catch {
+			return undefined;
+		}
+	}
+	return validateLanguage(raw.replace(/\s+#.*$/, ""));
+}
+
+export function readLanguage(root: string): string | undefined {
+	const file = join(root, "openspec", "config.yaml");
+	return existsSync(file) ? parseLanguage(readFileSync(file, "utf8")) : undefined;
+}
