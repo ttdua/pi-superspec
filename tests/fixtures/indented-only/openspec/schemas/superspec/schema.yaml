@@ -1,0 +1,3 @@
+name: superspec
+foo:
+  x-pi-superspec: {}
