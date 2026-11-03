@@ -156,6 +156,16 @@ describe("execution commands", () => {
 		expect(text).not.toContain("delta-sync");
 	});
 
+	it("verify stays read-only, reads progress from apply and reports skipped checks as not verified", () => {
+		const flat = skill("verify").replace(/\s+/g, " ");
+		expect(flat).toContain("Do NOT implement or archive anything during verify; the apply state is context only.");
+		expect(flat).toContain("Read task progress from the apply instruction (`progress`)");
+		expect(flat).toContain("if a tracking file is unavailable, record the tasks check as not verified");
+		expect(flat).toContain(
+			"is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`",
+		);
+	});
+
 	it("sync merges deltas and does not archive", () => {
 		const text = skill("sync");
 		for (const op of ["RENAMED", "REMOVED", "MODIFIED", "ADDED"]) {
