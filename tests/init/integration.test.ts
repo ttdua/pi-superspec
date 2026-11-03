@@ -67,6 +67,19 @@ describe.skipIf(!hasOpenspec())("opsx-init end to end", () => {
 		expect(snapshot(root)).toEqual(before);
 	}, 60_000);
 
+	it("activates with --generate and is idempotent", async () => {
+		const root = emptyRepo();
+		const io = realIO(root);
+
+		expect(await runInit(io, packageRoot, "--generate")).toBe("activated");
+		expect(isActivated(root)).toBe(true);
+		expect(io.reports[0]).toContain("/opsx-generate-specs");
+
+		const before = snapshot(root);
+		expect(await runInit(realIO(root), packageRoot, "--generate")).toBe("activated");
+		expect(snapshot(root)).toEqual(before);
+	}, 60_000);
+
 	it("preserves custom keys and comments in an existing config.yaml", async () => {
 		const root = emptyRepo();
 		mkdirSync(join(root, "openspec"), { recursive: true });

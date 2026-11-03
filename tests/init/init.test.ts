@@ -400,4 +400,79 @@ describe("runInit", () => {
 			expect(readFileSync(configPath(root), "utf8")).not.toContain("language:");
 		});
 	});
+
+	describe("--generate", () => {
+		const hint = "/opsx-generate-specs";
+
+		it("adds the next step after the Next line", async () => {
+			const root = tmp();
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot, "--generate")).toBe("activated");
+			const report = io.reports[0];
+			expect(report).toContain("Next: /opsx-new <name>");
+			expect(report).toContain(hint);
+			expect(report.indexOf(hint)).toBeGreaterThan(report.indexOf("Next: /opsx-new <name>"));
+			expect(report.split("\n").at(-1)).toBe(
+				"For an existing codebase, run /opsx-generate-specs to draft specs from the code.",
+			);
+		});
+
+		it("prints no hint without the flag", async () => {
+			const root = tmp();
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(io.reports[0]).not.toContain(hint);
+		});
+
+		it("prints no hint when blocked", async () => {
+			const root = tmp();
+			cpSync(join(fixtures, "unmarked"), root, { recursive: true });
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot, "--generate")).toBe("blocked");
+			expect(io.reports).toEqual([]);
+			expect(io.notes.join("\n")).not.toContain(hint);
+		});
+
+		it("prints no hint when validation fails", async () => {
+			const root = tmp();
+			const { io } = recording(root, (c) =>
+				isValidate(c) ? { code: 1, stdout: "", stderr: "bad" } : { code: 0, stdout: "1.4.1\n", stderr: "" },
+			);
+			expect(await runInit(io, packageRoot, "--generate")).toBe("validation-failed");
+			expect(io.reports).toEqual([]);
+			expect(io.notes.join("\n")).not.toContain(hint);
+		});
+
+		it("prints no hint when openspec is missing", async () => {
+			const root = tmp();
+			const { io } = recording(root, () => ({ code: 127, stdout: "", stderr: "not found" }));
+			expect(await runInit(io, packageRoot, "--generate")).toBe("preflight-failed");
+			expect(io.reports).toEqual([]);
+			expect(io.notes.join("\n")).not.toContain(hint);
+		});
+
+		it("rejects --generate=x without writing anything", async () => {
+			const root = tmp();
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot, "--generate=x")).toBe("invalid-arguments");
+			expect(readdirSync(root)).toEqual([]);
+		});
+
+		it("keeps --lang when combined with --generate", async () => {
+			const root = tmp();
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot, "--lang vi --generate")).toBe("activated");
+			expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("language: vi");
+		});
+
+		it("writes the same config.yaml with and without --generate", async () => {
+			const plain = tmp();
+			const flagged = tmp();
+			expect(await runInit(recording(plain).io, packageRoot)).toBe("activated");
+			expect(await runInit(recording(flagged).io, packageRoot, "--generate")).toBe("activated");
+			expect(readFileSync(join(flagged, "openspec", "config.yaml"), "utf8")).toBe(
+				readFileSync(join(plain, "openspec", "config.yaml"), "utf8"),
+			);
+		});
+	});
 });

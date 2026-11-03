@@ -38,11 +38,15 @@ The README SHALL include a quick start that runs `/opsx-init` in a repository an
 - **THEN** the README links to `docs/usage-guide.md`
 
 ### Requirement: README command table
-The README SHALL contain a table of every shipped command: `/opsx-init`, `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`, `/opsx-apply`, `/opsx-verify`, `/opsx-sync` and `/opsx-archive`, with a one-line behaviour each, and MUST state that `opsx-propose` and `opsx-bulk-archive` are not shipped.
+The README SHALL contain a table of every shipped command: `/opsx-init`, `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`, `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive` and `/opsx-generate-specs`, with a one-line behaviour each, and MUST state that `opsx-propose` and `opsx-bulk-archive` are not shipped. The `/opsx-init` row MUST mention the `--generate` option.
 
 #### Scenario: Table matches shipped prompts
 - **WHEN** the table is compared with the files in `prompts/` plus `/opsx-init`
 - **THEN** every command appears in both, and no command appears in only one
+
+#### Scenario: Init row mentions the flag
+- **WHEN** the `/opsx-init` row is read
+- **THEN** it mentions `--generate`
 
 ### Requirement: README uninstall behaviour
 The README SHALL describe what happens on uninstall: removing the package removes every command and skill, while `openspec/` stays a valid OpenSpec project; it MUST also state that the copied `openspec/schemas/superspec/` and its lock file remain and may be deleted by the user.

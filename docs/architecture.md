@@ -58,7 +58,9 @@ pi-superspec/
 │                           #   schema-install.ts, legacy.ts, io.ts
 ├── schema/superspec/       # published; bundled OpenSpec schema: schema.yaml + templates/ + LICENSE
 ├── skills/                 # published; pi-adapted openspec skills (loaded dynamically)
+│   └── opsx-generate-specs/  # SKILL.md: draft specs for an existing codebase
 ├── prompts/                # published; opsx-*.md commands (loaded dynamically)
+│   └── opsx-generate-specs.md  # short delegation to the skill
 ├── tests/                  # repository only; vitest suites, fixtures/, helpers/, init/
 ├── docs/                   # repository only; architecture.md, workflow.md, domain-model.md, glossary.md,
 │                           #   usage-guide.md, e2e-checklist.md
@@ -84,6 +86,7 @@ only to develop pi-superspec itself and is never edited by a change.
 | Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid. It does not check or upgrade the project schema at `session_start` (planned, see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
+| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then scouts each capability (as `pi-subagents` subagents when available, else sequentially) into delta specs in a `bootstrap-specs` change, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
 
 ## Runtime flow
 
@@ -93,6 +96,8 @@ pi start / reload
        ├─ find project root (walk up to first dir containing openspec/)
        ├─ openspec/schemas/superspec/schema.yaml has x-pi-superspec marker?
        │    yes → return skillPaths + promptPaths  (project is "activated")
+       │          (this includes opsx-generate-specs: right after /opsx-init it appears only
+       │           once the reload has run this discovery, not before)
        │    no  → return nothing (only /opsx-init exists)
 session_start (activated project)
   └─ warn once per session start, including reload (interactive only), if Superpowers is missing:
@@ -133,6 +138,11 @@ It does not repair or upgrade an existing schema (planned, see below).
    never changed without the flag.
 8. Run `openspec schema validate superspec` and report.
 9. `ctx.reload()` so the commands appear; print the next step (`/opsx-new <name>`).
+
+`--generate` (a standalone token, combinable with `--lang`) only adds one line to the printed
+output, pointing to `/opsx-generate-specs`. It does no agent work: init is TypeScript and cannot
+dispatch subagents, so the scanning and drafting live in the `opsx-generate-specs` skill, which
+the user runs in the session.
 
 ## Schema identity, version and upgrade
 
