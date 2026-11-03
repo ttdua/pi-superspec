@@ -20,4 +20,4 @@
 ## 4. Verification
 
 - [x] 4.1 Run `npm test` and `npm run typecheck`
-- [ ] 4.2 Manual in-pi run in an activated temp project: `/opsx-new` + `/opsx-continue` produce `brainstorm.md` then `proposal.md`; `/opsx-ff` reaches `plan.md` and stops (pending: manual in-pi run, needs a live model)
+- [x] ~~4.2 Manual in-pi run in an activated temp project: `/opsx-new` + `/opsx-continue` produce `brainstorm.md` then `proposal.md`; `/opsx-ff` reaches `plan.md` and stops~~ (dropped by decision: no run against a live model; not executed)
