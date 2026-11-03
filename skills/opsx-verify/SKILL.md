@@ -25,13 +25,15 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    ```bash
    git worktree list --porcelain
    ```
-   Pick the entry whose `branch` line is `branch refs/heads/<change-name>` and take its `worktree` path. If no entry matches, ask the user where the worktree is (use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait). Do not guess.
+   Pick the entry whose `branch` line is `branch refs/heads/<change-name>` and take its `worktree` path. If no entry matches:
+   - If `finalize.md` exists in the change directory (finalize removed the worktree, e.g. verifying post-PR fixes), run in the main checkout on the feature branch, which now holds the change directory.
+   - Otherwise ask the user where the worktree is (use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait). Do not guess.
 
-   **Worktree authority:** until finalize, the worktree copy of the change directory is authoritative (`tasks.md` ticks, `apply.md`, `verify.md`). Every `openspec` call and every check below, including the test run, uses the worktree as working directory. Never read the change from the main checkout.
+   **Worktree authority:** until finalize, the worktree copy of the change directory is authoritative (`tasks.md` ticks, `apply.md`, `verify.md`). Every `openspec` call and every check below, including the test run, uses the worktree as working directory. Until finalize, never read the change from the main checkout; after finalize the main checkout on the feature branch is the working directory.
 
 3. **Require the apply receipt**
 
-   Check that `apply.md` exists in the worktree copy of the change directory. If it does not, STOP: tell the user that the change has not been applied and to run `/opsx-apply` first. Do not verify without it. Read `apply.md` and note its `Iteration:` value, the commit range, and the executor.
+   Check that `apply.md` exists in the working copy (the worktree, or the main checkout after finalize) of the change directory. If it does not, STOP: tell the user that the change has not been applied and to run `/opsx-apply` first. Do not verify without it. Read `apply.md` and note its `Iteration:` value, the commit range, and the executor.
 
 4. **Check status and get the verify instruction**
    ```bash
@@ -70,10 +72,10 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
 
 7. **Handle the outcome**
 
-   - `PASS` or `PASS_WITH_WARNINGS`: report and suggest the next step (run `/opsx-continue` to create the finalize artifact, then `/opsx-archive`). STOP.
-   - `FAIL` with items that code can fix: read the `systematic-debugging` skill, find the root cause of each CRITICAL item, then re-apply by following `/opsx-apply` in the same worktree. That run records iteration N+1 in `apply.md`. Then verify again from step 3 and write a new `verify.md`.
-   - Stop after 5 iterations: if the fifth verify still returns `FAIL`, do not loop again. Report the remaining CRITICAL items and what was tried, then wait for the user.
-   - `FAIL` where the fix is not code (spec, design, or task artifacts are wrong): report it, suggest updating the artifacts, and STOP.
+   - `PASS` or `PASS_WITH_WARNINGS`: report and suggest the next step: run `/opsx-continue` with the worktree as working directory to create the finalize artifact, then `/opsx-archive`. STOP.
+   - `FAIL` with items that code can fix: report the CRITICAL items and tell the user to run `/opsx-apply` (it detects the `FAIL` and runs a fix iteration in the same worktree, reading `systematic-debugging`, and records iteration N+1 in `apply.md`), then `/opsx-verify` again, which writes a new `verify.md`.
+   - Stop after 5 iterations: verify's iteration equals the `Iteration:` value in `apply.md`. If the verify at iteration 5 still returns `FAIL`, do not loop again. Report the remaining CRITICAL items and what was tried, then wait for the user. Post-PR iterations are tracked separately in `apply.md` and do not count toward the 5.
+   - `FAIL` where the fix is not code (spec, design, or task artifacts are wrong): report it, say to fix the offending artifact, then run `/opsx-apply` (next step), then verify again. STOP.
 
 **Superpowers rule**
 
@@ -85,12 +87,12 @@ On completion:
 - Change name, schema, and the outcome (`PASS`, `PASS_WITH_WARNINGS` or `FAIL`)
 - Summary scorecard of the six checks and the fresh test result
 - Issues by priority with file references (`file.ts:123`)
-- Next step on pass: run `/opsx-continue` to create the finalize artifact, then `/opsx-archive`; on `FAIL`, the fix loop status (iteration N of 5)
+- Next step on pass: run `/opsx-continue` with the worktree as working directory to create the finalize artifact, then `/opsx-archive`; on `FAIL`, the fix loop status (iteration N of 5, from `apply.md`) and `/opsx-apply` as the next step
 
 On pause: describe the issue, offer options (use `ask_user_question` if available; otherwise numbered options), and wait.
 
 **Guardrails**
-- Run every `openspec` call and check in the worktree
+- Run every `openspec` call and check in the worktree (the main checkout only after finalize)
 - Never verify without `apply.md`; point to `/opsx-apply`
 - Always run the project tests fresh; never trust recorded results
 - Every issue gets a specific, actionable recommendation, not vague advice

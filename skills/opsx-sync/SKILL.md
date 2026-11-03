@@ -50,11 +50,11 @@ OpenSpec has no sync CLI, so this is an **agent-driven** operation: you read the
    - **MODIFIED**: find the requirement in the main spec and replace the whole block with the delta's block. The delta carries the full replacement text, including all scenarios to keep; do not merge partially.
    - **ADDED**: append the requirement block to the `## Requirements` section. If a requirement with that header already exists, treat it as MODIFIED.
 
-   Header matching is exact: compare the `### Requirement: <name>` header after trimming whitespace, case-sensitive. If a RENAMED `FROM`, REMOVED, or MODIFIED header has no match in the main spec, do not guess: report it and ask the user how to proceed (use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait).
+   Header matching is exact: compare the `### Requirement: <name>` header after trimming whitespace, case-sensitive. If a RENAMED `FROM`, REMOVED, or MODIFIED header has no match in the main spec (and the entry is not already applied as described below), do not guess: report it and ask the user how to proceed (use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait).
 
    **New capability** (no main spec yet): create `openspec/specs/<capability>/spec.md` by copying the delta as the main spec: a `# <capability>` title, a `## Purpose` section with a one-line Purpose (mark it TBD if unknown), and a `## Requirements` header followed by the ADDED requirements.
 
-   Preserve everything in the main spec that the delta does not mention. The operation must be idempotent: running it twice gives the same result.
+   Preserve everything in the main spec that the delta does not mention. The operation must be idempotent: running it twice gives the same result. Entries already applied need no ask: a REMOVED header already absent from the main spec, and a RENAMED entry whose `TO` header exists while `FROM` is absent, count as already applied (skip them silently).
 
 5. **Validate**
 

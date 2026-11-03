@@ -43,7 +43,7 @@ This skill runs in the main checkout, after the branch is finalized and before t
    Use `artifactPaths.specs.existingOutputPaths`, or list `specs/<capability>/spec.md` under the change directory. If there are no delta specs, skip to step 5.
 
    For each delta, compare it with `openspec/specs/<capability>/spec.md` (a missing main spec means not synced). A delta is **synced** when:
-   - every ADDED and MODIFIED requirement exists in the main spec with the same `### Requirement:` header and the same text;
+   - every ADDED and MODIFIED requirement exists in the main spec with the same `### Requirement:` header and the same text, compared after normalizing whitespace (ignore trailing whitespace and blank-line differences);
    - every REMOVED header is absent from the main spec;
    - every RENAMED `TO` header exists in the main spec.
 
@@ -67,10 +67,10 @@ This skill runs in the main checkout, after the branch is finalized and before t
    By default the CLI also updates main specs. This skill owns the spec update (through the `opsx-sync` logic in step 4); the CLI is only used to move the change to the archive. So always pass `--skip-specs`, in every case: after "Sync now", when all deltas are already synced, when there are no delta specs, and after "Archive without syncing" (so the CLI does not sync behind the user's back):
 
    ```bash
-   openspec archive "<name>" --skip-specs
+   openspec archive "<name>" --skip-specs -y
    ```
 
-   Add `-y` (`--yes`) only to skip the CLI's own confirmation prompts, since the user has already confirmed above. If the archive target already exists or the CLI fails, report the error and STOP; do not move directories by hand.
+   Always pass `-y` (`--yes`): the user already confirmed in the earlier steps, and the shell is non-interactive so the CLI prompt would hang. If the archive target already exists or the CLI fails, report the error and STOP; do not move directories by hand.
 
 6. **Summarise**
 
@@ -94,5 +94,5 @@ Warnings accepted: <incomplete artifacts / open tasks, or "none">
 - Warn on incomplete artifacts and open tasks, ask to confirm, archive only on confirmation
 - Run the delta-sync check whenever delta specs exist; a second check after a sync must report "already synced"
 - Offer "Sync now" first; when everything is synced, archive without syncing
-- Archive with `openspec archive "<name>" --skip-specs`; the skill owns the spec update, the CLI only moves the change; never move the change directory by hand
+- Archive with `openspec archive "<name>" --skip-specs`; the skill owns the spec update, the CLI only moves the change; never pass `--no-validate`; never move the change directory by hand
 - Run in the main checkout, after finalize and before the PR merges

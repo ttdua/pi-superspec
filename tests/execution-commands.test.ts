@@ -166,4 +166,29 @@ describe("execution commands", () => {
 			expect(skill(c), c).toContain(SUPERPOWERS_RULE);
 		}
 	});
+
+	it("archive skips CLI spec sync and owns the spec update", () => {
+		const text = skill("archive");
+		expect(text).toContain("--skip-specs");
+		expect(text).toMatch(/CLI also updates main specs/);
+		expect(text).toMatch(/skill owns the spec update/);
+		expect(text).toContain("already synced");
+		expect(text).toContain("never pass `--no-validate`");
+	});
+
+	it("verify points to opsx-continue and handles the post-finalize case", () => {
+		const text = skill("verify");
+		expect(text).toContain("/opsx-continue");
+		expect(text).toContain("finalize.md");
+		expect(text).toContain("/opsx-apply");
+	});
+
+	it("apply re-enters the existing worktree and handles a verify FAIL", () => {
+		const text = skill("apply");
+		expect(text).toContain("git worktree list --porcelain");
+		expect(text).toContain("refs/heads/<change-name>");
+		expect(text).toContain("Fix-iteration");
+		expect(text).toContain("`FAIL`");
+		expect(text).toContain("systematic-debugging");
+	});
 });
