@@ -232,18 +232,27 @@ artifacts:
          for this change only, not the whole repository.
       2. **Task completion**: every box in tasks.md is ticked, or each
          open box has a recorded reason.
-      3. **Requirement evidence**: every requirement in the delta specs
-         has implementation evidence (file and line).
+      3. **Requirement evidence**: every ADDED or MODIFIED requirement
+         in the delta specs has implementation evidence (file and
+         line); a REMOVED requirement has evidence that its baseline
+         behavior is gone (read the baseline from the main spec, fall
+         back to git history, otherwise record not verified); a
+         RENAMED requirement keeps its behavior under the new name.
       4. **Scenario coverage**: every scenario maps to a test, and the
          project test command was run fresh in this step with the
-         result recorded.
+         result recorded. Scenarios under a REMOVED requirement are
+         skipped.
       5. **Design coherence**: the decisions in design.md match the
          code. Drift is a warning only.
       6. **Clean tree**: the working tree is clean and the commit range
          is recorded.
 
       Outcome is one of PASS, PASS_WITH_WARNINGS or FAIL. Record it
-      under Overall Decision.
+      under Overall Decision. A check that could not run is recorded
+      as not verified with its reason and never counts as passing; the
+      outcome is then at most PASS_WITH_WARNINGS. A check that does not
+      apply is recorded as not applicable and does not lower the
+      outcome.
 
       `/opsx-archive` syncs delta specs if needed and warns when they differ.
 

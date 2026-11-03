@@ -205,6 +205,25 @@ run("bundled schema", () => {
 			);
 		});
 
+		it("verify handles REMOVED/RENAMED and skipped checks", () => {
+			const flat = verifyInstruction().replace(/\s+/g, " ");
+			for (const word of [
+				"REMOVED",
+				"RENAMED",
+				"baseline",
+				"git",
+				"not verified",
+				"not applicable",
+				"PASS_WITH_WARNINGS",
+			]) {
+				expect(flat, word).toContain(word);
+			}
+			expect(flat).toContain("Scenarios under a REMOVED requirement are skipped");
+			const tpl = verifyTemplate();
+			expect(tpl).toContain("Not verified");
+			expect(tpl).toContain("Not applicable");
+		});
+
 		it("sync check is deferred to archive", () => {
 			const flat = verifyInstruction().replace(/\s+/g, " ");
 			const sentences = flat.split(/(?<=\.)\s/);

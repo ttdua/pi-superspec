@@ -36,11 +36,17 @@
 
 ## 3. Requirement Evidence
 
-- [ ] Every requirement has implementation evidence (file / line)
+- [ ] ADDED / MODIFIED: implementation evidence (file / line)
+- [ ] REMOVED: evidence the baseline behavior is gone (main spec, else git history)
+- [ ] RENAMED: behavior kept under the new name
 
-| Requirement | Evidence (file:line) |
-|---|---|
-| — | — |
+| Requirement | Operation | Status | Evidence (file:line) or reason |
+|---|---|---|---|
+| — | — | — | — |
+
+Status is `Pass`, `Fail`, `Not verified` (could not run; give the reason) or
+`Not applicable`. A `Not verified` check is never a pass and caps the outcome at
+PASS_WITH_WARNINGS; `Not applicable` does not lower the outcome.
 
 ---
 
@@ -51,6 +57,9 @@
 
 **Test command**: `<command>`
 **Result**: `<pass / fail counts>`
+
+Scenarios under a REMOVED requirement are skipped. Mark any check as `Not verified`
+(with reason) or `Not applicable` as in section 3.
 
 | Scenario | Test |
 |---|---|
