@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { findProjectRoot } from "../activation.ts";
 import { parseInitArgs } from "./args.ts";
-import { applyConfig, applyLanguage, readLanguage, validateLanguage } from "./config.ts";
+import { DEFAULT_LANGUAGE, applyConfig, applyLanguage, readLanguage, validateLanguage } from "./config.ts";
 import type { ExecResult, InitIO } from "./io.ts";
 import { cleanLegacy } from "./legacy.ts";
 import { checkOpenspec, collectWarnings } from "./preflight.ts";
@@ -27,13 +27,21 @@ async function setLanguage(io: InitIO, root: string, flag: string | undefined): 
 		applyLanguage(root, flag);
 		return;
 	}
-	if (!io.hasUI || readLanguage(root) !== undefined) return;
-	const answer = await io.prompt("Document language (leave empty to skip)", "e.g. vi, Tiếng Việt");
-	if (answer === undefined || answer.trim() === "") return;
-	const language = validateLanguage(answer);
-	if (language === undefined) {
-		io.notify("The document language was not used: it must be at most 64 characters with no control characters.", "warning");
-		return;
+	if (readLanguage(root) !== undefined) return;
+	let language = DEFAULT_LANGUAGE;
+	if (io.hasUI) {
+		const answer = await io.prompt(`Document language (empty for ${DEFAULT_LANGUAGE})`, `e.g. ${DEFAULT_LANGUAGE}, vi, Tiếng Việt`);
+		if (answer !== undefined && answer.trim() !== "") {
+			const valid = validateLanguage(answer);
+			if (valid === undefined) {
+				io.notify(
+					`The document language was not used: it must be at most 64 characters with no control characters. Using ${DEFAULT_LANGUAGE}.`,
+					"warning",
+				);
+			} else {
+				language = valid;
+			}
+		}
 	}
 	applyLanguage(root, language);
 }

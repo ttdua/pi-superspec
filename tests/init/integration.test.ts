@@ -90,4 +90,14 @@ describe.skipIf(!hasOpenspec())("opsx-init end to end", () => {
 		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], { cwd: root, encoding: "utf8" });
 		expect(validate.status, validate.stdout + validate.stderr).toBe(0);
 	}, 60_000);
+
+	it("defaults the language to en without a flag", async () => {
+		const root = emptyRepo();
+
+		expect(await runInit(realIO(root), packageRoot)).toBe("activated");
+
+		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("schema: superspec\nlanguage: en\n");
+		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], { cwd: root, encoding: "utf8" });
+		expect(validate.status, validate.stdout + validate.stderr).toBe(0);
+	}, 60_000);
 });

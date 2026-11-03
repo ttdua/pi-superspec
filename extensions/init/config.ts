@@ -23,6 +23,7 @@ export function applyConfig(root: string): "written" | "unchanged" {
 	return "written";
 }
 
+export const DEFAULT_LANGUAGE = "en";
 export const MAX_LANGUAGE_LENGTH = 64;
 
 export function validateLanguage(value: string): string | undefined {
