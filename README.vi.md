@@ -61,7 +61,7 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 
 | Command | Chức năng |
 |---|---|
-| `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. |
+| `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. Tùy chọn `--lang <language>` đặt ngôn ngữ của các tài liệu OpenSpec. |
 | `/opsx-explore` | Khám phá ý tưởng và làm rõ yêu cầu trước hoặc trong một change. Không viết application code. |
 | `/opsx-new` | Bắt đầu một change và hiển thị hướng dẫn của artifact đầu tiên. |
 | `/opsx-continue` | Tạo artifact kế tiếp, rồi dừng để review. |

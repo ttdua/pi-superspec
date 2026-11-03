@@ -143,6 +143,24 @@ To sync delta specs into `openspec/specs/` without archiving, use `/opsx-sync [n
 
 Review feedback is handled with `/opsx-apply` on the feature branch in the main checkout (finalize removed the worktree, so the change directory now lives there). With `apply.md` and `finalize.md` present and review feedback from you, apply goes into post-PR mode: it uses Superpowers `receiving-code-review`, fixes each item with TDD, and appends a `post-PR iteration N+1` entry with the new commit range to `apply.md`. Then run `/opsx-verify`, update `finalize.md`, and push; the push and reviewer comment follow the policy in `finalize.md`.
 
+## Working in your language
+
+Set the language once and agents write the prose of your OpenSpec documents (change artifacts and main specs) in it:
+
+```text
+/opsx-init --lang vi
+```
+
+`--lang <value>` (or `--lang=<value>`) writes or overwrites `language:` in `openspec/config.yaml`, directly after `schema:`. Everything after `--lang` is taken as the value (so `--lang vi --force` sets the language to `vi --force`), quotes around it are stripped, and it must be 1 to 64 characters with no control characters. An invalid or missing value stops with an error before any file is written, and arguments that do not start with `--lang` are rejected as unknown.
+
+Without the flag the default language is `en`. When `language:` is missing or invalid and pi has a UI, `/opsx-init` asks once per run and offers `en`; an empty answer, cancel or invalid answer (the latter with a warning) writes `language: en`. Without a UI it does not ask and writes `language: en` directly. An invalid existing `language:` line is replaced by `language: en`, and an existing valid value is never changed without the flag. A project blocked on an existing schema writes no language and does not ask.
+
+To switch later, ask the agent to change the document language; it updates `language:` in `openspec/config.yaml`. The setting is read on every turn, so no reload is needed.
+
+A project whose `openspec/config.yaml` has no `language:` (or no `config.yaml`, or an invalid or unreadable value) is treated as `en`: agents are still told to write document prose in `en`.
+
+Structural tokens stay in English: headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`, checkboxes, delta operation headers, and file and capability names. Requirement names are identifiers that delta specs match exactly, so translating them would break the match. Code, code comments and commit messages are not affected. Existing documents are not retranslated.
+
 ## Fast-forward with /opsx-ff
 
 `/opsx-ff <name>` (or a description of what you want; it asks if you give neither) builds all the planning artifacts in one go.
@@ -192,7 +210,7 @@ In the last row, `foreign` is a schema without the `x-pi-superspec` marker and v
 
 The warning reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked.
 
-Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes no arguments. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again.
+Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again.
 
 ## Troubleshooting
 

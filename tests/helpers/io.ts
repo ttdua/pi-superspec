@@ -15,6 +15,9 @@ export function fakeIO(
 		async confirm(_title: string, _message: string): Promise<boolean> {
 			return true;
 		},
+		async prompt(_title: string, _placeholder?: string): Promise<string | undefined> {
+			return undefined;
+		},
 		notify(message: string, _level?: "info" | "warning" | "error"): void {
 			notes.push(message);
 		},

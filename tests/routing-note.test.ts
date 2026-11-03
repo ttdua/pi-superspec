@@ -6,6 +6,7 @@ import {
 	insertRoutingNote,
 	ROUTING_NOTE,
 	ROUTING_NOTE_MARKER,
+	routingNote,
 	SUPERPOWERS_MISSING_WARNING,
 } from "../extensions/routing-note.ts";
 
@@ -100,9 +101,9 @@ describe("ROUTING_NOTE", () => {
 	});
 
 	it("builds a user message with a text part", () => {
-		const message = createRoutingNoteMessage();
+		const message = createRoutingNoteMessage("en");
 		expect(message.role).toBe("user");
-		expect(message.content).toEqual([{ type: "text", text: ROUTING_NOTE }]);
+		expect(message.content).toEqual([{ type: "text", text: routingNote("en") }]);
 		expect(typeof message.timestamp).toBe("number");
 	});
 });
@@ -122,5 +123,45 @@ describe("SUPERPOWERS_MISSING_WARNING", () => {
 	it("mentions Superpowers and the install command", () => {
 		expect(SUPERPOWERS_MISSING_WARNING).toContain("Superpowers");
 		expect(SUPERPOWERS_MISSING_WARNING).toContain("pi install git:github.com/obra/superpowers");
+	});
+});
+
+describe("routingNote", () => {
+	it("requires a language", () => {
+		const never = () => {
+			// @ts-expect-error the language is required
+			routingNote();
+			// @ts-expect-error the language is required
+			createRoutingNoteMessage();
+		};
+		expect(never).toBeTypeOf("function");
+	});
+
+	it("appends the document language paragraph", () => {
+		const text = routingNote("vi");
+		expect(text.startsWith(ROUTING_NOTE_MARKER)).toBe(true);
+		expect(text.startsWith(ROUTING_NOTE)).toBe(true);
+		for (const part of ['"vi"', "WHEN", "SHALL", "openspec/config.yaml", "language:"]) {
+			expect(text).toContain(part);
+		}
+	});
+
+	it("quotes the language as JSON", () => {
+		expect(routingNote("zh: simplified")).toContain('"zh: simplified"');
+	});
+
+	it("builds a message carrying the language", () => {
+		expect(createRoutingNoteMessage("vi").content).toEqual([{ type: "text", text: routingNote("vi") }]);
+	});
+
+	it("is recognised as already present when created with a language", () => {
+		const existing = createRoutingNoteMessage("vi");
+		expect(insertRoutingNote([existing, user], createRoutingNoteMessage("vi"))).toBeUndefined();
+	});
+
+	it("still inserts when an assistant message only quotes the marker", () => {
+		const assistant: Msg = { role: "assistant", content: [{ type: "text", text: routingNote("vi") }] };
+		const withLang = createRoutingNoteMessage("vi");
+		expect(insertRoutingNote([assistant], withLang)).toEqual([withLang, assistant]);
 	});
 });

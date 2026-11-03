@@ -125,7 +125,7 @@ describe("runInit", () => {
 		expect(io.reports).toHaveLength(1);
 		expect(io.reports[0]).toContain("Schema superspec is valid.");
 		expect(io.reports[0]).toContain("Next: /opsx-new <name>");
-		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe("schema: superspec\n");
+		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe("schema: superspec\nlanguage: en\n");
 		expect(existsSync(join(root, "openspec", "schemas", "superspec", "schema.yaml"))).toBe(true);
 		const v = calls.findIndex(isValidate);
 		expect(v).toBeGreaterThan(-1);
@@ -226,9 +226,178 @@ describe("runInit", () => {
 		const { io, calls } = recording(nested);
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		expect(calls.some(isInit)).toBe(false);
-		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe("schema: superspec\n");
+		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe("schema: superspec\nlanguage: en\n");
 		expect(existsSync(join(root, "openspec", "schemas", "superspec", "schema.yaml"))).toBe(true);
 		expect(existsSync(join(nested, "openspec"))).toBe(false);
 		expect(calls.find(isValidate)?.cwd).toBe(root);
+	});
+
+	describe("language", () => {
+		const configPath = (root: string) => join(root, "openspec", "config.yaml");
+		const withExisting = (root: string, text: string) => {
+			mkdirSync(join(root, "openspec"), { recursive: true });
+			writeFileSync(configPath(root), text);
+		};
+
+		it.each(["--lang", `--lang ${"a".repeat(65)}`])(
+			"returns invalid-arguments without touching anything for %j",
+			async (args) => {
+				const root = tmp();
+				const { io, calls } = recording(root);
+				expect(await runInit(io, packageRoot, args)).toBe("invalid-arguments");
+				expect(calls).toEqual([]);
+				expect(readdirSync(root)).toEqual([]);
+				expect(io.notes.length).toBeGreaterThan(0);
+				expect(io.reloads).toBe(0);
+			},
+		);
+
+		it("writes the flag language directly after the schema line", async () => {
+			const root = tmp();
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot, "--lang vi")).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: vi\n");
+		});
+
+		it("overwrites an existing language with the flag", async () => {
+			const root = tmp();
+			withExisting(root, "schema: superspec\nlanguage: vi\n");
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot, "--lang=en")).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: en\n");
+		});
+
+		it("prompts when no language is set and writes the answer", async () => {
+			const root = tmp();
+			const asked: Array<[string, string | undefined]> = [];
+			const { io } = recording(root, undefined, {
+				async prompt(title, placeholder) {
+					asked.push([title, placeholder]);
+					return " vi ";
+				},
+			});
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(asked).toEqual([["Document language (empty for en)", "e.g. en, vi, Tiếng Việt"]]);
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: vi\n");
+		});
+
+		it.each([undefined, "", "   "])("falls back to en silently when the prompt answer is %j", async (answer) => {
+			const root = tmp();
+			const { io } = recording(root, undefined, { prompt: async () => answer });
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: en\n");
+			expect(io.notes).toEqual([]);
+		});
+
+		it("warns and falls back to en when the prompt answer is invalid", async () => {
+			const root = tmp();
+			const { io } = recording(root, undefined, { prompt: async () => "a".repeat(100) });
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: en\n");
+			expect(io.notes.join("\n")).toContain("not used");
+		});
+
+		it("does not prompt when a valid language exists", async () => {
+			const root = tmp();
+			withExisting(root, "schema: superspec\nlanguage: vi\n");
+			let prompts = 0;
+			const { io } = recording(root, undefined, {
+				async prompt() {
+					prompts += 1;
+					return "en";
+				},
+			});
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(prompts).toBe(0);
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: vi\n");
+		});
+
+		it("offers en in the prompt placeholder", async () => {
+			const root = tmp();
+			let placeholder: string | undefined;
+			const { io } = recording(root, undefined, {
+				async prompt(_title, ph) {
+					placeholder = ph;
+					return "";
+				},
+			});
+			await runInit(io, packageRoot);
+			expect(placeholder).toContain("en");
+		});
+
+		it("writes en without prompting and without a UI", async () => {
+			const root = tmp();
+			let prompts = 0;
+			const { io } = recording(root, undefined, {
+				hasUI: false,
+				async prompt() {
+					prompts += 1;
+					return "vi";
+				},
+			});
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(prompts).toBe(0);
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: en\n");
+		});
+
+		it("prompts when the language on disk is invalid", async () => {
+			const root = tmp();
+			withExisting(root, `schema: superspec\nlanguage: ${"a".repeat(100)}\n`);
+			let prompts = 0;
+			const { io } = recording(root, undefined, {
+				async prompt() {
+					prompts += 1;
+					return "vi";
+				},
+			});
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(prompts).toBe(1);
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: vi\n");
+		});
+
+		it("replaces an invalid language on disk with en when there is no UI", async () => {
+			const root = tmp();
+			withExisting(root, `schema: superspec\nlanguage: ${"a".repeat(100)}\n`);
+			const { io } = recording(root, undefined, { hasUI: false });
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe("schema: superspec\nlanguage: en\n");
+		});
+
+		it("changes no file on a second run without a flag", async () => {
+			const root = tmp();
+			expect(await runInit(recording(root, undefined, { hasUI: false }).io, packageRoot)).toBe("activated");
+			const first = readFileSync(configPath(root), "utf8");
+			expect(first).toBe("schema: superspec\nlanguage: en\n");
+			expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe(first);
+		});
+
+		it("leaves config.yaml byte-identical on reruns", async () => {
+			const root = tmp();
+			expect(await runInit(recording(root).io, packageRoot, "--lang vi")).toBe("activated");
+			expect(await runInit(recording(root).io, packageRoot, "--lang vi")).toBe("activated");
+			const after = readFileSync(configPath(root), "utf8");
+			expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+			expect(readFileSync(configPath(root), "utf8")).toBe(after);
+			expect(after).toBe("schema: superspec\nlanguage: vi\n");
+		});
+
+		it("writes no language and does not prompt when blocked", async () => {
+			const root = tmp();
+			cpSync(join(fixtures, "unmarked"), root, { recursive: true });
+			let prompts = 0;
+			const { io } = recording(root, undefined, {
+				async prompt() {
+					prompts += 1;
+					return "vi";
+				},
+			});
+			expect(await runInit(io, packageRoot, "--lang vi")).toBe("blocked");
+			expect(await runInit(io, packageRoot)).toBe("blocked");
+			const quiet = recording(root, undefined, { hasUI: false });
+			expect(await runInit(quiet.io, packageRoot)).toBe("blocked");
+			expect(prompts).toBe(0);
+			expect(readFileSync(configPath(root), "utf8")).not.toContain("language:");
+		});
 	});
 });

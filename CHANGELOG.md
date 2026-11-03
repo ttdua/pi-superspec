@@ -18,3 +18,9 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 - Execution commands: `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive`.
 - Routing note injected into the session context that directs behaviour-changing work through `/opsx-new` before brainstorming.
 - Warning at session start when Superpowers is not installed.
+- Optional `language` key in `openspec/config.yaml` for the language of OpenSpec document prose.
+  - `/opsx-init --lang <value>` writes it.
+  - `/opsx-init` asks for it once per run when it is missing or invalid and a UI is available.
+  - The default is `en`: it is written on an empty answer, cancel, invalid answer, or without a UI.
+  - The routing note always tells agents to write document prose in that language, and names `en` when `config.yaml` has no valid `language:` (or no `config.yaml`).
+  - Structural tokens (headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`) stay in English.
