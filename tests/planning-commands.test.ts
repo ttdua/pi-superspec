@@ -512,7 +512,7 @@ describe("planning commands", () => {
 	it("explore scaffolds a change and hands off to /opsx-continue without writing brainstorm.md", () => {
 		const t = flatExplore();
 		expect(t).toContain(
-			"you may run `openspec new change <name>` and never create `openspec/changes/` by hand, then point to `/opsx-continue <name>`.",
+			"you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`.",
 		);
 		expect(t).toContain("Do not write `brainstorm.md` and do not run a review gate in explore.");
 	});
@@ -523,24 +523,31 @@ describe("planning commands", () => {
 		expect(t).toContain("openspec show <id> --type spec");
 	});
 
-	it("explore capture table uses the superspec artifact names", () => {
-		const t = skill("explore");
+	it("explore capture table uses the superspec artifact names and omits gated artifacts", () => {
+		const rows = skill("explore")
+			.split("\n")
+			.filter((l) => l.trim().startsWith("|"))
+			.map((l) => l.replace(/\s+/g, " ").trim());
 		for (const row of [
-			"| Scope changed              | `proposal.md`",
-			"| Design decision made       | `design.md`",
-			"| New work identified        | `tasks.md`",
-			"| Plan changed               | `plan.md`",
-			"| Problem or goal reframed   | `brainstorm.md`",
+			"| Scope changed | `proposal.md` |",
+			"| New requirement discovered | `specs/<capability>/spec.md` |",
+			"| Requirement changed | `specs/<capability>/spec.md` |",
+			"| Design decision made | `design.md` |",
+			"| New work identified | `tasks.md` |",
 		]) {
-			expect(t).toContain(row);
+			expect(rows).toContain(row);
 		}
-		expect(t).not.toContain("default schema");
+		expect(rows.join("\n")).not.toMatch(/brainstorm\.md|plan\.md/);
+		expect(flatExplore()).toContain(
+			"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.",
+		);
 	});
 
 	it("explore diagrams use ASCII only", () => {
 		const t = skill("explore");
+		const body = t.slice(t.indexOf("---", 3) + 3);
 		expect(t).toContain("Diagrams use ASCII characters only.");
-		expect(t).not.toMatch(/[\u2500-\u257F\u25A0-\u25FF\u2190-\u21FF\u2022\u2713\u2717\u2715]/);
+		expect(body).not.toMatch(/[^\x00-\x7F]/);
 	});
 
 	it("new asks for a kebab-case name and continue handles several changes", () => {

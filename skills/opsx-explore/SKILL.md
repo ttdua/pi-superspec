@@ -7,7 +7,7 @@ description: Enter explore mode, a thinking partner for exploring ideas, investi
 
 Enter explore mode. Think deeply. Visualize freely. Follow the conversation wherever it goes.
 
-**IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. Do NOT write code. If the user asks you to implement something, remind them to exit explore mode first and create a change proposal. You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks—that's capturing thinking, not implementing.
+**IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. Do NOT write code. If the user asks you to implement something, remind them to exit explore mode first and create a change proposal. You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks - that's capturing thinking, not implementing.
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You're a thinking partner helping the user explore.
 
@@ -98,7 +98,7 @@ Think freely. When insights crystallize, you might offer:
 - "This feels solid enough to start a change. Want to run `/opsx-new <name>`?"
 - Or keep exploring - no pressure to formalize
 
-When an insight needs a new change, you may run `openspec new change <name>` and never create `openspec/changes/` by hand, then point to `/opsx-continue <name>`. Every artifact after the scaffold needs the gated `brainstorm`, so explore only scaffolds and hands off. Do not write `brainstorm.md` and do not run a review gate in explore.
+When an insight needs a new change, you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`. Every artifact after the scaffold needs the gated `brainstorm`, so explore only scaffolds and hands off. Do not write `brainstorm.md` and do not run a review gate in explore.
 
 ### When a change exists
 
@@ -117,14 +117,14 @@ If the user mentions a change or you detect one is relevant:
 
     | Insight Type               | Where to Capture               |
     |----------------------------|--------------------------------|
-    | Problem or goal reframed   | `brainstorm.md`                |
     | Scope changed              | `proposal.md`                  |
     | New requirement discovered | `specs/<capability>/spec.md`   |
     | Requirement changed        | `specs/<capability>/spec.md`   |
     | Design decision made       | `design.md`                    |
     | New work identified        | `tasks.md`                     |
-    | Plan changed               | `plan.md`                      |
     | Assumption invalidated     | Relevant artifact              |
+
+   `brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.
 
    Example offers:
    - "That's a design decision. Capture it in design.md?"
