@@ -54,7 +54,7 @@ only to develop pi-superspec itself and is never edited by a change.
 
 | Component | Responsibility |
 |---|---|
-| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; checks and upgrades the project schema on `session_start`; injects the routing note via the `context` event. |
+| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; checks and upgrades the project schema on `session_start` and warns once when Superpowers is not installed; injects the routing note via the `context` event. |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
 
@@ -68,9 +68,12 @@ pi start / reload
        │    yes → return skillPaths + promptPaths  (project is "activated")
        │    no  → return nothing (only /opsx-init exists)
 session_start (activated project)
-  └─ compare project schema version with bundled → upgrade rules (below)
+  ├─ compare project schema version with bundled → upgrade rules (below)
+  └─ warn once (interactive only) if Superpowers is missing:
+     `pi install git:github.com/obra/superpowers`
 context (activated project)
-  └─ append routing note after the Superpowers bootstrap message
+  └─ append routing note after the Superpowers bootstrap message; when that message is
+     absent (e.g. from the second agent run), at the head after compaction summaries
 ```
 
 ## `/opsx-init`
