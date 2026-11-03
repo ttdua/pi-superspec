@@ -165,3 +165,25 @@
 - [ ] **Step 2: Run** `git diff main --stat -- schema openspec/schemas` . Expected: empty (no schema change).
 - [ ] **Step 3: Manual check** following `docs/e2e-checklist.md` with `language: vi` in a scratch project: the agent writes prose in Vietnamese, keeps structural tokens English, and `openspec validate <change> --strict` passes; then ask the agent to switch to English and confirm `config.yaml` changes. Record the outcome in the verify artifact, not here.
 - [ ] **Step 4: Commit** any fixes: `git commit -am "fix: address verification findings"` (skip when nothing changed).
+
+---
+
+## Task 9: Default language `en` (iteration 2)
+
+Added after the first PR was opened: the user asked that without `--lang` the default is `en`. Specs: `init-command` (Language prompt, Default language, Idempotency) and `document-language` (Default language). Covers `tasks.md` group 6.
+
+**Files:**
+- Modify: `extensions/init/config.ts`, `extensions/init/init.ts`
+- Test: `tests/init/init.test.ts`, `tests/init/integration.test.ts`
+- Docs: `docs/usage-guide.md`, `docs/architecture.md`, `CHANGELOG.md` (and `README.md` only if it describes the prompt)
+
+**Interfaces:**
+- Produces: `DEFAULT_LANGUAGE = "en"` exported from `extensions/init/config.ts`.
+- Consumes: `applyLanguage`, `readLanguage`, `validateLanguage` (Tasks 1-2), `InitIO.prompt` (Task 5).
+
+- [ ] **Step 1: Write failing tests** in `tests/init/init.test.ts` (use `recording(...)`, `fakeIO`): no flag and `hasUI` false on a fresh repo ends with `language: en` right after `schema: superspec`; no flag, UI, prompt answers `""`, `"   "` or `undefined` gives `language: en`; prompt answers a 100-character value gives a warning containing "not used" and `language: en`; prompt answers `vi` gives `language: vi`; the prompt is called with a placeholder containing `en`; an existing `language: vi` is never rewritten and the prompt is not called; an existing 100-character `language:` line is replaced by `language: en` (exact file content); a second run changes no file (byte-identical); a run blocked by a foreign schema writes no `language:` line even without a UI; update the existing tests that asserted "no `language:` line" for skip, cancel, empty, invalid and no-UI. In `tests/init/integration.test.ts` assert a real `/opsx-init` without a flag on a temp git repo ends with `language: en` and `openspec schema validate superspec` still passes.
+- [ ] **Step 2: Run** `npx vitest run tests/init` and record the RED output before changing code. Expected: FAIL on the new assertions.
+- [ ] **Step 3: Implement** `DEFAULT_LANGUAGE` and the fallback in `setLanguage` (the prompt title may mention the default, e.g. "Document language (empty for en)"; placeholder contains `en`). Skip, cancel, empty and invalid answers all end in `applyLanguage(root, DEFAULT_LANGUAGE)`; an invalid non-empty answer additionally notifies the existing warning.
+- [ ] **Step 4: Run** `npx vitest run` and `npm run typecheck`. Expected: all PASS.
+- [ ] **Step 5: Docs.** State in `docs/usage-guide.md` ("Working in your language") and `docs/architecture.md` (language step) that the default is `en`, written when no language is chosen, also without a UI; update the sentence that a skipped prompt writes nothing and asks again; add a `CHANGELOG.md` line.
+- [ ] **Step 6: Commit** code and tests, then docs.

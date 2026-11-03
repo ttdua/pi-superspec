@@ -27,6 +27,17 @@ A project MAY declare its document language with a top-level `language: <value>`
 - **WHEN** the `language:` value is empty
 - **THEN** no document language is set
 
+### Requirement: Default language
+A project set up by `/opsx-init` SHALL end with a document language in `config.yaml`: the one chosen through `--lang` or the prompt, otherwise `en`. A project whose `config.yaml` has no valid `language:`, for example one initialised before this setting existed, MUST be treated as having no language set and MUST keep its previous behavior until `/opsx-init` is run again.
+
+#### Scenario: Nothing chosen at init
+- **WHEN** `/opsx-init` finishes without `--lang` and the user chose no language
+- **THEN** `config.yaml` contains `language: en`
+
+#### Scenario: Project from before this setting
+- **WHEN** an existing activated project has no `language:` line and no init is run
+- **THEN** no document language is set and the routing note is unchanged
+
 ### Requirement: Localised document content
 When a document language is set, agents SHALL write the prose of OpenSpec documents in that language. The documents covered are the artifacts of a change under `openspec/changes/<name>/` and the main specs under `openspec/specs/`. Code, code comments, commit messages and the chat language MUST NOT be governed by this setting.
 

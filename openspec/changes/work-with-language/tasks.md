@@ -27,3 +27,10 @@
 
 - [x] 5.1 Run `npm test` and `npm run typecheck`
 - [ ] 5.2 Walk the manual check in `docs/e2e-checklist.md` with `language: vi`: confirm the agent writes prose in Vietnamese, keeps structural tokens in English, and that `openspec validate` passes on the resulting change
+
+## 6. Default language (iteration 2)
+
+- [ ] 6.1 Add `DEFAULT_LANGUAGE = "en"` to `extensions/init/config.ts` and make `setLanguage` in `extensions/init/init.ts` fall back to it: prompt skipped, cancelled, empty or invalid, and no UI, when there is no valid `language:` and no flag; an invalid existing line is replaced; a valid existing value is never touched; blocked runs still write nothing (specs `init-command`: Language prompt, Default language, Idempotency; `document-language`: Default language)
+- [ ] 6.2 Update the tests in `tests/init/init.test.ts` and `tests/init/integration.test.ts` for the new behavior, including a second run that changes no file and the prompt placeholder offering `en`
+- [ ] 6.3 Update `docs/usage-guide.md`, `docs/architecture.md`, `README.md` if it mentions the prompt, and `CHANGELOG.md` to state that the default is `en`
+- [ ] 6.4 Re-run `npm test`, `npm run typecheck` and `openspec validate --all --strict`
