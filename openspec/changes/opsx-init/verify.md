@@ -63,9 +63,7 @@ All four are ADDED-only deltas, so `/opsx:archive` (or `/opsx:sync`) can apply t
 
 **Drift warnings** (non-blocking):
 
-- design.md "Existing schema directory" wording (lock hashes) differs from spec and code (bundled-file comparison).
-- design.md does not record the "Stop on unmanaged schema" outcome or the persisted `report` message added after the final review.
-- brainstorm.md "Open Questions" (pi API shape, Superpowers detection) are resolved in code (`pi.getCommands()` `skill:brainstorming`) but still listed as open.
+- Resolved after this report: design.md now describes the bundled-file comparison, the "Stop on unmanaged schema" outcome and the persisted `report` message; brainstorm.md Open Questions are marked resolved.
 - Deferred to `schema-auto-upgrade`: missing lock file is never repaired; marker block vs inline form inconsistency; `pi.exec` has no timeout.
 
 ---
@@ -82,7 +80,7 @@ All four are ADDED-only deltas, so `/opsx:archive` (or `/opsx:sync`) can apply t
 ## Overall Decision
 
 - [ ] ✅ PASS
-- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: delta specs are not yet synced, the branch is not pushed, and design.md drifts from the final implementation in the points above. None block archive.
+- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: delta specs are not yet synced, the branch is not pushed, and design.md drift was fixed after this report. None block archive.
 - [ ] ❌ FAIL
 
 **Next step**:

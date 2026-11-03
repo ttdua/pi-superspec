@@ -53,5 +53,9 @@ Alternative A. It keeps each documented step independently testable, gives `sche
 
 ## Open Questions
 
-- Exact pi API shape for `registerCommand`, confirmation UI, notify, and `ctx.reload()` is verified against the installed `@earendil-works/pi-coding-agent` types at plan time; `node_modules` is not installed in this worktree yet. The injected interface isolates any difference.
-- Whether Superpowers is "discoverable" is detected through the pi API at plan time; if no reliable signal exists, the warning is skipped rather than guessed.
+Resolved during implementation:
+
+- pi API shape: verified against `@earendil-works/pi-coding-agent` 1.5 (`pi.registerCommand`, `pi.exec`, `ctx.ui.confirm/notify`, `ctx.hasUI`, `ctx.reload()`); `ctx.reload()` invalidates the ctx, so nothing may touch it afterwards.
+- Superpowers detection: `pi.getCommands()` contains `skill:brainstorming` when Superpowers skills are loaded; a boolean is used.
+
+Deferred to `schema-auto-upgrade`: repairing a missing lock file; block versus inline `x-pi-superspec` marker forms.
