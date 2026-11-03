@@ -28,6 +28,6 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Dry-run the README in a scratch git repo and record every command and any undocumented step; fix gaps
-- [ ] 6.2 Check every command, flag and path named in the docs against the repository
-- [ ] 6.3 Run `npm test`, `npm run typecheck` and `openspec validate docs-release`
+- [x] 6.1 Dry-run the README in a scratch git repo and record every command and any undocumented step; fix gaps
+- [x] 6.2 Check every command, flag and path named in the docs against the repository
+- [x] 6.3 Run `npm test`, `npm run typecheck` and `openspec validate docs-release`
