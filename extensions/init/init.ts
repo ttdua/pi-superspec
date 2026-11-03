@@ -1,13 +1,14 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { findProjectRoot } from "../activation.ts";
-import { applyConfig } from "./config.ts";
+import { parseInitArgs } from "./args.ts";
+import { applyConfig, applyLanguage, readLanguage, validateLanguage } from "./config.ts";
 import type { ExecResult, InitIO } from "./io.ts";
 import { cleanLegacy } from "./legacy.ts";
 import { checkOpenspec, collectWarnings } from "./preflight.ts";
 import { installSchema } from "./schema-install.ts";
 
-export type InitOutcome = "activated" | "blocked" | "preflight-failed" | "validation-failed";
+export type InitOutcome = "activated" | "blocked" | "invalid-arguments" | "preflight-failed" | "validation-failed";
 
 function output(result: ExecResult): string {
 	return [result.stdout.trim(), result.stderr.trim()].filter((s) => s !== "").join("\n");
@@ -21,7 +22,28 @@ async function run(io: InitIO, args: string[], cwd: string): Promise<ExecResult>
 	}
 }
 
-export async function runInit(io: InitIO, packageRoot: string): Promise<InitOutcome> {
+async function setLanguage(io: InitIO, root: string, flag: string | undefined): Promise<void> {
+	if (flag !== undefined) {
+		applyLanguage(root, flag);
+		return;
+	}
+	if (!io.hasUI || readLanguage(root) !== undefined) return;
+	const answer = await io.prompt("Document language (leave empty to skip)", "e.g. vi, Tiếng Việt");
+	if (answer === undefined || answer.trim() === "") return;
+	const language = validateLanguage(answer);
+	if (language === undefined) {
+		io.notify("The document language was not used: it must be at most 64 characters with no control characters.", "warning");
+		return;
+	}
+	applyLanguage(root, language);
+}
+
+export async function runInit(io: InitIO, packageRoot: string, args = ""): Promise<InitOutcome> {
+	const parsed = parseInitArgs(args);
+	if ("error" in parsed) {
+		io.notify(parsed.error, "error");
+		return "invalid-arguments";
+	}
 	const preflight = await checkOpenspec(io);
 	if (!preflight.ok) {
 		io.notify(preflight.message, "error");
@@ -58,6 +80,7 @@ export async function runInit(io: InitIO, packageRoot: string): Promise<InitOutc
 		return "blocked";
 	}
 	await cleanLegacy(io, root);
+	await setLanguage(io, root, parsed.lang);
 
 	const validation = await run(io, ["schema", "validate", "superspec"], root);
 	if (validation.code !== 0) {

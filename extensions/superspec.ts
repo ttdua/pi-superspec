@@ -59,9 +59,9 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("opsx-init", {
 		description: "Set up this repository for the Superspec workflow",
-		handler: async (_args, ctx) => {
+		handler: async (args, ctx) => {
 			const io = createInitIO(pi, ctx);
-			await runInit(io, packageRoot);
+			await runInit(io, packageRoot, args);
 		},
 	});
 }
