@@ -210,3 +210,23 @@ Added after Task 9: the user asked that a `config.yaml` without `language:` also
 - [ ] **Step 4: Run** `npx vitest run`, `npm run typecheck` and `openspec validate --all --strict`. Expected: all PASS.
 - [ ] **Step 5: Docs** as in `tasks.md` 6.7.
 - [ ] **Step 6: Commit** code and tests, then docs.
+
+---
+
+## Task 11: Required language in the routing note builders (iteration 2)
+
+Added after Task 10: the user pointed out that the effective language always has a value, so `language?: string` is no longer right. This supersedes the optional signatures recorded in Tasks 3 and 10. Covers `tasks.md` item 6.8.
+
+**Files:**
+- Modify: `extensions/routing-note.ts`
+- Test: `tests/routing-note.test.ts`, `tests/extension.test.ts` only if they call the builders without a language
+
+**Interfaces:**
+- Produces: `routingNote(language: string): string` and `createRoutingNoteMessage(language: string)`; no optional parameter, no `undefined` branch.
+- Unchanged: `ROUTING_NOTE` (base text, used by `isRoutingNote`), `readLanguage(root): string | undefined`, `resolveLanguage(root): string`, `parseInitArgs` and the `--lang` flag.
+
+- [ ] **Step 1: Write the failing check.** In `tests/routing-note.test.ts` add a type-level test: `// @ts-expect-error the language is required` before a call `routingNote()` (and the same for `createRoutingNoteMessage()`), inside a function that is never executed, e.g. `it("requires a language", () => { const never = () => { /* @ts-expect-error */ routingNote(); }; expect(never).toBeTypeOf("function"); })`. Remove the test "is exactly ROUTING_NOTE without a language" and change the test that calls `createRoutingNoteMessage()` with no argument to pass `"en"` and compare with `routingNote("en")`.
+- [ ] **Step 2: Run** `npm run typecheck` and record the RED output. Expected: error "Unused '@ts-expect-error' directive".
+- [ ] **Step 3: Implement** the required parameter in `routingNote` and `createRoutingNoteMessage` and delete the `language === undefined` branch (and its doc comment sentence "when `language` is set").
+- [ ] **Step 4: Run** `npm run typecheck`, `npx vitest run` and `openspec validate --all --strict`. Expected: all PASS.
+- [ ] **Step 5: Commit** `refactor(routing-note): require the document language`.
