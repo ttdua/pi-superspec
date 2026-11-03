@@ -15,7 +15,8 @@
 	"files": [
 		"extensions",
 		"skills",
-		"prompts"
+		"prompts",
+		"schema"
 	],
 	"scripts": {
 		"test": "vitest run",

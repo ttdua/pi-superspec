@@ -25,9 +25,9 @@ describe("package manifest", () => {
 		expect(Object.keys(pkg.dependencies ?? {})).toEqual([]);
 	});
 
-	it("publishes extensions, skills and prompts but not tests", () => {
+	it("publishes extensions, skills, prompts and schema but not tests", () => {
 		expect(pkg.files).toEqual(
-			expect.arrayContaining(["extensions", "skills", "prompts"]),
+			expect.arrayContaining(["extensions", "skills", "prompts", "schema"]),
 		);
 		expect(pkg.files).not.toContain("tests");
 	});
