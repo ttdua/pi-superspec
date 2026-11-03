@@ -60,8 +60,9 @@ describe("superspec extension", () => {
 
 	it("registers the opsx-init command in a directory with no openspec/", () => {
 		const dir = mkdtempSync(join(tmpdir(), "ps-"));
-		const { commands } = loadAll();
+		const { handlers, commands } = loadAll();
 		expect(existsSync(join(dir, "openspec"))).toBe(false);
+		expect(handlers.get("resources_discover")?.({ cwd: dir, reason: "startup" })).toEqual({});
 		const command = commands.get("opsx-init");
 		expect(command).toBeDefined();
 		expect(typeof command?.handler).toBe("function");

@@ -58,7 +58,8 @@ export async function runInit(io: InitIO, packageRoot: string): Promise<InitOutc
 		return "validation-failed";
 	}
 	io.notify("Schema superspec is valid.", "info");
-	await io.reload();
 	io.notify("Superspec is set up. Next: /opsx-new <name>", "info");
+	// reload() invalidates the command ctx; nothing may touch io after it.
+	await io.reload();
 	return "activated";
 }

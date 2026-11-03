@@ -119,6 +119,24 @@ describe("runInit", () => {
 		expect(calls[v].cwd).toBe(root);
 	});
 
+	it("does not touch io after reload (reload invalidates the ctx)", async () => {
+		const root = tmp();
+		let reloaded = false;
+		const notes: string[] = [];
+		const { io } = recording(root, undefined, {
+			notify(message) {
+				if (reloaded) throw new Error("ctx is stale after reload");
+				notes.push(message);
+			},
+			async reload() {
+				reloaded = true;
+			},
+		});
+		expect(await runInit(io, packageRoot)).toBe("activated");
+		expect(reloaded).toBe(true);
+		expect(notes.some((n) => n.includes("/opsx-new"))).toBe(true);
+	});
+
 	it("emits warnings without stopping", async () => {
 		const root = tmp();
 		const warnings: string[] = [];
