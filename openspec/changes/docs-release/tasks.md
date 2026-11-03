@@ -23,8 +23,8 @@
 
 ## 5. Docs consistency
 
-- [ ] 5.1 Update `docs/architecture.md` (component list, anything that differs from what shipped)
-- [ ] 5.2 Update `docs/workflow.md`, `docs/domain-model.md` and `docs/glossary.md` where they differ
+- [x] 5.1 Update `docs/architecture.md` (component list, anything that differs from what shipped)
+- [x] 5.2 Update `docs/workflow.md`, `docs/domain-model.md` and `docs/glossary.md` where they differ
 
 ## 6. Verification
 
