@@ -157,6 +157,8 @@ Without the flag the default language is `en`. When `language:` is missing or in
 
 To switch later, ask the agent to change the document language; it updates `language:` in `openspec/config.yaml`. The setting is read on every turn, so no reload is needed.
 
+A project whose `openspec/config.yaml` has no `language:` (or no `config.yaml`, or an invalid or unreadable value) is treated as `en`: agents are still told to write document prose in `en`.
+
 Structural tokens stay in English: headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`, checkboxes, delta operation headers, and file and capability names. Requirement names are identifiers that delta specs match exactly, so translating them would break the match. Code, code comments and commit messages are not affected. Existing documents are not retranslated.
 
 ## Fast-forward with /opsx-ff

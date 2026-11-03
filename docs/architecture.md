@@ -81,7 +81,7 @@ only to develop pi-superspec itself and is never edited by a change.
 
 | Component | Responsibility |
 |---|---|
-| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event, with a document language paragraph when `language` is set in `openspec/config.yaml` (read on every turn). It does not check or upgrade the project schema at `session_start` (planned, see below). |
+| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid. It does not check or upgrade the project schema at `session_start` (planned, see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
 
@@ -99,8 +99,8 @@ session_start (activated project)
      `pi install git:github.com/obra/superpowers`
      (no schema version comparison or upgrade here yet: planned, see below)
 context (activated project)
-  └─ (adds a document language paragraph when `language:` is set in openspec/config.yaml;
-      read each turn, so a change takes effect without reload)
+  └─ (always adds a document language paragraph: `language:` from openspec/config.yaml, or `en`
+      when it is missing, invalid or unreadable; read each turn, so a change takes effect without reload)
   └─ append routing note after the Superpowers bootstrap message; when that message is
      absent (e.g. from the second agent run), at the head after compaction summaries
 ```
@@ -115,7 +115,7 @@ It does not repair or upgrade an existing schema (planned, see below).
 2. Warn (do not stop) when not in a git repo or when Superpowers skills are not
    discoverable.
 3. If `openspec/` is missing, run `openspec init --tools none` (no harness files).
-4. Write or update `openspec/config.yaml`: set `schema: superspec`, optionally set `language` (step 7), keep all other keys.
+4. Write or update `openspec/config.yaml`: set `schema: superspec`, set `language` (step 7), keep all other keys.
 5. Install the schema on a fresh project (`absent`). An identical schema is left as is;
    any other existing state stops with a warning and writes nothing (see below).
 6. If files from `openspec init --tools pi` exist (`.pi/prompts/opsx-*.md`,
