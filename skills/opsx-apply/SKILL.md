@@ -27,15 +27,16 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    From status, read `schemaName`, `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`. The apply instructions return `contextFiles`, progress, the task list, a `state`, and the instruction text.
 
    **Handle states:**
+   - If `apply.md` and `finalize.md` both exist and the user is addressing PR review feedback, skip the two `blocked` / `all_done` stops below and go to **Post-PR mode** (a finalized change normally reports `all_done`).
    - `state: "blocked"` (missing artifacts): show the message, suggest `/opsx-continue`, and STOP without any code changes.
-   - `state: "all_done"`: report that all tasks are complete, suggest `/opsx-verify` and then `/opsx-archive`, and STOP.
+   - `state: "all_done"`: report that all tasks are complete, suggest `/opsx-verify` and then `/opsx-archive`, and STOP (unless Post-PR mode applies, see above).
    - Otherwise proceed.
 
    **Workspace guard:** If status reports `actionContext.mode: "workspace-planning"` and `allowedEditRoots` is empty, explain that full workspace apply is not supported here, treat linked repos as read-only context, and STOP before editing files.
 
 3. **Post-PR check**
 
-   If `apply.md` and `finalize.md` both exist and the user is addressing PR review feedback, go to **Post-PR mode** below. Otherwise continue.
+   If `apply.md` and `finalize.md` both exist and the user is addressing PR review feedback, go to **Post-PR mode** below (this check takes precedence over the `all_done` stop in step 2). Otherwise continue.
 
 4. **Read context and follow the apply instruction**
 
@@ -49,6 +50,8 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    - If it does not exist, follow **2b**: read the `executing-plans` skill, tell the user that TDD and review are not enforced for you, follow TDD manually, and request a whole-branch review (`requesting-code-review`) over the full commit range before writing `apply.md`.
    - Never invent subagent calls.
 
+   **Change-directory authority:** step 0 commits the change directory on the feature branch and creates the worktree on branch `<change-name>`. From then until finalize the worktree copy of the change directory is authoritative: `tasks.md` ticks, `apply.md`, and `verify.md` are written and committed there, and every `openspec` call runs with the worktree as working directory.
+
    Record the executor actually used in `apply.md`. `tasks.md` is authoritative for progress: tick each box in the worktree copy as the task completes.
 
    **Pause if:** a task is unclear (ask), implementation reveals a design issue (suggest updating artifacts), or an error or blocker occurs (report and wait). Do not guess.
@@ -61,6 +64,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
 
    Used when a PR is open and the user brings review feedback.
    - Read the `receiving-code-review` skill and follow it.
+   - Which copy is current: finalize removes the worktree, so the feature branch in the main checkout now holds the change directory (including `apply.md`, `verify.md`, `finalize.md`). Work and run `openspec` calls there. If the worktree still exists, it is still authoritative; use it instead.
    - Fix on the feature branch in the main checkout, using TDD for each fix.
    - Append a `post-PR iteration N+1` entry with the new commit range to `apply.md`.
    - Tell the user to run `/opsx-verify`, then update `finalize.md`.
