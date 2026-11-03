@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 const SCHEMA_LINE = "schema: superspec";
 
 export function mergeConfig(text: string | undefined): string {
+	// Keep a leading BOM in place and match `schema:` on the line after it.
+	if (text?.startsWith("\uFEFF")) return `\uFEFF${mergeConfig(text.slice(1))}`;
 	if (text === undefined || text === "") return `${SCHEMA_LINE}\n`;
 	// "." does not match "\r", so a CRLF line ending is left in place.
 	if (/^schema:.*$/m.test(text)) return text.replace(/^schema:.*$/m, SCHEMA_LINE);

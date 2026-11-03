@@ -11,6 +11,11 @@ describe("mergeConfig", () => {
 	it("prepends when missing", () => {
 		expect(mergeConfig("context: |\n  x\n")).toBe("schema: superspec\ncontext: |\n  x\n");
 	});
+	it("handles a leading BOM", () => {
+		expect(mergeConfig("\uFEFFschema: spec-driven\nx: 1\n")).toBe("\uFEFFschema: superspec\nx: 1\n");
+		expect(mergeConfig("\uFEFFx: 1\n")).toBe("\uFEFFschema: superspec\nx: 1\n");
+		expect(mergeConfig("\uFEFFschema: superspec\n")).toBe("\uFEFFschema: superspec\n");
+	});
 	it("handles undefined and empty", () => {
 		expect(mergeConfig(undefined)).toBe("schema: superspec\n");
 		expect(mergeConfig("")).toBe("schema: superspec\n");
