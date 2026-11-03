@@ -94,5 +94,5 @@ Behaviour change in skills, one schema instruction wording change and docs. Exis
 
 ## Open Questions
 
-- Can pi run the Plannotator CLI detached and let the agent wait on the result file? To confirm on a real pi session before apply.
+- Can pi run the Plannotator CLI detached and let the agent wait on the result file? **Still open.** Apply ran in Claude Code, so the pi path (`approved`, `annotated`, closed tab through `--result-file`) was not exercised; confirm on a real pi session. Answered in apply: `plannotator review --base main --gate --json .` with stdout redirected to a scratch file exits 0 and writes `{"decision":"approved","message":"..."}` (a `decision` and a `message`, no `feedback`), which matches the code review tier's classification.
 - Whether the tier-2 check should also look at `PLANNOTATOR_AGENT_TOOL` to explain why the tool is missing.
