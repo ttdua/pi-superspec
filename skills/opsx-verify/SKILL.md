@@ -70,7 +70,7 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
 
 7. **Handle the outcome**
 
-   - `PASS` or `PASS_WITH_WARNINGS`: report and suggest the next step (finalize, then `/opsx-archive`). STOP.
+   - `PASS` or `PASS_WITH_WARNINGS`: report and suggest the next step (run `/opsx-continue` to create the finalize artifact, then `/opsx-archive`). STOP.
    - `FAIL` with items that code can fix: read the `systematic-debugging` skill, find the root cause of each CRITICAL item, then re-apply by following `/opsx-apply` in the same worktree. That run records iteration N+1 in `apply.md`. Then verify again from step 3 and write a new `verify.md`.
    - Stop after 5 iterations: if the fifth verify still returns `FAIL`, do not loop again. Report the remaining CRITICAL items and what was tried, then wait for the user.
    - `FAIL` where the fix is not code (spec, design, or task artifacts are wrong): report it, suggest updating the artifacts, and STOP.
@@ -85,7 +85,7 @@ On completion:
 - Change name, schema, and the outcome (`PASS`, `PASS_WITH_WARNINGS` or `FAIL`)
 - Summary scorecard of the six checks and the fresh test result
 - Issues by priority with file references (`file.ts:123`)
-- Next step: finalize and `/opsx-archive` on pass; on `FAIL`, the fix loop status (iteration N of 5)
+- Next step on pass: run `/opsx-continue` to create the finalize artifact, then `/opsx-archive`; on `FAIL`, the fix loop status (iteration N of 5)
 
 On pause: describe the issue, offer options (use `ask_user_question` if available; otherwise numbered options), and wait.
 
