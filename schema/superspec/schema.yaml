@@ -1,11 +1,11 @@
-# Superspec schema v5 for pi-superspec.
+# Superspec schema v6 for pi-superspec.
 #
 # Forked from Superspec v4 by Daniel Hanold (MIT License, see LICENSE),
 # upstream commit e1c8f417ee3601208416d988ba3b37d83ddb63f2.
 name: superspec
-version: 5
+version: 6
 x-pi-superspec:
-  version: 5
+  version: 6
 description: >
   Spec-driven workflow integrated with Superpowers skills.
   brainstorm → proposal → specs → tasks → plan → apply → verify → finalize.

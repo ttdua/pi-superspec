@@ -47,8 +47,8 @@ run("bundled schema", () => {
 	it("identity: name, version and marker", () => {
 		const text = schemaYaml();
 		expect(text).toMatch(/^name: superspec$/m);
-		expect(text).toMatch(/^version: 5$/m);
-		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 5$/m);
+		expect(text).toMatch(/^version: 6$/m);
+		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 6$/m);
 	});
 
 	it("openspec schema validate superspec passes", () => {

@@ -146,7 +146,7 @@ the user runs in the session.
 
 ## Schema identity, version and upgrade
 
-- Schema name: `superspec`. `version:` starts at **5** (continuing upstream v4).
+- Schema name: `superspec`. `version:` is **6** (started at 5, continuing upstream v4).
 - Marker block `x-pi-superspec: { version: <n> }` identifies the package's schema.
   OpenSpec strips unknown top-level keys, so validation still passes (not verified
   against an OpenSpec release).
