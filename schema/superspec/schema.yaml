@@ -236,7 +236,8 @@ artifacts:
          in the delta specs has implementation evidence (file and
          line); a REMOVED requirement has evidence that its baseline
          behavior is gone (read the baseline from the main spec, fall
-         back to git history, otherwise record not verified); a
+         back to git history, otherwise record not verified; if code
+         for the baseline behavior remains, the check fails); a
          RENAMED requirement keeps its behavior under the new name.
       4. **Scenario coverage**: every scenario maps to a test, and the
          project test command was run fresh in this step with the
