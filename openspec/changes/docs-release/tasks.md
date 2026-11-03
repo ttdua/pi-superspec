@@ -5,10 +5,10 @@
 
 ## 2. Release metadata
 
-- [ ] 2.1 Add root `LICENSE` (MIT) and leave `schema/superspec/LICENSE` unchanged
-- [ ] 2.2 Add `repository`, `homepage` and `bugs` to `package.json`
-- [ ] 2.3 Add `CHANGELOG.md` for the first release
-- [ ] 2.4 Add `CONTRIBUTING.md`
+- [x] 2.1 Add root `LICENSE` (MIT) and leave `schema/superspec/LICENSE` unchanged
+- [x] 2.2 Add `repository`, `homepage` and `bugs` to `package.json`
+- [x] 2.3 Add `CHANGELOG.md` for the first release
+- [x] 2.4 Add `CONTRIBUTING.md`
 
 ## 3. README
 
