@@ -7,9 +7,9 @@
 
 ## 2. `/opsx-generate-specs` skill and prompt
 
-- [ ] 2.1 Write `skills/opsx-generate-specs/SKILL.md`: precondition, MAP, existing-spec filtering, CONFIRM, bootstrap change, SCOUT dispatch with sequential fallback, spec output format with `Evidence:` and `Confidence: inferred`, document language, other artifacts, hand-off to `/opsx-ff bootstrap-specs`
-- [ ] 2.2 Write `prompts/opsx-generate-specs.md` that delegates to the skill and references `$@`
-- [ ] 2.3 Add content tests for the pair (pair exists and matches, no forbidden tool names, key rules present) alongside the existing command tests
+- [x] 2.1 Write `skills/opsx-generate-specs/SKILL.md`: precondition, MAP, existing-spec filtering, CONFIRM, bootstrap change, SCOUT dispatch with sequential fallback, spec output format with `Evidence:` and `Confidence: inferred`, document language, other artifacts, hand-off to `/opsx-ff bootstrap-specs`
+- [x] 2.2 Write `prompts/opsx-generate-specs.md` that delegates to the skill and references `$@`
+- [x] 2.3 Add content tests for the pair (pair exists and matches, no forbidden tool names, key rules present) alongside the existing command tests
 
 ## 3. Docs
 
