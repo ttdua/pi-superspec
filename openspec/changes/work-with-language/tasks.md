@@ -19,11 +19,11 @@
 
 ## 4. Documentation
 
-- [ ] 4.1 Update `docs/domain-model.md` ProjectConfig and `docs/architecture.md` (`/opsx-init` step 4 and the extension table row for the `context` event) to describe the optional `language` key
-- [ ] 4.2 Describe `/opsx-init --lang`, the prompt and changing the language during work in `docs/usage-guide.md`, and add the flag to the README command table row for `/opsx-init`
-- [ ] 4.3 Add a CHANGELOG entry for the new flag and config key
+- [x] 4.1 Update `docs/domain-model.md` ProjectConfig and `docs/architecture.md` (`/opsx-init` step 4 and the extension table row for the `context` event) to describe the optional `language` key
+- [x] 4.2 Describe `/opsx-init --lang`, the prompt and changing the language during work in `docs/usage-guide.md`, and add the flag to the README command table row for `/opsx-init`
+- [x] 4.3 Add a CHANGELOG entry for the new flag and config key
 
 ## 5. Verification
 
-- [ ] 5.1 Run `npm test` and `npm run typecheck`
+- [x] 5.1 Run `npm test` and `npm run typecheck`
 - [ ] 5.2 Walk the manual check in `docs/e2e-checklist.md` with `language: vi`: confirm the agent writes prose in Vietnamese, keeps structural tokens in English, and that `openspec validate` passes on the resulting change
