@@ -102,7 +102,11 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	}
 	// reload() rebuilds the chat from session entries, dropping notify() output,
 	// so the result is persisted as a session message before reloading.
-	io.report([...warnings, "Schema superspec is valid.", "Superspec is set up. Next: /opsx-new <name>"].join("\n"));
+	const report = [...warnings, "Schema superspec is valid.", "Superspec is set up. Next: /opsx-new <name>"];
+	if (parsed.generate) {
+		report.push("For an existing codebase, run /opsx-generate-specs to draft specs from the code.");
+	}
+	io.report(report.join("\n"));
 	// reload() invalidates the command ctx; nothing may touch io after it.
 	await io.reload();
 	return "activated";
