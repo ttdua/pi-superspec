@@ -12,7 +12,7 @@
 
 ## 3. README
 
-- [ ] 3.1 Write `README.md`: what it is, prerequisites, optional packages, install, `/opsx-init` quick start, command table, uninstall behaviour, credits and license
+- [x] 3.1 Write `README.md`: what it is, prerequisites, optional packages, install, `/opsx-init` quick start, command table, uninstall behaviour, credits and license
 - [ ] 3.2 Write `README.vi.md` mirroring the section order of `README.md`, with cross-links
 
 ## 4. Usage guide and checklist
