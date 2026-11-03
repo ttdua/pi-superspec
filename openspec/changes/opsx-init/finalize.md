@@ -11,7 +11,7 @@
 - **Branch**: `feat/opsx-init`
 - **Base branch**: `main`
 - **Final state**: `pr-open`
-- **PR URL**: `pending`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/3`
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## PR comment
 
-- **Comment status**: `pending`
+- **Comment status**: `posted`
 
 ---
 
