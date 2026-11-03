@@ -8,8 +8,8 @@ specs, tasks, verify, archive) with [Superpowers](https://github.com/obra/superp
 
 See [workflow.md](workflow.md) for the process itself, [domain-model.md](domain-model.md)
 for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use see
-[usage-guide.md](usage-guide.md); the manual release check is
-[e2e-checklist.md](e2e-checklist.md).
+[docs/usage-guide.md](usage-guide.md); the manual release check is
+[docs/e2e-checklist.md](e2e-checklist.md).
 
 ## Goals
 
@@ -44,29 +44,37 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 
 ```text
 pi-superspec/
-├── package.json            # keywords: pi-package; pi.extensions only
-├── package-lock.json
-├── tsconfig.json
-├── vitest.config.ts
-├── extensions/
+├── package.json            # keywords: pi-package; pi.extensions only; `files` lists the published entries
+├── package-lock.json       # repository only
+├── tsconfig.json           # repository only
+├── vitest.config.ts        # repository only
+├── .gitignore              # repository only
+├── .claude/                # repository only: OpenSpec-generated Claude Code commands/ and skills/
+│                           #   used to develop this repository
+├── extensions/             # published
 │   ├── superspec.ts        # entry: /opsx-init registration, resources_discover, session_start warning, context hook
 │   ├── activation.ts       # project root discovery, marker detection
 │   ├── routing-note.ts     # routing note and Superpowers detection
 │   └── init/               # /opsx-init steps: init.ts, preflight.ts, config.ts,
 │                           #   schema-install.ts, legacy.ts, io.ts
-├── schema/superspec/       # bundled OpenSpec schema: schema.yaml + templates/ + LICENSE
-├── skills/                 # pi-adapted openspec skills (loaded dynamically)
-├── prompts/                # opsx-*.md commands (loaded dynamically)
-├── tests/                  # vitest suites, fixtures/, helpers/, init/
-├── docs/                   # architecture.md, workflow.md, domain-model.md, glossary.md,
-│                           #   docs/usage-guide.md, docs/e2e-checklist.md
-├── openspec/               # this repository's own OpenSpec project (specs, changes, schemas)
+├── schema/superspec/       # published; bundled OpenSpec schema: schema.yaml + templates/ + LICENSE
+├── skills/                 # published; pi-adapted openspec skills (loaded dynamically)
+├── prompts/                # published; opsx-*.md commands (loaded dynamically)
+├── tests/                  # repository only; vitest suites, fixtures/, helpers/, init/
+├── docs/                   # repository only; architecture.md, workflow.md, domain-model.md, glossary.md,
+│                           #   usage-guide.md, e2e-checklist.md
+├── openspec/               # repository only; this repository's own OpenSpec project (specs, changes, schemas)
 ├── README.md
 ├── README.vi.md            # Vietnamese README
 ├── LICENSE
 ├── CHANGELOG.md
 └── CONTRIBUTING.md
 ```
+
+Published package: `package.json` `files` ships only `extensions`, `skills`, `prompts`
+and `schema` (npm adds `package.json`, README and LICENSE itself); every other entry
+is repository-only. The tree omits untracked or generated entries (`.git`,
+`node_modules`, `.superpowers`).
 
 `schema/superspec/` is the product schema. Do not confuse it with
 `openspec/schemas/superspec/` in this repository, which is upstream Superspec v4 used
@@ -117,7 +125,8 @@ It does not repair or upgrade an existing schema (planned, see below).
 
 - Schema name: `superspec`. `version:` starts at **5** (continuing upstream v4).
 - Marker block `x-pi-superspec: { version: <n> }` identifies the package's schema.
-  OpenSpec strips unknown top-level keys, so validation still passes.
+  OpenSpec strips unknown top-level keys, so validation still passes (not verified
+  against an OpenSpec release).
 - Lock file `openspec/schemas/superspec/.pi-superspec.json`:
   `{ "schemaVersion": n, "packageVersion": "…", "files": { "<rel path>": "<sha256>" } }`.
 
@@ -145,8 +154,8 @@ Planned design (not shipped):
 | newer than bundled | warn that the package is outdated; do nothing |
 | no marker (e.g. upstream Superspec v4) | not activated; `/opsx-init` offers migration after backup |
 
-Planned (not shipped): automatic upgrade writes files only when all hold: the project root is the main
-checkout, not a linked worktree (`git rev-parse --git-dir` equals
+Planned (not shipped): automatic upgrade writes files only when all hold: the
+project root is the main checkout, not a linked worktree (`git rev-parse --git-dir` equals
 `--git-common-dir`); the project is trusted (`ctx.isProjectTrusted()`); the session
 is interactive (`ctx.hasUI`, which excludes subagent sessions). Otherwise it only
 notifies.
@@ -159,9 +168,9 @@ unless the release notes include a migration step.
 
 | Action | With optional package | Fallback |
 |---|---|---|
-| Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`) | plain question, numbered options |
+| Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`, name not verified) | plain question, numbered options |
 | Dispatch a subagent | `pi-subagents` `subagent` tool | Superpowers `executing-plans` in-session |
-| Track todos | tool `todo` (package `rpiv-todo`) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
+| Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
 Pi-specific tool names live only in the package's skills and prompts, never in the
