@@ -1,7 +1,7 @@
 ## 1. Pi API and shared types
 
-- [ ] 1.1 Verify the installed pi types for `registerCommand`, confirm/notify UI, `ctx.hasUI`, `ctx.reload()` and Superpowers discoverability; record findings in the plan (`npm install` first if `node_modules` is absent)
-- [ ] 1.2 Define the `InitIO` interface (`exec`, `confirm`, `notify`, `reload`, `cwd`, `hasUI`) in `extensions/init/io.ts`
+- [x] 1.1 Verify the installed pi types for `registerCommand`, confirm/notify UI, `ctx.hasUI`, `ctx.reload()` and Superpowers discoverability; record findings in the plan (`npm install` first if `node_modules` is absent)
+- [x] 1.2 Define the `InitIO` interface (`exec`, `confirm`, `notify`, `reload`, `cwd`, `hasUI`) in `extensions/init/io.ts`
 
 ## 2. Preflight and config merge
 
