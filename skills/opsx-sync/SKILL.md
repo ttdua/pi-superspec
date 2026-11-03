@@ -58,6 +58,8 @@ OpenSpec has no sync CLI, so this is an **agent-driven** operation: you read the
 
    **Empty requirements**: If applying the delta would leave `## Requirements` empty, STOP, write no empty section, and report it. The only exception: delete the spec only when the change's `.openspec.yaml` sets `retire_capabilities: true`, then report its Purpose and say it can be restored with git.
 
+   A block or stop applies to one capability. Capabilities already written stay written; list each blocked capability in the report so the caller can tell a partial sync from a complete one.
+
    Preserve everything in the main spec that the delta does not mention. The operation must be idempotent: running it twice gives the same result. Entries already applied need no ask: a REMOVED header already absent from the main spec, and a RENAMED entry whose `TO` header exists while `FROM` is absent, count as already applied (skip them silently).
 
 5. **Validate**
@@ -86,6 +88,9 @@ OpenSpec has no sync CLI, so this is an **agent-driven** operation: you read the
 **<capability-2>**:
 - Created new spec file
 - Added: "Another Feature"
+
+**<capability-3>**:
+- Blocked: <reason>; nothing written for this capability
 
 Validation: <result of openspec validate>
 The change remains active. Run `/opsx-archive` when ready.
