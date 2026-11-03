@@ -1,6 +1,6 @@
 ## Why
 
-Users who think and review in a language other than English must read and write English-only change documents, which makes proposals, designs and specs harder to review. Agents already follow the routing note injected into every turn, so a per-project document language can be applied without touching the bundled schema. Projects without the setting keep today's behaviour.
+Users who think and review in a language other than English must read and write English-only change documents, which makes proposals, designs and specs harder to review. Agents already follow the routing note injected into every turn, so a per-project document language can be applied without touching the bundled schema. Projects without the setting default to English, which is today's behaviour.
 
 ## What Changes
 
@@ -8,7 +8,7 @@ Users who think and review in a language other than English must read and write 
 - From: `config.yaml` only carries `schema: superspec` from the package; all documents are written in English.
 - To: an optional top-level `language: <value>` key; when set, agents write the prose of OpenSpec documents (change artifacts and main specs) in that language.
 - Reason: let users work in their own language.
-- Impact: non-breaking; no key means no change.
+- Impact: non-breaking; no key means the default language `en`, and `/opsx-init` writes `language: en` when none is chosen.
 
 **Structural tokens stay English**
 - Headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`, checkbox syntax, delta operation headers, file and capability names. Requirement names are identifiers for delta matching, so they cannot change with the language.

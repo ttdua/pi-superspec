@@ -30,7 +30,10 @@
 
 ## 6. Default language (iteration 2)
 
-- [ ] 6.1 Add `DEFAULT_LANGUAGE = "en"` to `extensions/init/config.ts` and make `setLanguage` in `extensions/init/init.ts` fall back to it: prompt skipped, cancelled, empty or invalid, and no UI, when there is no valid `language:` and no flag; an invalid existing line is replaced; a valid existing value is never touched; blocked runs still write nothing (specs `init-command`: Language prompt, Default language, Idempotency; `document-language`: Default language)
-- [ ] 6.2 Update the tests in `tests/init/init.test.ts` and `tests/init/integration.test.ts` for the new behavior, including a second run that changes no file and the prompt placeholder offering `en`
-- [ ] 6.3 Update `docs/usage-guide.md`, `docs/architecture.md`, `README.md` if it mentions the prompt, and `CHANGELOG.md` to state that the default is `en`
-- [ ] 6.4 Re-run `npm test`, `npm run typecheck` and `openspec validate --all --strict`
+- [x] 6.1 Add `DEFAULT_LANGUAGE = "en"` to `extensions/init/config.ts` and make `setLanguage` in `extensions/init/init.ts` fall back to it: prompt skipped, cancelled, empty or invalid, and no UI, when there is no valid `language:` and no flag; an invalid existing line is replaced; a valid existing value is never touched; blocked runs still write nothing (specs `init-command`: Language prompt, Default language, Idempotency; `document-language`: Default language)
+- [x] 6.2 Update the tests in `tests/init/init.test.ts` and `tests/init/integration.test.ts` for the new behavior, including a second run that changes no file and the prompt placeholder offering `en`
+- [x] 6.3 Update `docs/usage-guide.md`, `docs/architecture.md`, `README.md` if it mentions the prompt, and `CHANGELOG.md` to state that the default is `en`
+- [x] 6.4 Re-run `npm test`, `npm run typecheck` and `openspec validate --all --strict`
+- [ ] 6.5 Add `resolveLanguage(root)` (valid `language:` value, else `en`) to `extensions/init/config.ts` and use it in the `context` handler in `extensions/superspec.ts`, so the routing note always carries the language paragraph; `routingNote()` without an argument keeps returning `ROUTING_NOTE` (specs `routing-note`: Document language paragraph; `document-language`: Language setting, Default language)
+- [ ] 6.6 Update the tests in `tests/init/config.test.ts`, `tests/routing-note.test.ts` and `tests/extension.test.ts` for the effective language: missing key, missing file, invalid value and unreadable config all give `en`; an existing project with no key now gets the `en` paragraph
+- [ ] 6.7 Update `docs/usage-guide.md`, `docs/architecture.md` (also step 4 wording: `language` is set, not "optionally set") and `CHANGELOG.md` to state that a missing `language:` means `en`; split the long CHANGELOG sentence; then re-run 6.4

@@ -24,7 +24,7 @@ When `/opsx-init` is given a document language, it SHALL ensure `openspec/config
 - **THEN** it is not modified and a top-level line is added
 
 ### Requirement: Read language key
-The package SHALL read the document language from the top-level `language:` line of `openspec/config.yaml`, accepting a bare or a double-quoted value; a double-quoted value MAY be followed by an optional trailing comment. A missing file, a missing key, or a value that violates the rules of the `document-language` capability MUST yield no language.
+The package SHALL read the document language from the top-level `language:` line of `openspec/config.yaml`, accepting a bare or a double-quoted value; a double-quoted value MAY be followed by an optional trailing comment. A missing file, a missing key, or a value that violates the rules of the `document-language` capability MUST yield no configured language; the package then uses the default language `en` of the `document-language` capability.
 
 #### Scenario: Bare value
 - **WHEN** the file contains `language: vi`

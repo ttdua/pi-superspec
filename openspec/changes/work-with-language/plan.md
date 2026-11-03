@@ -187,3 +187,26 @@ Added after the first PR was opened: the user asked that without `--lang` the de
 - [ ] **Step 4: Run** `npx vitest run` and `npm run typecheck`. Expected: all PASS.
 - [ ] **Step 5: Docs.** State in `docs/usage-guide.md` ("Working in your language") and `docs/architecture.md` (language step) that the default is `en`, written when no language is chosen, also without a UI; update the sentence that a skipped prompt writes nothing and asks again; add a `CHANGELOG.md` line.
 - [ ] **Step 6: Commit** code and tests, then docs.
+
+---
+
+## Task 10: Missing `language:` means `en` (iteration 2)
+
+Added after Task 9: the user asked that a `config.yaml` without `language:` also defaults to `en`. Specs: `routing-note` (Document language paragraph), `document-language` (Language setting, Default language), `config-merge` (Read language key). Covers `tasks.md` items 6.5 to 6.7.
+
+**Files:**
+- Modify: `extensions/init/config.ts`, `extensions/superspec.ts`
+- Test: `tests/init/config.test.ts`, `tests/routing-note.test.ts`, `tests/extension.test.ts`
+- Docs: `docs/usage-guide.md`, `docs/architecture.md`, `CHANGELOG.md` (and `README.md` only if it states otherwise)
+
+**Interfaces:**
+- Produces: `resolveLanguage(root: string): string` in `extensions/init/config.ts`, returning `readLanguage(root) ?? DEFAULT_LANGUAGE`.
+- Consumes: `readLanguage`, `DEFAULT_LANGUAGE` (Task 9).
+- Unchanged: `readLanguage(root): string | undefined` and `routingNote(language?: string)`; with no argument `routingNote()` still equals `ROUTING_NOTE`.
+
+- [ ] **Step 1: Write failing tests.** `config.test.ts`: `resolveLanguage` returns `vi` for `language: vi`, and `en` for a missing file, a config without the key, an empty value, a 100-character value, a value with U+2028, and a config path that is a directory. `extensions.test.ts` (document language block, temp copy of `fixtures/marked`): with no `language:` the `context` handler's injected text equals `routingNote("en")` and contains the language paragraph; with an invalid 100-character value likewise; the unreadable-config test now expects `routingNote("en")` instead of the plain note; the no-reload test and the `vi` test keep passing. `routing-note.test.ts` is unchanged except where it assumed the handler adds nothing.
+- [ ] **Step 2: Run** `npx vitest run tests/init/config.test.ts tests/extension.test.ts tests/routing-note.test.ts` and record the RED output before changing code.
+- [ ] **Step 3: Implement** `resolveLanguage` and call it in the `context` handler instead of `readLanguage`.
+- [ ] **Step 4: Run** `npx vitest run`, `npm run typecheck` and `openspec validate --all --strict`. Expected: all PASS.
+- [ ] **Step 5: Docs** as in `tasks.md` 6.7.
+- [ ] **Step 6: Commit** code and tests, then docs.
