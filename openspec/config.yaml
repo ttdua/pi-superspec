@@ -1,0 +1,18 @@
+schema: superspec
+
+context: |
+  pi-superspec is a pi.dev package (TypeScript extension + bundled OpenSpec schema +
+  pi-adapted opsx prompts/skills) that brings the Superspec workflow
+  (OpenSpec + Superpowers) to the pi coding agent.
+  Project documentation is the source of truth for scope and decisions:
+  docs/architecture.md, docs/workflow.md, docs/domain-model.md, docs/glossary.md.
+  Read them before brainstorming. A change's brainstorm must cite the doc sections
+  it implements and must not re-decide what those docs already settle; if a change
+  needs to alter a documented decision, say so explicitly and update the doc in the
+  same change.
+  openspec/schemas/superspec/ is the upstream Superspec v4 schema that drives this
+  repo's own development workflow. No change may edit it. The product's bundled
+  schema lives under schema/superspec/.
+  Upstream Superspec schema used to develop this repo: v4, commit
+  e1c8f417ee3601208416d988ba3b37d83ddb63f2 (danielhanold/superspec).
+  All repository content (code, comments, docs, commits) is written in English.
