@@ -347,6 +347,52 @@ run("bundled schema", () => {
 			expect(text).not.toContain("also write it to this change's `design.md`");
 		});
 
+		it("brainstorm approves the written file before returning to the flow", () => {
+			const text = instructionFor("brainstorm");
+			const written = text.indexOf("`brainstorm.md` first");
+			const approve = text.indexOf("approve that file");
+			const back = text.indexOf("Return to the OpenSpec flow");
+			expect(written).toBeGreaterThan(-1);
+			expect(approve).toBeGreaterThan(written);
+			expect(back).toBeGreaterThan(approve);
+			expect(text).toContain(
+				"Keep technical decisions out of brainstorm.md; they belong in design.md. The two must not repeat each other.",
+			);
+			expect(text).toContain(
+				"do NOT invoke writing-plans or any other skill the brainstorming skill hands off to",
+			);
+		});
+
+		it("brainstorm and finalize instructions name no review tool", () => {
+			for (const id of ["brainstorm", "finalize"]) {
+				expect(instructionFor(id), id).not.toMatch(
+					/plannotator|AskUserQuestion|ask_user_question/,
+				);
+			}
+		});
+
+		it("finalize step 2b sits between the worktree tests and the checkout", () => {
+			const flat = instructionFor("finalize");
+			const two = flat.indexOf("2. Verify tests pass in the worktree");
+			const twoB = flat.indexOf("2b.");
+			const three = flat.indexOf("3. Switch to the feature branch and pull:");
+			expect(two).toBeGreaterThan(-1);
+			expect(twoB).toBeGreaterThan(two);
+			expect(three).toBeGreaterThan(twoB);
+			const gate = flat.slice(twoB, three);
+			expect(gate).toContain("$FEATURE_BRANCH");
+			expect(gate).toContain("apply.md");
+			expect(gate).toContain("approved with notes");
+			expect(gate).toContain("never treat");
+		});
+
+		it("finalize template records the code review", () => {
+			const t = tpl("finalize.md");
+			expect(t).toContain("Code review");
+			expect(t).toContain("Reviewer tier");
+			expect(t).toContain("Commit range reviewed");
+		});
+
 		it("plan instruction carries the handoff, ID, scenario and spec rules", () => {
 			const text = instructionFor("plan");
 			expect(text).toContain(
