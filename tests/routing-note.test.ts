@@ -101,9 +101,9 @@ describe("ROUTING_NOTE", () => {
 	});
 
 	it("builds a user message with a text part", () => {
-		const message = createRoutingNoteMessage();
+		const message = createRoutingNoteMessage("en");
 		expect(message.role).toBe("user");
-		expect(message.content).toEqual([{ type: "text", text: ROUTING_NOTE }]);
+		expect(message.content).toEqual([{ type: "text", text: routingNote("en") }]);
 		expect(typeof message.timestamp).toBe("number");
 	});
 });
@@ -127,8 +127,14 @@ describe("SUPERPOWERS_MISSING_WARNING", () => {
 });
 
 describe("routingNote", () => {
-	it("is exactly ROUTING_NOTE without a language", () => {
-		expect(routingNote()).toBe(ROUTING_NOTE);
+	it("requires a language", () => {
+		const never = () => {
+			// @ts-expect-error the language is required
+			routingNote();
+			// @ts-expect-error the language is required
+			createRoutingNoteMessage();
+		};
+		expect(never).toBeTypeOf("function");
 	});
 
 	it("appends the document language paragraph", () => {
