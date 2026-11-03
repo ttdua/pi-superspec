@@ -9,34 +9,48 @@ This project uses OpenSpec with the superspec schema. Route work as follows:
 - Small work that changes no spec (a bug fix restoring specified behaviour, a typo, a refactor) is done directly with TDD and no change directory.
 - Do NOT write design docs or plans to docs/superpowers/; they live in the change directory instead.`;
 
-/** True when a message's string or text-part content includes `marker`. */
-function containsMarker(message: unknown, marker: string): boolean {
+function role(message: unknown): unknown {
+	return (message as { role?: unknown } | null | undefined)?.role;
+}
+
+/** Text values of a message: its string content, or each text part. */
+function texts(message: unknown): string[] {
 	const content = (message as { content?: unknown } | null | undefined)?.content;
-	if (typeof content === "string") return content.includes(marker);
-	if (!Array.isArray(content)) return false;
-	return content.some((part) => {
-		return (
+	if (typeof content === "string") return [content];
+	if (!Array.isArray(content)) return [];
+	const out: string[] = [];
+	for (const part of content) {
+		if (
 			part &&
 			typeof part === "object" &&
 			(part as { type?: unknown }).type === "text" &&
-			typeof (part as { text?: unknown }).text === "string" &&
-			(part as { text: string }).text.includes(marker)
-		);
-	});
+			typeof (part as { text?: unknown }).text === "string"
+		) {
+			out.push((part as { text: string }).text);
+		}
+	}
+	return out;
+}
+
+function isRoutingNote(message: unknown): boolean {
+	return role(message) === "user" && texts(message).some((t) => t === ROUTING_NOTE || t.startsWith(ROUTING_NOTE_MARKER));
+}
+
+function isBootstrap(message: unknown): boolean {
+	return role(message) === "user" && texts(message).some((t) => t.includes(BOOTSTRAP_MARKER));
 }
 
 function insertionIndex(messages: unknown[]): number {
-	for (let i = messages.length - 1; i >= 0; i--) {
-		if (containsMarker(messages[i], BOOTSTRAP_MARKER)) return i + 1;
-	}
+	const bootstrap = messages.findIndex(isBootstrap);
+	if (bootstrap >= 0) return bootstrap + 1;
 	let index = 0;
-	while ((messages[index] as { role?: unknown } | undefined)?.role === "compactionSummary") index++;
+	while (role(messages[index]) === "compactionSummary") index++;
 	return index;
 }
 
 /** Returns a new array with `note` inserted, or `undefined` when the note is already present. */
 export function insertRoutingNote<T>(messages: T[], note: T): T[] | undefined {
-	if (messages.some((message) => containsMarker(message, ROUTING_NOTE_MARKER))) return undefined;
+	if (messages.some(isRoutingNote)) return undefined;
 	const index = insertionIndex(messages);
 	return [...messages.slice(0, index), note, ...messages.slice(index)];
 }

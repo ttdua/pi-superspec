@@ -51,6 +51,39 @@ describe("insertRoutingNote", () => {
 		expect(insertRoutingNote([{ role: "user", content: ROUTING_NOTE_MARKER }], note)).toBeUndefined();
 	});
 
+	it("still inserts when the marker is only quoted by non-user or mid-text", () => {
+		const assistant: Msg = { role: "assistant", content: [{ type: "text", text: `see ${ROUTING_NOTE_MARKER}` }] };
+		const toolResult: Msg = { role: "toolResult", content: [{ type: "text", text: ROUTING_NOTE }] };
+		const midUser: Msg = { role: "user", content: `please explain the ${ROUTING_NOTE_MARKER} text` };
+		expect(insertRoutingNote([assistant], note)).toEqual([note, assistant]);
+		expect(insertRoutingNote([toolResult], note)).toEqual([note, toolResult]);
+		expect(insertRoutingNote([midUser], note)).toEqual([note, midUser]);
+	});
+
+	it("treats a user message starting with the marker as the note", () => {
+		expect(insertRoutingNote([{ role: "user", content: `${ROUTING_NOTE_MARKER}\nbody` }, user], note)).toBeUndefined();
+		expect(insertRoutingNote([user, { role: "user", content: [{ type: "text", text: ROUTING_NOTE }] }], note)).toBeUndefined();
+	});
+
+	it("ignores bootstrap markers quoted by non-user messages", () => {
+		const toolResult: Msg = { role: "toolResult", content: [{ type: "text", text: BOOTSTRAP_MARKER }] };
+		const assistant: Msg = { role: "assistant", content: BOOTSTRAP_MARKER };
+		expect(insertRoutingNote([summary, toolResult, assistant, user], note)).toEqual([summary, note, toolResult, assistant, user]);
+	});
+
+	it("places the note after the first user bootstrap message", () => {
+		expect(insertRoutingNote([bootstrapParts, user, bootstrapString], note)).toEqual([bootstrapParts, note, user, bootstrapString]);
+	});
+
+	it("is stable regardless of handler order", () => {
+		const first = insertRoutingNote([user], note);
+		expect(first).toEqual([note, user]);
+		const withBootstrap = [bootstrapParts, ...(first as Msg[])];
+		expect(withBootstrap).toEqual([bootstrapParts, note, user]);
+		expect(insertRoutingNote(withBootstrap, note)).toBeUndefined();
+		expect(insertRoutingNote([bootstrapParts, user], note)).toEqual([bootstrapParts, note, user]);
+	});
+
 	it("does not mutate the input array", () => {
 		const input = [user];
 		insertRoutingNote(input, note);

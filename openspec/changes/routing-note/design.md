@@ -26,4 +26,5 @@
 
 - Superpowers may change its marker string; then the note falls back to the head position, which is still correct for turns after the first and only slightly different on the first turn. Mitigation: the marker is a single constant and covered by a test.
 - Detecting Superpowers via `skill:brainstorming` can false-negative if skills are renamed; the consequence is a spurious warning, not a failure.
+- `session_start` runs before `resources_discover` skill paths are added, so Superpowers detection relies on `skill:brainstorming` already being in `getCommands()`. This holds when Superpowers is installed as a pi package (manifest `pi.skills`), but a spurious warning is possible when Superpowers is loaded as a bare extension path or its skills are disabled. Alternative if this proves noisy: perform the check on the first `before_agent_start` instead.
 - The note adds a few hundred tokens to every LLM call in activated projects.

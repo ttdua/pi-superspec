@@ -16,7 +16,7 @@ On every `context` event the extension SHALL inject the routing note only when t
 - **THEN** the messages are returned unchanged
 
 ### Requirement: Routing note placement
-The extension SHALL place the routing note immediately after the message containing the Superpowers bootstrap marker `superpowers:using-superpowers bootstrap for pi` when such a message exists. Otherwise it SHALL place the note at the first index that is not a leading `compactionSummary` message. Placement MUST NOT depend on extension load order.
+The extension SHALL place the routing note immediately after the bootstrap message, defined as the first user message containing the Superpowers bootstrap marker `superpowers:using-superpowers bootstrap for pi`, when such a message exists. Otherwise it SHALL place the note at the first index that is not a leading `compactionSummary` message. Placement MUST NOT depend on extension load order.
 
 #### Scenario: Bootstrap present
 - **WHEN** the messages contain a Superpowers bootstrap message
@@ -35,11 +35,15 @@ The extension SHALL place the routing note immediately after the message contain
 - **THEN** the bootstrap precedes the routing note
 
 ### Requirement: Routing note is not duplicated
-The routing note SHALL carry its own marker, and the extension MUST NOT insert it when a message already contains that marker.
+The routing note SHALL carry its own marker at the start of its text, and the extension MUST NOT insert it when a user message already is the routing note (the marker is at the start of that user message's text).
 
 #### Scenario: Note already present
-- **WHEN** the messages already contain the routing note marker
+- **WHEN** a user message already starts with the routing note marker
 - **THEN** the messages are returned unchanged
+
+#### Scenario: Marker quoted elsewhere
+- **WHEN** an assistant or tool message merely quotes the routing note marker
+- **THEN** the routing note is still inserted
 
 ### Requirement: Routing note content
 The routing note SHALL tell the agent that work adding or changing behaviour MUST first be proposed as a change with `/opsx-new` before brainstorming, that small work changing no spec (bug fix restoring specified behaviour, typo, refactor) is done directly with TDD and no change directory, and that design docs and plans MUST NOT be written to `docs/superpowers/`. The note SHALL be guidance only; the extension MUST NOT block any tool call.
@@ -53,7 +57,7 @@ The routing note SHALL tell the agent that work adding or changing behaviour MUS
 - **THEN** it registers no `tool_call` handler that blocks tools
 
 ### Requirement: Missing Superpowers warning
-At `session_start` in an activated project with an interactive UI, the extension SHALL warn once when the `skill:brainstorming` command is not discoverable. The warning MUST include the command `pi install git:github.com/obra/superpowers`. It MUST NOT warn when Superpowers is discoverable, in unactivated projects, or without a UI.
+At `session_start` in an activated project with an interactive UI, the extension SHALL warn once per session start (including reload) when the `skill:brainstorming` command is not discoverable. The warning MUST include the command `pi install git:github.com/obra/superpowers`. It MUST NOT warn when Superpowers is discoverable, in unactivated projects, or without a UI.
 
 #### Scenario: Superpowers missing
 - **WHEN** `session_start` fires in an activated project with a UI and no `skill:brainstorming` command
