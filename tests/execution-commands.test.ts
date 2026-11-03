@@ -175,6 +175,42 @@ describe("execution commands", () => {
 		expect(text).toContain("Do NOT archive");
 	});
 
+	it("sync reads the specs instructions once and applies rules without copying them", () => {
+		const flat = skill("sync").replace(/\s+/g, " ");
+		expect(flat).toContain(
+			"Read `openspec instructions specs --change <name> --json` once and apply its `rules` as constraints on the text you write; never copy the `rules` into any spec.",
+		);
+		expect(flat).toContain(
+			"If reading the instructions fails, STOP and report the error without writing any spec.",
+		);
+		expect(flat).not.toContain("or list `specs/<capability>/spec.md`");
+	});
+
+	it("sync keeps the delta Purpose for new capabilities", () => {
+		const flat = skill("sync").replace(/\s+/g, " ");
+		expect(flat).toContain(
+			"copy the delta's `## Purpose` text verbatim and title the spec `# <capability> Specification`",
+		);
+		expect(flat).toContain(
+			"If the delta has no `## Purpose`, write `TBD` as the Purpose and flag it in the report.",
+		);
+		expect(flat).toContain("Never overwrite the Purpose of an existing main spec.");
+		expect(flat).toContain("Never write delta section headers into a main spec.");
+	});
+
+	it("sync blocks unsafe merges", () => {
+		const flat = skill("sync").replace(/\s+/g, " ");
+		expect(flat).toContain(
+			"If the delta has MODIFIED or RENAMED operations, or only REMOVED ones, and the main spec does not exist, report the capability as blocked and write nothing.",
+		);
+		expect(flat).toContain(
+			"If applying the delta would leave `## Requirements` empty, STOP, write no empty section, and report it.",
+		);
+		expect(flat).toContain(
+			"delete the spec only when the change's `.openspec.yaml` sets `retire_capabilities: true`, then report its Purpose and say it can be restored with git",
+		);
+	});
+
 	it("archive performs the delta-sync check", () => {
 		const text = skill("archive");
 		expect(text).toContain("delta-sync");
