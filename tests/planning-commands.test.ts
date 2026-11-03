@@ -495,6 +495,54 @@ describe("planning commands", () => {
 		expect(skill("explore")).toContain("Do NOT write code");
 	});
 
+	const flatExplore = () => skill("explore").replace(/\s+/g, " ");
+
+	it("explore asks consent before the first write and names file and scope", () => {
+		expect(flatExplore()).toContain(
+			"Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.",
+		);
+	});
+
+	it("explore refuses schema, template and config.yaml edits as implementing", () => {
+		expect(flatExplore()).toContain(
+			"Editing a schema, a template or `config.yaml` counts as implementing: refuse it and point the user to creating a change.",
+		);
+	});
+
+	it("explore scaffolds a change and hands off to /opsx-continue without writing brainstorm.md", () => {
+		const t = flatExplore();
+		expect(t).toContain(
+			"you may run `openspec new change <name>` and never create `openspec/changes/` by hand, then point to `/opsx-continue <name>`.",
+		);
+		expect(t).toContain("Do not write `brainstorm.md` and do not run a review gate in explore.");
+	});
+
+	it("explore context checks list specs", () => {
+		const t = skill("explore");
+		expect(t).toContain("openspec list --specs");
+		expect(t).toContain("openspec show <id> --type spec");
+	});
+
+	it("explore capture table uses the superspec artifact names", () => {
+		const t = skill("explore");
+		for (const row of [
+			"| Scope changed              | `proposal.md`",
+			"| Design decision made       | `design.md`",
+			"| New work identified        | `tasks.md`",
+			"| Plan changed               | `plan.md`",
+			"| Problem or goal reframed   | `brainstorm.md`",
+		]) {
+			expect(t).toContain(row);
+		}
+		expect(t).not.toContain("default schema");
+	});
+
+	it("explore diagrams use ASCII only", () => {
+		const t = skill("explore");
+		expect(t).toContain("Diagrams use ASCII characters only.");
+		expect(t).not.toMatch(/[\u2500-\u257F\u25A0-\u25FF\u2190-\u21FF\u2022\u2713\u2717\u2715]/);
+	});
+
 	it("new asks for a kebab-case name and continue handles several changes", () => {
 		const text = skill("new");
 		expect(text).toContain("kebab-case");
