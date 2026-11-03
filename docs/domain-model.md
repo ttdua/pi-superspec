@@ -34,19 +34,24 @@ The `superspec` schema shipped inside the package (`schema/superspec/`).
 ## ProjectSchema
 
 The copy at `openspec/schemas/superspec/` inside a project. Has the same fields as
-BundledSchema. States relative to the bundled one: *same*, *older-pristine*,
-*older-edited*, *newer*, *foreign* (no marker).
+BundledSchema. States relative to the bundled one, as classified by the code:
+*absent* (not installed), *identical*, *foreign* (no marker with a version), *older*,
+*newer*, *edited* (same version, files differ). *older* takes precedence over
+*edited*; there is no older-pristine/older-edited split. Only *absent* is installed
+over; every state except *identical* blocks `/opsx-init`. Splitting *older* by the
+lock hashes is planned (`schema-auto-upgrade`, not shipped). This change deliberately
+corrects the earlier state list to match the shipped behaviour.
 
 ## SchemaLock
 
-`openspec/schemas/superspec/.pi-superspec.json`, written with every install or
-upgrade.
+`openspec/schemas/superspec/.pi-superspec.json`, written on a fresh install
+(upgrade is planned, not shipped). It is not read yet.
 
 | Field | Meaning |
 |---|---|
 | `schemaVersion` | Version installed. |
 | `packageVersion` | Package version that installed it. |
-| `files` | Map of relative path → sha256 at install time. Any mismatch means *edited*. |
+| `files` | Map of relative path → sha256 at install time. Planned (not shipped): compare against it to detect user edits. Today *edited* is decided by hashing the project directory against the bundled one, not against the lock. |
 
 ## Project
 
@@ -56,8 +61,8 @@ A repository (or the nearest ancestor of `cwd` containing `openspec/`).
 |---|---|
 | `root` | Directory containing `openspec/`. |
 | `activated` | ProjectSchema exists and carries the marker. |
-| `isMainCheckout` | `git rev-parse --git-dir` equals `--git-common-dir`. |
-| `trusted` | pi project trust granted. |
+| `isMainCheckout` | Planned (`schema-auto-upgrade`, not shipped; not modelled in code): `git rev-parse --git-dir` equals `--git-common-dir`. |
+| `trusted` | Planned (not shipped; not modelled in code): pi project trust granted. |
 
 ## ProjectConfig
 
