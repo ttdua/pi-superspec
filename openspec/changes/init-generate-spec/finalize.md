@@ -11,7 +11,7 @@
 - **Branch**: `worktree-init-generate-spec`
 - **Base branch**: `main`
 - **Final state**: `pr-open`
-- **PR URL**: `pending (filled in after the PR is created)`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/7`
 
 ---
 
