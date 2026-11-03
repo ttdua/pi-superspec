@@ -75,6 +75,11 @@ describe("validateLanguage", () => {
 		expect(validateLanguage("a".repeat(65))).toBeUndefined();
 		expect(validateLanguage("a\nb")).toBeUndefined();
 	});
+	it("rejects control characters", () => {
+		expect(validateLanguage("a\tb")).toBeUndefined();
+		expect(validateLanguage("a\u0000b")).toBeUndefined();
+		expect(validateLanguage("a\u007fb")).toBeUndefined();
+	});
 });
 
 describe("parseLanguage / readLanguage", () => {
@@ -92,6 +97,8 @@ describe("parseLanguage / readLanguage", () => {
 		expect(parseLanguage("language: \n")).toBeUndefined();
 		expect(parseLanguage('language: ""\n')).toBeUndefined();
 		expect(parseLanguage('language: "abc\n')).toBeUndefined();
+		expect(parseLanguage('language: "a\\u0000b"\n')).toBeUndefined();
+		expect(parseLanguage('language: "vi\\u0007"\n')).toBeUndefined();
 	});
 	it("readLanguage reads the file, missing file is undefined", () => {
 		const root = mkdtempSync(join(tmpdir(), "lang-"));

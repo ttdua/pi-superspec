@@ -27,7 +27,7 @@ export const MAX_LANGUAGE_LENGTH = 64;
 
 export function validateLanguage(value: string): string | undefined {
 	const trimmed = value.trim();
-	if (trimmed === "" || trimmed.length > MAX_LANGUAGE_LENGTH || /[\r\n]/.test(trimmed)) return undefined;
+	if (trimmed === "" || trimmed.length > MAX_LANGUAGE_LENGTH || /[\u0000-\u001f\u007f]/.test(trimmed)) return undefined;
 	return trimmed;
 }
 
