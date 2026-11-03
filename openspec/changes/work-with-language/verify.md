@@ -5,7 +5,7 @@
 > Failed checks must be fixed in the corresponding artifact, then re-run verify.
 
 **Change**: `work-with-language`
-**Verified at**: `2026-11-03 13:05 UTC`
+**Verified at**: `2026-11-03 13:14 UTC`
 **Iteration**: `2`
 **Verifier**: `Claude (controller session)`
 
@@ -35,7 +35,7 @@ If any items failed, list id + issues:
 
 - [ ] All `- [ ]` have been changed to `- [x]`
 
-21 of 22 checkboxes are `- [x]`.
+22 of 23 checkboxes are `- [x]`.
 
 **Incomplete tasks** (if any):
 
@@ -80,20 +80,20 @@ All four are expected before archive; `/opsx:archive` (or `/opsx:sync`) applies 
 - [x] No unstaged files in the worktree
 - [ ] All related commits have been pushed
 
-PR #5 was opened from this branch. The iteration 2 commits (`57c2ae8` onward) are not pushed yet: pushing needs the user's explicit go-ahead.
+PR #5 was opened from this branch. The iteration 2 commits up to `b57cc7e` were pushed with the user's go-ahead. Task 11 (language is a required string in the routing note builders, `965586a` and `a39f30e`) and the receipt updates after it are not pushed yet: pushing needs the user's explicit go-ahead.
 
-**Commit range** (if known): `c8e9782..1773560`
+**Commit range** (if known): `c8e9782..a39f30e`
 
 ---
 
 ## Overall Decision
 
 - [ ] ✅ PASS — ready to proceed via /opsx:continue to the finalize artifact, then /opsx:archive
-- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: task 5.2 (manual end-to-end check with a live agent) has not been performed and blocks archive until the user runs it or waives it; the delta specs are not yet synced; the iteration 2 commits are not pushed to PR #5.
+- [x] ⚠️ PASS WITH WARNINGS — can proceed but note: task 5.2 (manual end-to-end check with a live agent) has not been performed and blocks archive until the user runs it or waives it; the delta specs are not yet synced; the Task 11 commits are not pushed to PR #5 yet.
 
 **Next step**:
 
-Decide on task 5.2: run the `docs/e2e-checklist.md` flow once in a scratch project (an `/opsx-init` run now gives `language: en`; use `--lang vi` or edit the key to test another language) and report the outcome, or waive it explicitly. Then push the iteration 2 commits to update PR #5, and run `/opsx:archive` (sync the four delta specs).
+Decide on task 5.2: run the `docs/e2e-checklist.md` flow once in a scratch project (an `/opsx-init` run now gives `language: en`; use `--lang vi` or edit the key to test another language) and report the outcome, or waive it explicitly. Then push the remaining commits to update PR #5, and run `/opsx:archive` (sync the four delta specs).
 
 > **Convergence loop reminder**:
 > - PASS / PASS_WITH_WARNINGS → `/opsx:continue` advances to the finalize
