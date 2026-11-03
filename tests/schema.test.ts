@@ -12,6 +12,7 @@ import {
 	SCHEMA_DIR,
 	type TempProject,
 } from "./helpers/project.js";
+import { parseArtifactTable } from "./helpers/artifact-table.js";
 
 const available = hasOpenspec();
 if (!available) {
@@ -250,6 +251,78 @@ run("bundled schema", () => {
 			expect(
 				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
 			).toBe(true);
+		});
+	});
+	describe("artifact DAG", () => {
+		const docsTable = () =>
+			parseArtifactTable(
+				readFileSync(
+					new URL("../docs/domain-model.md", import.meta.url),
+					"utf8",
+				),
+			);
+
+		it("artifact DAG matches docs/domain-model.md", () => {
+			const docs = docsTable();
+			const res = project.openspec(["new", "change", "dag"]);
+			expect(res.status, res.stdout + res.stderr).toBe(0);
+			const st = project.openspec(["status", "--change", "dag", "--json"]);
+			expect(st.status, st.stderr).toBe(0);
+			const json = JSON.parse(st.stdout.slice(st.stdout.indexOf("{"))) as {
+				artifacts: { id: string; status: string; missingDeps?: string[] }[];
+			};
+			expect(json.artifacts.map((a) => a.id).sort()).toEqual(
+				[...docs.keys()].sort(),
+			);
+			// The CLI exposes no `requires`; on a fresh change nothing is done,
+			// so each artifact's missingDeps equals its direct requires.
+			const ready = json.artifacts.filter((a) => a.status === "ready");
+			expect(ready.map((a) => a.id)).toEqual(["brainstorm"]);
+			for (const a of json.artifacts) {
+				expect([...(a.missingDeps ?? [])].sort(), a.id).toEqual(
+					[...(docs.get(a.id) ?? [])].sort(),
+				);
+			}
+			// Cross-check the schema file's own requires: lists.
+			const fromYaml = new Map<string, string[]>();
+			let cur = "";
+			let inReq = false;
+			for (const line of schemaYaml().split("\n")) {
+				const idm = /^  - id: (\S+)/.exec(line);
+				if (idm) {
+					cur = idm[1];
+					fromYaml.set(cur, []);
+					inReq = false;
+					continue;
+				}
+				if (/^    requires:\s*\[\]\s*$/.test(line)) {
+					inReq = false;
+				} else if (/^    requires:\s*$/.test(line)) {
+					inReq = true;
+				} else if (inReq && /^      - (\S+)/.test(line)) {
+					fromYaml.get(cur)?.push(/^      - (\S+)/.exec(line)?.[1] ?? "");
+				} else if (/^    \S/.test(line)) {
+					inReq = false;
+				}
+			}
+			for (const [id, req] of docs) {
+				expect(fromYaml.get(id)?.slice().sort(), id).toEqual(
+					req.slice().sort(),
+				);
+			}
+			expect(fromYaml.size).toBe(docs.size);
+			// design is required by no artifact.
+			for (const req of docs.values()) expect(req).not.toContain("design");
+		});
+
+		it("every artifact template exists", () => {
+			const templates = [...schemaYaml().matchAll(/^\s+template: (\S+)$/gm)].map(
+				(m) => m[1],
+			);
+			expect(templates.length).toBe(docsTable().size);
+			for (const t of templates) {
+				expect(existsSync(join(SCHEMA_DIR, "templates", t)), t).toBe(true);
+			}
 		});
 	});
 });
