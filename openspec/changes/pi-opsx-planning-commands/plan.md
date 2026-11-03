@@ -17,7 +17,7 @@
 - Skill directory name == frontmatter `name`: `opsx-explore`, `opsx-new`, `opsx-continue`, `opsx-ff` (never `openspec-*`).
 - Skill `description` ≤ 1024 chars, `name` ≤ 64 chars, lowercase/digits/hyphens only.
 - pi has no `Skill` tool: skills are loaded by reading `SKILL.md`; prompt args arrive as `$@`.
-- Optional tools use "if available, otherwise plain fallback" wording: `rpiv-ask-user-question`, `rpiv-todo`.
+- Optional tools use "if available, otherwise plain fallback" wording: `ask_user_question`, `todo`.
 - `opsx-new` must not pass `--schema` (project `config.yaml` selects `superspec`).
 - Do not edit `openspec/schemas/superspec/`, `schema/superspec/`, `package.json`, or `extensions/`.
 - Each SKILL.md carries a one-line credit to the OpenSpec 1.4.1 skill it adapts.
@@ -67,7 +67,7 @@ Use `readFileSync`/`readdirSync`/`existsSync` with root = `new URL("..", import.
 - "prompts delegate to their skill and pass $@": each prompt contains `opsx-${c}`, `SKILL.md`, and `$@`; each prompt is ≤ 15 lines.
 - "ships no placeholder resources": `skills/superspec-placeholder` and `prompts/opsx-placeholder.md` do not exist.
 - "contains no Claude tool names": walk every file under `skills/` and `prompts/`; none matches `/AskUserQuestion|TodoWrite|Task tool/`.
-- "skills that ask the user state a plain-text fallback": `new`, `continue`, `ff` each contain `rpiv-ask-user-question` and `numbered options`.
+- "skills that ask the user state a plain-text fallback": `new`, `continue`, `ff` each contain `ask_user_question` and `numbered options`.
 - "continue and ff carry the Superpowers artifact rule": each contains `superpowers:`, `SKILL.md`, `install Superpowers`, and `docs/superpowers`.
 - "new creates without --schema, stops, and suggests continue": `opsx-new` contains `openspec new change`, `Do NOT create any artifacts`, `/opsx-continue`, and its only `--schema` mentions are in a line containing `omit`/`Omit`/`never`.
 - "continue creates one artifact then stops": contains `exactly one` and `STOP`.
@@ -98,7 +98,7 @@ git commit -m "test: specify planning command skills and prompts"
 - Reference (read-only): `.claude/skills/openspec-explore/SKILL.md`, `.claude/skills/openspec-new-change/SKILL.md`, `.claude/commands/opsx/{explore,new}.md`
 
 **Interfaces:**
-- Produces: tool wording reused verbatim by Tasks 3–4 — ask: "Use the `rpiv-ask-user-question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait." Todo: "Track progress with the `rpiv-todo` tool if available; otherwise state the checklist in your reply."
+- Produces: tool wording reused verbatim by Tasks 3–4 — ask: "Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait." Todo: "Track progress with the `todo` tool if available; otherwise state the checklist in your reply."
 
 - [ ] **Step 1: Confirm tool names.** Inspect the installed or published `rpiv-ask-user-question` and `rpiv-todo` packages (npm / repo README) for their registered tool names. If a name differs from the package name, use the real tool name in the wording above and in Task 1's `numbered options` neighbour assertion; record it in a code comment-free note in the commit message.
 - [ ] **Step 2: Write `opsx-explore/SKILL.md`.** Frontmatter `name: opsx-explore`, a description adapted from the source; credit line; body adapted from `openspec-explore` with every Claude tool reference mapped per Interfaces; keep the "Do NOT write code" guardrail verbatim in meaning. Run `grep -n "AskUserQuestion\|TodoWrite\|Task tool" skills/opsx-explore/SKILL.md` → no output.
