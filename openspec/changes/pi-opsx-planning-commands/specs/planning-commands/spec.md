@@ -12,7 +12,7 @@ The package SHALL provide `opsx-explore`, `opsx-new`, `opsx-continue` and `opsx-
 - **THEN** it names its skill, references `$@`, and contains no step-by-step command logic
 
 ### Requirement: No Claude tool names
-Skills and prompts SHALL NOT contain `AskUserQuestion`, `TodoWrite` or `Task tool`. Where the OpenSpec source skill asked the user, tracked todos, or loaded a skill, the text MUST use the `rpiv-ask-user-question` tool, the `rpiv-todo` tool, or reading `SKILL.md`, each with a plain-text fallback when the tool is unavailable.
+Skills and prompts SHALL NOT contain `AskUserQuestion`, `TodoWrite` or `Task tool`. Where the OpenSpec source skill asked the user, tracked todos, or loaded a skill, the text MUST use the `ask_user_question` tool (package `rpiv-ask-user-question`), the `todo` tool (package `rpiv-todo`), or reading `SKILL.md`, each with a plain-text fallback when the tool is unavailable.
 
 #### Scenario: Forbidden names absent
 - **WHEN** all files under `skills/` and `prompts/` are searched for `AskUserQuestion`, `TodoWrite` and `Task tool`

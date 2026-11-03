@@ -34,9 +34,9 @@ or `/skill:opsx-<x>`), follow it, treating `$@` as the user input. Nothing else.
 | `TodoWrite` | "Track progress with the `todo` tool if available; otherwise state the checklist in your reply." |
 | Skill invocation | "Read the skill's `SKILL.md`." |
 
-The exact registered tool names of `rpiv-ask-user-question` / `rpiv-todo` are
-confirmed against the packages at implementation time; wording says "if available"
-so a wrong name degrades to the fallback rather than failing.
+The registered tool names are confirmed: `ask_user_question` (package
+`rpiv-ask-user-question`) and `todo` (package `rpiv-todo`). Wording still says
+"if available" so a missing package degrades to the fallback rather than failing.
 
 ### Superpowers-backed artifacts
 
@@ -70,5 +70,5 @@ when" criteria.
 
 - Behaviour rests on instruction text; a weak model may skip the Superpowers rule.
   Mitigated by a plain "stop if skill not found" rather than silent improvisation.
-- Tool names of the optional rpiv packages may differ; "if available" wording and the
+- The optional rpiv packages may not be installed; "if available" wording and the
   plain fallback bound the damage.

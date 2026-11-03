@@ -5,7 +5,7 @@ After `/opsx-init` a project is activated but exposes only a placeholder command
 ## What Changes
 
 - Add four commands, each a thin prompt in `prompts/` that reads a skill in `skills/` and passes `$@`: `opsx-explore`, `opsx-new`, `opsx-continue`, `opsx-ff`. The skills are adapted from the OpenSpec 1.4.1 generated skills, with credit.
-- Replace Claude tool names with pi tools (`rpiv-ask-user-question`, `rpiv-todo`) and plain-text fallbacks; load skills by reading `SKILL.md`.
+- Replace Claude tool names with pi tools (`ask_user_question` from `rpiv-ask-user-question`, `todo` from `rpiv-todo`) and plain-text fallbacks; load skills by reading `SKILL.md`.
 - Add one rule for artifacts written by Superpowers skills (brainstorm, plan): read the named skill, write only to the change directory, ignore its closing handoff, stop if it is not installed.
 - `opsx-ff` runs brainstorm interactively, then proposal → plan unattended, and stops before apply.
 - **Remove** the placeholder skill and prompt from package-skeleton.
