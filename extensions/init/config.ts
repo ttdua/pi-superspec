@@ -52,3 +52,29 @@ export function readLanguage(root: string): string | undefined {
 	const file = join(root, "openspec", "config.yaml");
 	return existsSync(file) ? parseLanguage(readFileSync(file, "utf8")) : undefined;
 }
+
+export function mergeLanguage(text: string | undefined, value: string): string {
+	// Keep a leading BOM in place so `^` matches the first real line.
+	if (text?.startsWith("\uFEFF")) return `\uFEFF${mergeLanguage(text.slice(1), value)}`;
+	const formatted = /^[\p{L}\p{N} _.()-]+$/u.test(value) ? value : JSON.stringify(value);
+	const line = `language: ${formatted}`;
+	if (text === undefined || text === "") return `${line}\n`;
+	// "." does not match "\r", so a CRLF line ending is left in place.
+	if (/^language:.*$/m.test(text)) return text.replace(/^language:.*$/m, () => line);
+	const eol = text.includes("\r\n") ? "\r\n" : "\n";
+	const schema = /^schema:.*(?:\r?\n|$)/m.exec(text);
+	if (!schema) return `${line}${eol}${text}`;
+	const end = schema.index + schema[0].length;
+	const head = text.slice(0, end);
+	return `${head}${head.endsWith("\n") ? "" : eol}${line}${eol}${text.slice(end)}`;
+}
+
+export function applyLanguage(root: string, value: string): "written" | "unchanged" {
+	const file = join(root, "openspec", "config.yaml");
+	const current = existsSync(file) ? readFileSync(file, "utf8") : undefined;
+	const next = mergeLanguage(current, value);
+	if (next === current) return "unchanged";
+	mkdirSync(dirname(file), { recursive: true });
+	writeFileSync(file, next);
+	return "written";
+}

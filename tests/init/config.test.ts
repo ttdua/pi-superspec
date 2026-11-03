@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, utimesSync,
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyConfig, mergeConfig, parseLanguage, readLanguage, validateLanguage } from "../../extensions/init/config.ts";
+import { applyConfig, applyLanguage, mergeConfig, mergeLanguage, parseLanguage, readLanguage, validateLanguage } from "../../extensions/init/config.ts";
 
 describe("mergeConfig", () => {
 	it("replaces spec-driven", () => {
@@ -106,5 +106,55 @@ describe("parseLanguage / readLanguage", () => {
 		mkdirSync(join(root, "openspec"));
 		writeFileSync(join(root, "openspec", "config.yaml"), "schema: superspec\nlanguage: vi\n");
 		expect(readLanguage(root)).toBe("vi");
+	});
+});
+
+describe("mergeLanguage", () => {
+	it("inserts after the schema line", () => {
+		expect(mergeLanguage("schema: superspec\ncontext: |\n  x\n", "vi")).toBe("schema: superspec\nlanguage: vi\ncontext: |\n  x\n");
+	});
+	it("replaces an existing top-level language", () => {
+		expect(mergeLanguage("schema: superspec\nlanguage: vi\nx: 1\n", "en")).toBe("schema: superspec\nlanguage: en\nx: 1\n");
+	});
+	it("quotes values that are not plain", () => {
+		expect(mergeLanguage("schema: superspec\n", "zh: simplified")).toBe('schema: superspec\nlanguage: "zh: simplified"\n');
+		expect(mergeLanguage("schema: superspec\n", "a # b")).toBe('schema: superspec\nlanguage: "a # b"\n');
+		expect(mergeLanguage("schema: superspec\n", "Tiếng Việt")).toBe("schema: superspec\nlanguage: Tiếng Việt\n");
+	});
+	it("leaves a nested language key alone", () => {
+		expect(mergeLanguage("schema: superspec\nx:\n  language: vi\n", "en")).toBe("schema: superspec\nlanguage: en\nx:\n  language: vi\n");
+	});
+	it("keeps CRLF line endings", () => {
+		expect(mergeLanguage("schema: superspec\r\nb: 1\r\n", "vi")).toBe("schema: superspec\r\nlanguage: vi\r\nb: 1\r\n");
+		expect(mergeLanguage("schema: superspec\r\nlanguage: vi\r\n", "en")).toBe("schema: superspec\r\nlanguage: en\r\n");
+	});
+	it("adds a newline when the schema line is last", () => {
+		expect(mergeLanguage("schema: superspec", "vi")).toBe("schema: superspec\nlanguage: vi\n");
+	});
+	it("prepends without a schema line, keeping the BOM first", () => {
+		expect(mergeLanguage("x: 1\n", "vi")).toBe("language: vi\nx: 1\n");
+		expect(mergeLanguage("\uFEFFx: 1\n", "vi")).toBe("\uFEFFlanguage: vi\nx: 1\n");
+		expect(mergeLanguage(undefined, "vi")).toBe("language: vi\n");
+	});
+	it("is idempotent", () => {
+		const once = mergeLanguage("schema: superspec\nx: 1\n", "vi");
+		expect(mergeLanguage(once, "vi")).toBe(once);
+	});
+	it("round-trips through parseLanguage", () => {
+		for (const v of ["vi", "zh: simplified", "a # b", "Tiếng Việt", 'say "hi"']) {
+			expect(parseLanguage(mergeLanguage("schema: superspec\n", v))).toBe(v);
+		}
+	});
+});
+
+describe("applyLanguage", () => {
+	it("writes once, then reports unchanged", () => {
+		const root = mkdtempSync(join(tmpdir(), "lang-"));
+		mkdirSync(join(root, "openspec"));
+		const file = join(root, "openspec", "config.yaml");
+		writeFileSync(file, "schema: superspec\ncontext: |\n  x\n");
+		expect(applyLanguage(root, "vi")).toBe("written");
+		expect(readFileSync(file, "utf8")).toBe("schema: superspec\nlanguage: vi\ncontext: |\n  x\n");
+		expect(applyLanguage(root, "vi")).toBe("unchanged");
 	});
 });
