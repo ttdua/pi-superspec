@@ -43,11 +43,9 @@ describe("superspec extension", () => {
 		expect(result.skillPaths[0]).toMatch(/[\\/]skills$/);
 		expect(result.promptPaths[0]).toMatch(/[\\/]prompts$/);
 		expect(
-			existsSync(join(result.skillPaths[0], "superspec-placeholder", "SKILL.md")),
+			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
 		).toBe(true);
-		expect(existsSync(join(result.promptPaths[0], "opsx-placeholder.md"))).toBe(
-			true,
-		);
+		expect(existsSync(join(result.promptPaths[0], "opsx-new.md"))).toBe(true);
 	});
 
 	it("returns nothing in an unmarked project", () => {

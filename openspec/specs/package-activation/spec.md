@@ -3,9 +3,7 @@
 ## Purpose
 
 Decide when the pi-superspec extension exposes its skills and prompts: find the project root, detect the `x-pi-superspec` marker, and return resource paths only for activated projects.
-
 ## Requirements
-
 ### Requirement: Project root discovery
 The extension SHALL find the project root by walking up from the given working directory and selecting the first directory that contains an `openspec/` directory. It SHALL report no root when none exists up to the filesystem root. The nearest `openspec/` SHALL win even when it is not activated.
 
@@ -59,13 +57,18 @@ On `resources_discover` the extension SHALL return the package's `skills` and `p
 - **WHEN** `resources_discover` fires with a `cwd` that has no project root
 - **THEN** the result contains no skill or prompt paths
 
-### Requirement: Placeholder commands prove activation
-The package SHALL ship one placeholder skill and one placeholder prompt that are visible in pi only in an activated project.
+### Requirement: Planning commands are visible only when activated
+The package SHALL ship the `opsx-explore`, `opsx-new`, `opsx-continue` and `opsx-ff` skills and prompts, and SHALL NOT ship a placeholder skill or prompt. These resources MUST be visible in pi only in an activated project.
 
 #### Scenario: Visible when marked
 - **WHEN** pi is started with `pi -e .` inside a marked fixture project
-- **THEN** the placeholder command is available
+- **THEN** the `opsx-new` command and the `opsx-new` skill are available
 
 #### Scenario: Hidden when unmarked
 - **WHEN** pi is started with `pi -e .` inside an unmarked fixture project
-- **THEN** the placeholder command is not available
+- **THEN** none of the planning commands or skills are available
+
+#### Scenario: No placeholder resources
+- **WHEN** the package resource directories are listed
+- **THEN** no placeholder skill or prompt exists
+

@@ -118,9 +118,9 @@ unless the release notes include a migration step.
 
 | Action | With optional package | Fallback |
 |---|---|---|
-| Ask the user to choose | `rpiv-ask-user-question` tool | plain question, numbered options |
+| Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`) | plain question, numbered options |
 | Dispatch a subagent | `pi-subagents` `subagent` tool | Superpowers `executing-plans` in-session |
-| Track todos | `rpiv-todo` tool | checklist in `tasks.md` / SDD ledger |
+| Track todos | tool `todo` (package `rpiv-todo`) | checklist in `tasks.md` / SDD ledger |
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
 Pi-specific tool names live only in the package's skills and prompts, never in the
