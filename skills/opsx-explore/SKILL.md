@@ -3,7 +3,7 @@ name: opsx-explore
 description: Enter explore mode, a thinking partner for exploring ideas, investigating problems, and clarifying requirements before or during an OpenSpec change. Use when the user wants to think something through without implementing.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-explore (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-explore (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Enter explore mode. Think deeply. Visualize freely. Follow the conversation wherever it goes.
 

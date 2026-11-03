@@ -3,7 +3,7 @@ name: opsx-verify
 description: Verify an applied OpenSpec change in its worktree against the change artifacts, run the project tests fresh, and write the verify.md receipt with a PASS, PASS_WITH_WARNINGS or FAIL outcome. Use after /opsx-apply and before finalize and archive.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-verify-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-verify-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Verify that an implementation matches the change artifacts. The CLI returns the verify instruction (the six checks) at runtime; this skill wraps it and adds the worktree, the fresh test run, the `verify.md` receipt, and the fix loop.
 

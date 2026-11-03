@@ -123,6 +123,25 @@ describe("planning commands", () => {
 		}
 	});
 
+	it("provenance headers record the 1.16.0 sync and what was not adopted", () => {
+		const upstream: Record<string, string> = {
+			explore: "openspec-explore",
+			new: "openspec-new-change",
+			continue: "openspec-continue-change",
+			ff: "openspec-ff-change",
+			apply: "openspec-apply-change",
+			verify: "openspec-verify-change",
+			sync: "openspec-sync-specs",
+			archive: "openspec-archive-change",
+		};
+		for (const [c, name] of Object.entries(upstream)) {
+			const line = skill(c).split("\n")[5];
+			expect(line, c).toBe(
+				`<!-- Adapted from OpenSpec 1.4.1 ${name} (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->`,
+			);
+		}
+	});
+
 	it("continue and ff carry the Superpowers artifact rule", () => {
 		for (const c of ["continue", "ff"]) {
 			const text = skill(c);

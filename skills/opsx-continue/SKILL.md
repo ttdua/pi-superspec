@@ -3,7 +3,7 @@ name: opsx-continue
 description: Continue an OpenSpec change by creating the next ready artifact, run a review gate on it, then stop. Use when the user wants to progress their change or create the next artifact.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-continue-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-continue-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Continue working on a change by creating the next artifact.
 

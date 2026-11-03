@@ -3,7 +3,7 @@ name: opsx-sync
 description: Merge a change's delta specs into the living specs under openspec/specs without archiving the change. Use when the main specs should be updated before archive, or to preview what archive would sync.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-sync-specs (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-sync-specs (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Sync delta specs from a change into the living specs.
 

@@ -3,7 +3,7 @@ name: opsx-apply
 description: Implement an OpenSpec change in an isolated worktree using the Superpowers executor, then write the apply.md receipt. Also handles PR review feedback after a PR is open. Use when the user wants to start or continue implementation.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-apply-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-apply-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Implement the tasks of an OpenSpec change. The CLI returns the apply instruction at runtime; this skill wraps it and adds the executor choice, the receipt, and the post-PR loop.
 

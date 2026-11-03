@@ -3,7 +3,7 @@ name: opsx-archive
 description: Archive a completed change after checking completion and whether its delta specs are already synced into the living specs. Use when implementation is finalized and the change should be archived.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-archive-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-archive-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Archive a completed change. Before archiving, run the delta-sync check and offer to sync when the living specs are behind.
 

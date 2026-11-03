@@ -3,7 +3,7 @@ name: opsx-ff
 description: Fast-forward an OpenSpec change. Run the brainstorm artifact interactively and gate it, then create all remaining artifacts needed for implementation unattended, then gate the final packet. Use when the user wants a complete plan quickly.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-ff-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-ff-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Fast-forward through artifact creation: brainstorm the design with the user, then generate everything needed to start implementation in one go.
 
