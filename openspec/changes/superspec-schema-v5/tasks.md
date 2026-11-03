@@ -1,7 +1,7 @@
 ## 1. Schema scaffold
 
-- [ ] 1.1 Copy upstream v4 `schema.yaml`, `templates/*.md` and `LICENSE` into `schema/superspec/`; set `name`, `version: 5`, `x-pi-superspec`, credit header and new description
-- [ ] 1.2 Add test helper that copies the schema into a temp OpenSpec project; test identity fields and `openspec schema validate superspec`
+- [x] 1.1 Copy upstream v4 `schema.yaml`, `templates/*.md` and `LICENSE` into `schema/superspec/`; set `name`, `version: 5`, `x-pi-superspec`, credit header and new description
+- [x] 1.2 Add test helper that copies the schema into a temp OpenSpec project; test identity fields and `openspec schema validate superspec`
 
 ## 2. Workflow edits
 
