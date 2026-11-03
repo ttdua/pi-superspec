@@ -20,7 +20,7 @@ The Superpowers bootstrap tells the agent to brainstorm before any creative work
 
 ## Impact
 
-- Code: new `extensions/routing-note.ts`; `extensions/superspec.ts` registers the `context` and `session_start` handlers; `extensions/init/preflight.ts` or `init.ts` reuses the shared detection helper (behaviour unchanged).
+- Code: new `extensions/routing-note.ts`; `extensions/superspec.ts` registers the `context` and `session_start` handlers; the `superpowersAvailable` lambda in `extensions/superspec.ts` (used by `/opsx-init`) reuses the shared detection helper (behaviour unchanged).
 - Tests: new unit tests for placement, gating and the warning.
 - Docs: `docs/architecture.md`, `docs/workflow.md`.
 - No new dependencies, no schema or public command changes.

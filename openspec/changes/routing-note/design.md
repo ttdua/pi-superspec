@@ -17,7 +17,7 @@
 ## Decisions
 
 - **Marker-relative insertion** (see brainstorm, Alternative A): find the message containing the Superpowers bootstrap marker and insert after it; otherwise insert at the first non-`compactionSummary` index. Independent of extension load order.
-- **Idempotency**: the note contains its own marker; if a message already contains it, return nothing.
+- **Idempotency**: the note starts with its own marker; if a user message already is the note (text equals it or starts with the marker), return nothing. Quotes of the marker in assistant or tool messages do not count. The same user-role rule applies when locating the Superpowers bootstrap (first match).
 - **New module** `extensions/routing-note.ts` exporting the note text, the insertion function (pure, tested on message arrays) and the Superpowers-detection helper; `superspec.ts` wires the `context` and `session_start` handlers. `/opsx-init` reuses the detection helper.
 - **Warning**: at `session_start`, activated project and `ctx.hasUI` only, notify at warning level: Superpowers not found, run `pi install git:github.com/obra/superpowers`. Once per session.
 - **Docs**: update `docs/architecture.md` (Components and Runtime flow) and `docs/workflow.md` (Routing note) to mention head fallback and the runtime warning.
