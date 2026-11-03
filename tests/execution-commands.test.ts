@@ -109,6 +109,18 @@ describe("execution commands", () => {
 		expect(text).toContain("all_done");
 	});
 
+	it("apply uses task locations and scope pauses", () => {
+		const text = skill("apply");
+		expect(text).toContain("sourcePath");
+		expect(text).toContain("line");
+		expect(text).toContain("fully implemented");
+		expect(text).toContain("adds scope");
+		expect(text).toContain("tracking file");
+		expect(text).toContain("tracked tasks are complete");
+		expect(text).toContain("/opsx-continue");
+		expect(text).toContain("/opsx-verify");
+	});
+
 	it("apply stops after the receipt without finishing the branch", () => {
 		const text = skill("apply");
 		expect(text).toContain("finishing-a-development-branch");
