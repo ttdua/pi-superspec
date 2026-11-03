@@ -654,8 +654,8 @@ apply:
        Steps:
        a. Run `git status --porcelain openspec/changes/<name>/` to
           inspect state.
-       b. If the output contains untracked entries (lines starting
-          with `??`), stage and commit ONLY this change's directory
+       b. If the output is non-empty (untracked `??` or modified
+          entries), stage and commit ONLY this change's directory
           (do NOT use `git add -A`):
 
           ```
@@ -667,13 +667,10 @@ apply:
           with the change directory already tracked."
           ```
 
-       c. If the output is non-empty (untracked or modified entries),
-          stage and commit only this change's directory
-          (`git add openspec/changes/<name>/ && git commit`); the
-          worktree is created from HEAD, so uncommitted artifacts
-          would be missing from its authoritative copy. Skip the
-          commit only when the output is empty (everything is
-          committed).
+       c. Skip the commit only when the output is empty (everything
+          is committed). The worktree is created from HEAD, so
+          uncommitted artifacts would be missing from its
+          authoritative copy.
 
        d. **Branch-state checks** (v4):
           - **Recommended**: a feature branch (any branch that is not

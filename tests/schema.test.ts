@@ -377,8 +377,9 @@ run("bundled schema", () => {
 				"When a plan task's review passes, tick its tasks.md box. tasks.md is the official status; the executor's ledger is for recovery only.",
 			);
 			expect(text).toContain(
-				"If the output is non-empty (untracked or modified entries), stage and commit only this change's directory",
+				"If the output is non-empty (untracked `??` or modified entries), stage and commit ONLY this change's directory",
 			);
+			expect(text).not.toContain("contains untracked entries");
 			expect(text).toContain("Skip the commit only when the output is empty");
 			expect(text).not.toMatch(/only modifications/);
 			expect(text).toContain(

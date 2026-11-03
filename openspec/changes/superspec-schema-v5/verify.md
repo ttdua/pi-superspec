@@ -54,7 +54,7 @@ Both are expected before archive; `/opsx:archive` syncs them.
 
 **Drift warnings** (non-blocking):
 
-1. `schema/superspec/schema.yaml:656-658` (apply step 0b) still says to commit the change dir only when `??` entries exist, while step 0c (`:670-676`) says to commit whenever the status is non-empty. The two steps contradict each other; a literal reading of 0b skips the commit for modified-only artifacts. Known from the final review (finding 2), left open because SDD allows no second fix wave. Fix: reword 0b to "non-empty output" and drop the redundancy with 0c.
+1. ~~Apply step 0b/0c contradiction~~ — **fixed** after this report was first written: step 0b now commits on any non-empty status and 0c skips only when empty (`schema/superspec/schema.yaml:657-676`); test `apply ticks tasks.md as official status and commits dirty change dirs` pins it. Re-checked: `npm test` 54/54, typecheck clean, `openspec validate --all` unchanged.
 2. Worktree branch is `feat/superspec-schema-v5` (the session's pre-existing linked worktree), not `<change-name>`; recorded in apply.md. Finalize's `refs/heads/<change-name>` lookup will not find it for this change and must fall back to asking the user.
 3. Known gaps by decision (see apply.md "Review"): finalize step 3 checks out the feature branch in the main checkout (fails when it lives in a linked worktree); `Outcome: pr-updated` is hard-coded; the reviewer-comment subroutine uses `/tmp` and `gh api -f body=@file`; `apply.md` overwrite vs the docs' "append" for post-PR iterations.
 
@@ -85,8 +85,8 @@ Both are expected before archive; `/opsx:archive` syncs them.
 
 ## Overall Decision
 
-- [ ] ✅ PASS
-- [x] ⚠️ PASS WITH WARNINGS — can proceed to finalize, but note: apply step 0b/0c contradiction (warning 1) should be fixed (one-line edit) before the schema is relied upon; the other items are recorded decisions.
+- [x] ✅ PASS (after fixing warning 1; remaining items 2–3 are recorded decisions, not defects)
+- [ ] ⚠️ PASS WITH WARNINGS
 - [ ] ❌ FAIL
 
-**Next step**: fix warning 1 (optional, can be a small follow-up commit), then `/opsx:continue` to finalize. Nothing has been pushed or merged; finalize requires your explicit go-ahead for push/PR.
+**Next step**: archive, then push and open a PR (user approved in chat).
