@@ -2,7 +2,7 @@
 
 **Change**: `superspec-schema-v5`
 **Finalized at**: `2026-11-03`
-**Outcome**: `kept-as-is`
+**Outcome**: `pr-created`
 
 ---
 
@@ -10,8 +10,8 @@
 
 - **Branch**: `feat/superspec-schema-v5`
 - **Base branch**: `main`
-- **Final state**: `kept-open`
-- **PR URL**: `N/A` (no PR exists for this branch; none opened — awaiting explicit go-ahead)
+- **Final state**: `pr-open`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/2`
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## PR comment
 
-- **Comment status**: `skipped (no PR)`
+- **Comment status**: `skipped (not posted)`
 
 ---
 
@@ -36,11 +36,11 @@
 
 ## Notes
 
-- Closeout steps skipped: ff-merge of the worktree branch (same branch as the feature branch), push, PR creation and reviewer comment. Pushing and opening a PR require the user's explicit go-ahead.
+- ff-merge skipped (worktree branch is the feature branch). After the user's explicit go-ahead in chat, the change was archived, the branch pushed and PR #2 opened. No reviewer comment was posted.
 - Verify outcome was `PASS_WITH_WARNINGS`; the open warning (apply step 0b/0c contradiction in `schema/superspec/schema.yaml`) is recorded in `verify.md`.
 
 ---
 
 ## Next step
 
-Resume later. Re-enter finalize when ready to push and open a PR, or run `/opsx:archive` to sync the delta specs (`bundled-schema`, `package-manifest`) and move the change into the archive. Fix the verify warning before relying on the schema.
+Wait for PR review. Archive commits are already on this branch; merge the PR yourself (or ask) once approved. Merging requires the user's explicit go-ahead.
