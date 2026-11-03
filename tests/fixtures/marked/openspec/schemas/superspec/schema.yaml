@@ -1,0 +1,4 @@
+name: superspec
+version: 5
+x-pi-superspec:
+  version: 5
