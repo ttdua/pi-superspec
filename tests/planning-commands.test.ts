@@ -1,9 +1,11 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
 
 const root = new URL("..", import.meta.url);
-const rootPath = root.pathname;
+const rootPath = fileURLToPath(root);
 
 const COMMANDS = ["explore", "new", "continue", "ff"] as const;
 
@@ -61,10 +63,31 @@ describe("planning commands", () => {
 			...walk(join(rootPath, "skills")),
 			...walk(join(rootPath, "prompts")),
 		];
+		expect(files.length).toBeGreaterThan(0);
 		for (const file of files) {
 			expect(readFileSync(file, "utf8"), file).not.toMatch(
 				/AskUserQuestion|TodoWrite|Task tool/,
 			);
+		}
+	});
+
+	it("frontmatter of every skill and prompt parses like pi does", () => {
+		const skills = walk(join(rootPath, "skills")).filter((f) =>
+			f.endsWith("SKILL.md"),
+		);
+		const prompts = walk(join(rootPath, "prompts")).filter((f) =>
+			f.endsWith(".md"),
+		);
+		expect(skills.length).toBeGreaterThan(0);
+		expect(prompts.length).toBeGreaterThan(0);
+		for (const file of [...skills, ...prompts]) {
+			const { frontmatter } = parseFrontmatter(readFileSync(file, "utf8"));
+			expect(typeof frontmatter.description, file).toBe("string");
+			expect(String(frontmatter.description).trim(), file).not.toBe("");
+			if (skills.includes(file)) {
+				expect(typeof frontmatter.name, file).toBe("string");
+				expect(String(frontmatter.name).trim(), file).not.toBe("");
+			}
 		}
 	});
 
@@ -81,7 +104,7 @@ describe("planning commands", () => {
 			const text = skill(c);
 			expect(text, c).toContain("superpowers:");
 			expect(text, c).toContain("SKILL.md");
-			expect(text, c).toContain("install Superpowers");
+			expect(text, c).toContain("STOP and tell the user to install Superpowers");
 			expect(text, c).toContain("docs/superpowers");
 			expect(text, c).toContain("STOP");
 		}
@@ -118,7 +141,7 @@ describe("planning commands", () => {
 	it("new asks for a kebab-case name and continue handles several changes", () => {
 		const text = skill("new");
 		expect(text).toContain("kebab-case");
-		expect(text).toContain("ask");
+		expect(text).toContain("ask for a valid name");
 		expect(skill("continue")).toContain("several");
 	});
 });
