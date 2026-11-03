@@ -347,4 +347,18 @@ describe("planning commands", () => {
 		expect(text).toContain("ask for a valid name");
 		expect(skill("continue")).toContain("several");
 	});
+
+	it("workflow doc describes the review gates", () => {
+		const wf = read("docs/workflow.md");
+		expect(wf).toContain("Review gate");
+		expect(wf).toContain("plannotator");
+		expect(wf).toContain("brainstorm.md");
+		expect(wf).toContain("code review gate");
+		expect(wf).not.toContain("ff runs unattended but brainstorming is interactive");
+		const arch = read("docs/architecture.md");
+		const row = arch.split("\n").find((l) => l.startsWith("|") && l.includes("`plannotator`"));
+		expect(row).toBeDefined();
+		expect(row).toContain("--result-file");
+		expect(row).toContain("ask_user_question");
+	});
 });

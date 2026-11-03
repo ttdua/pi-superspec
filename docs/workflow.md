@@ -76,8 +76,34 @@ comment under the same policy as finalize.
   `branch refs/heads/<change-name>` (asks the user if not found), reads branch facts
   from its `apply.md`, then runs the Superspec v4 closeout: ff-merge into the feature
   branch, re-test, remove the worktree, write and commit `finalize.md`, push, offer a
-  PR, upsert the reviewer comment. A policy in the project's `AGENTS.md` overrides
-  any of these steps.
+  PR, upsert the reviewer comment. Before the feature branch is touched, a **code
+  review gate** (step 2b) reviews the worktree diff against the feature branch. A
+  policy in the project's `AGENTS.md` overrides any of these steps.
+
+## Review gates
+
+A review gate asks the reviewer to decide on written work before the workflow moves on.
+It ends in one outcome: `approved`, `approved with notes` or `changes requested`. A
+closed or dismissed review is not an approval: the agent asks in chat how to proceed.
+
+- `/opsx-continue` creates one artifact, runs a review gate on it, then stops.
+- `/opsx-ff` runs a gate on `brainstorm.md`, creates proposal, design, specs, tasks and
+  plan unattended, then runs one final gate over those five files. `brainstorm.md` is not
+  repeated in the final gate.
+- finalize runs a code review gate (step 2b) after the in-worktree test run and before
+  the feature branch is checked out, merged, pushed or opened as a PR. Notes or requested
+  changes stop finalize: fix on the worktree branch, record an iteration in `apply.md`,
+  run `/opsx-verify` again and re-enter finalize.
+- Reviewer, chosen each time a gate opens, in this order:
+  1. the `plannotator` agent tool;
+  2. the Plannotator CLI, run in the background, with its JSON result read from a file;
+  3. `ask_user_question`;
+  4. plain text with numbered options.
+
+  A tier that fails to open falls to the next one.
+- Wording-only notes after `approved with notes` are applied and the work continues;
+  anything that changes a requirement, scope, decision or scenario reopens the gate. A
+  revision cascades to dependent artifacts, and the next gate opens on the changed files.
 
 ## Conflicts resolved
 
@@ -91,7 +117,7 @@ comment under the same policy as finalize.
 | 6 | Finalize guesses the feature branch from `git log`. | `apply.md` records branch facts; finalize reads them. |
 | 7 | OpenSpec-generated skills name Claude tools (`AskUserQuestion`, `Task`). | Package skills use pi tools with fallbacks ([architecture.md](architecture.md#pi-tool-mapping)). |
 | 8 | Upstream says `executing-plans` lacks TDD/review; Superpowers 7 requires TDD there. | `executing-plans` is the fallback without `pi-subagents`; it must still request a whole-branch review before `apply.md`. |
-| 9 | `/opsx-ff` runs unattended but brainstorming is interactive. | ff runs brainstorm interactively, then the rest unattended, stopping before apply. |
+| 9 | `/opsx-ff` runs unattended but brainstorming is interactive. | ff gates `brainstorm.md`, runs proposal, design, specs, tasks and plan unattended, then runs one final review gate over those five, stopping before apply. |
 | 10 | The Superpowers bootstrap pushes brainstorming before any creative work, writing outside OpenSpec. | Routing note by kind of work (below). |
 
 ## Routing note (activated projects)
@@ -114,8 +140,8 @@ warns once per session start (including reload) with `pi install git:github.com/
 | `/opsx-init` | Always available. Set up the project; an existing non-identical schema is left unchanged with a warning (automatic upgrade and repair are planned, not shipped). |
 | `/opsx-explore [topic]` | Free-form thinking, no code. |
 | `/opsx-new <name>` | Create a change with the `superspec` schema. |
-| `/opsx-continue [name]` | Create the next ready artifact, then stop for review. **Default path.** |
-| `/opsx-ff <name or description>` | Brainstorm interactively, then generate proposal → plan unattended; stop before apply. |
+| `/opsx-continue [name]` | Create the next ready artifact, run a review gate on it, then stop. **Default path.** |
+| `/opsx-ff <name or description>` | Brainstorm interactively and gate `brainstorm.md`, generate proposal → plan unattended, then run one final gate; stop before apply. |
 | `/opsx-apply [name]` | Run the schema's apply block. |
 | `/opsx-verify [name]` | Produce `verify.md`. |
 | `/opsx-sync [name]` | Sync delta specs into living specs without archiving. |
