@@ -11,7 +11,7 @@ Facts below come only from reading `extensions/`, `skills/`, `prompts/`, `schema
 
 ### Activation
 - Project root = nearest ancestor-or-self of cwd that contains an `openspec/` directory (`extensions/activation.ts:15`). If none, `/opsx-init` uses cwd itself as root (`init.ts:33`).
-- Activated = `openspec/schemas/superspec/schema.yaml` matches `/^x-pi-superspec:/m` (`activation.ts:4,26`).
+- Activated = `openspec/schemas/superspec/schema.yaml` matches `/^x-pi-superspec:/m` (`activation.ts:4,26`). Activation matches only that key line; classification (`schema-install.ts:15`) also needs a `version: <n>` line right after it, so a marker without a version is activated yet classed `foreign` (blocked by /opsx-init).
 - On `resources_discover`, an activated project gets `skills/` and `prompts/` of the package (`superspec.ts:17-24`). Not activated: only `/opsx-init` exists. So after removing the package no `/opsx-*` command remains.
 
 ### Steps, in order (`extensions/init/init.ts:24-77`)
@@ -46,7 +46,7 @@ Facts below come only from reading `extensions/`, `skills/`, `prompts/`, `schema
 ### Other runtime behaviour (activated project)
 - `session_start`: only when activated AND `ctx.hasUI` and Superpowers missing: notify (warning) `pi-superspec needs Superpowers, which is not installed. Install it with: pi install git:github.com/obra/superpowers` (`superspec.ts:33-37`). Fires on every session start including reload.
 - `context` event: inserts the routing note (user message starting `pi-superspec routing note`) once; after the message containing `superpowers:using-superpowers bootstrap for pi` if present, else at head after any `compactionSummary` messages; skipped if already present (`routing-note.ts`). Text: behaviour-changing work MUST first be proposed with `/opsx-new`, before brainstorming; small work that changes no spec is done directly with TDD and no change directory; do NOT write design docs or plans to `docs/superpowers/`.
-- Optional pi packages named in skills (fallbacks exist): `ask_user_question` tool (`rpiv-ask-user-question` per docs/architecture.md:120-127 table; the skill text says only "the `ask_user_question` tool if available"), `todo` tool, `subagent` tool from `pi-subagents` (named in `skills/opsx-apply/SKILL.md`).
+- Optional pi packages named in skills (fallbacks exist): `ask_user_question` tool (UNVERIFIED: the package name `rpiv-ask-user-question` (and `rpiv-todo`) appears only in docs/architecture.md:124-126, nowhere in code or skills, do not quote as fact; the skill text says only "the `ask_user_question` tool if available"), `todo` tool, `subagent` tool from `pi-subagents` (named in `skills/opsx-apply/SKILL.md`).
 
 ## Upgrade
 
@@ -62,7 +62,7 @@ THE SHIPPED CODE HAS NO UPGRADE MECHANISM. Do not document automatic upgrade, `-
   4. marker version > bundled: `newer`
   5. same version but any bundled file's sha256 differs or is missing: `edited`
   6. same version, all bundled files match: `identical` (extra user files are ignored)
-  So the "five cases" of the plan are really: absent (install), identical (no-op), and four blocked states `foreign` / `older` / `newer` / `edited`. Note an older schema is `older` even if edited.
+  The plan said "five upgrade cases"; the code has six schema states: absent (install), identical (no-op), and four blocked states `foreign` / `older` / `newer` / `edited`. Note an older schema is `older` even if edited.
 - For every state other than absent/identical, `/opsx-init` writes nothing in `openspec/schemas/superspec/`, notifies at level `warning`, runs legacy cleanup, returns `blocked` without validating or reloading (`init.ts:47-59`). Exact message:
   ```
   Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.
@@ -90,7 +90,7 @@ After the package is removed (`pi remove ...`), commands and skills vanish becau
 - `openspec/schemas/superspec/` : `schema.yaml` (with the `x-pi-superspec` marker), `templates/*.md` (9 files: apply, brainstorm, design, finalize, plan, proposal, spec, tasks, verify), `LICENSE`.
 - `openspec/schemas/superspec/.pi-superspec.json` (the lock file; the brief's `.pi-superspec.json`).
 - Anything the user created: change directories, and e.g. `.superpowers/` ledgers, worktrees and feature branches made by `/opsx-apply` (git state, outside `openspec/`).
-Not left behind: any `.pi/` file (the package writes none; it only offers to delete legacy `.pi/prompts/opsx-*.md` and `.pi/skills/openspec-*`, and only with confirmation). Because the schema stays and `config.yaml` names it, the plain `openspec` CLI keeps working with `schema: superspec` (the marker key is an unknown key that OpenSpec ignores, per docs/architecture.md:97-98, not independently re-verified here). Re-installing the package re-activates the project automatically since the marker is still present.
+Not left behind: any `.pi/` file (the package writes none; it only offers to delete legacy `.pi/prompts/opsx-*.md` and `.pi/skills/openspec-*`, and only with confirmation). Because the schema stays and `config.yaml` names it, the plain `openspec` CLI keeps working with `schema: superspec` (UNVERIFIED: that OpenSpec ignores the unknown `x-pi-superspec` key is only a claim in docs/architecture.md:97-98; not tested here, do not quote as fact). Re-installing the package re-activates the project automatically since the marker is still present.
 Manual full removal (not automated by the package): delete `openspec/schemas/superspec/` and revert the `schema:` line in `openspec/config.yaml`.
 
 ## Commands
@@ -116,40 +116,33 @@ Notes:
 
 ## Doc drift
 
-`docs/*.md` compared with the code as shipped. Task 6 should fix each item (or the docs-release spec should record it as a finding).
+Confirmed mismatches between `docs/*.md` and the shipped code only. Format: file:line, what the doc says, what the code does.
 
 ### docs/architecture.md
-1. Line 18-19, Goal 4 "projects with an older copy are upgraded automatically and safely": not implemented. Code blocks on any non-identical existing schema.
-2. Line 44: `extensions/superspec.ts` is described as "/opsx-init, activation, auto-upgrade, routing note": no auto-upgrade. (The extension is also split across `extensions/activation.ts`, `routing-note.ts`, `extensions/init/*`; the tree lists only `superspec.ts`.)
-3. Lines 44-48 tree: lists `README.md` which does not exist yet (Task 2 adds it); omits the root files this change adds (LICENSE, CHANGELOG, CONTRIBUTING).
-4. Line 57, Extension row: "checks and upgrades the project schema on `session_start`": `session_start` only warns about missing Superpowers (hasUI-gated). No schema check or upgrade.
-5. Lines 70-71, runtime flow: `session_start` "compare project schema version with bundled -> upgrade rules": not implemented.
-6. Line 81 `/opsx-init` "idempotent (re-running repairs or upgrades)": re-running is idempotent but does not repair or upgrade; it blocks on `older`/`edited`/`newer`/`foreign`.
-7. Line 88, init step 5 "fresh install or upgrade rules below": only fresh install; other states stop.
-8. Lines 94-113, "Schema identity, version and upgrade" table and write-guard paragraph: no upgrade of any kind. Specifically not implemented: replace-when-lock-matches (105), `/opsx-init --force` with backup `openspec/schemas/superspec.bak-<timestamp>/` (106), "newer": warn package outdated (107; code reports state through the blocked notice), "no marker": migration offer after backup (108; code reports `foreign` and stops), the three write guards main-checkout / `ctx.isProjectTrusted()` / `ctx.hasUI` (110-114). The lock file is written but never read.
-9. Line 96, `version:` "starts at **5**": correct (schema.yaml `version: 5`).
-10. Line 98-100 lock file path and shape: correct (path `openspec/schemas/superspec/.pi-superspec.json`).
-11. Lines 152-154 Testing bullet: "the five upgrade cases ... upgrade write guards" claims unit tests that do not exist for upgrade or guards; tests exist for classification (6 states), config merge, legacy, preflight, init. Also "Manual end-to-end in pi ... with and without `pi-subagents`" has no checklist yet (Task 3 adds `docs/e2e-checklist.md`).
-12. Line 141: lists `ctx.isProjectTrusted()` among pi APIs relied on: the code never calls it.
-13. Lines 120-127 pi tool mapping: package names `rpiv-ask-user-question`, `rpiv-todo` are not referenced anywhere in code or skills (skills say only "`ask_user_question` tool if available" and "`todo` tool if available"); `pi-subagents` is referenced (`skills/opsx-apply`). Unverified, keep as is but flag.
-14. Lines 22-26 Non-goals: "Installing OpenSpec or Superpowers" consistent with code (warns only).
+1. :18-19 Goal 4 says projects with an older schema copy "are upgraded automatically and safely". Code: no upgrade; any non-identical existing schema blocks (`init.ts:47-59`).
+2. :44 says `extensions/superspec.ts` does "/opsx-init, activation, auto-upgrade, routing note". Code: no auto-upgrade; the logic is also in `extensions/activation.ts`, `routing-note.ts`, `extensions/init/*`.
+3. :57 Extension row says it "checks and upgrades the project schema on `session_start`". Code: `session_start` only warns when Superpowers is missing (`superspec.ts:33-37`).
+4. :70-71 runtime flow says `session_start` compares schema version with bundled and applies upgrade rules. Code: not implemented.
+5. :81 says `/opsx-init` re-running "repairs or upgrades". Code: re-running is idempotent but never repairs or upgrades; older/edited/newer/foreign stop with the blocked notice.
+6. :88 init step 5 says "fresh install or upgrade rules". Code: fresh install only.
+7. :103-108 upgrade table: "older, files match lock hashes" replace and rewrite lock (:105); `/opsx-init --force` backup to `openspec/schemas/superspec.bak-<timestamp>/` then replace (:106); "newer": warn package outdated (:107); "no marker": migration offer after backup (:108). Code: none of these exist; every non-identical state only gets the blocked warning; the lock is never read.
+8. :110-114 automatic upgrade write guards (main checkout via git-dir vs git-common-dir, `ctx.isProjectTrusted()`, `ctx.hasUI`). Code: no upgrade, no such guards; `isProjectTrusted` is never called. `hasUI` is used only for the legacy-delete confirm and the Superpowers warning.
+9. :141 lists `ctx.isProjectTrusted()` among the pi APIs used. Code never calls it.
+10. :152-154 Testing bullet claims unit tests for "the five upgrade cases" and "upgrade write guards". Code and tests: six classification states, no upgrade, no guards tested.
 
 ### docs/workflow.md
-15. Line 114: `/opsx-init` "Set up, repair or upgrade the project": only set up; repair/upgrade not implemented.
-16. Lines 115-123 command table is otherwise consistent with the prompts; `/opsx-new <name>`, `[name]` arguments match. `/opsx-ff <name>` is `name or description`; `/opsx-explore` takes an optional topic and is not in the table with argument. Consider noting that finalize is created through `/opsx-continue`.
-17. Line 101: "`session_start` warns once per session start (including reload)": correct, but only when `ctx.hasUI` (architecture.md:71-72 says "interactive only" - consistent).
-18. Lines 96-109 routing note: matches `routing-note.ts` ("propose creating a change" vs code "MUST first be proposed"; wording only).
+11. :114 `/opsx-init` "Set up, repair or upgrade the project". Code: set up only.
+12. :115-123 command table lacks argument detail: `/opsx-ff` takes a name or a description (asks if missing) but the table shows `/opsx-ff <name>`; `/opsx-explore` takes an optional topic but the table shows none. Finalize is created with `/opsx-continue` (verify skill step 7) and is not a command; consider a note.
 
 ### docs/domain-model.md
-19. Lines 34-38, ProjectSchema: "ProjectSchema states: *same*, *older-pristine*, *older-edited*, *newer*, *foreign*": code states are `absent`, `identical`, `foreign`, `older`, `newer`, `edited` (no older-pristine/older-edited split; `older` wins over `edited`).
-20. Lines 41-48 `SchemaLock`: "written with every install or upgrade" true for install only; lock is not used to detect "edited" (classification compares with the bundled files). Glossary says the same (glossary.md "Lock file ... used to detect user edits"): inaccurate.
-21. Lines 56-60 Project `isMainCheckout`, `trusted` properties: not modelled or used in code.
-22. Project `activated` property: correct.
+13. :36-38 ProjectSchema states "same, older-pristine, older-edited, newer, foreign". Code states: `absent`, `identical`, `foreign`, `older`, `newer`, `edited`; no older-pristine/older-edited split, and `older` wins over `edited` (`schema-install.ts:59-72`).
+14. SchemaLock section ("written with every install or upgrade"; "Any mismatch means *edited*"): the lock is written on fresh install only, and "edited" is decided by hashing the project dir against the bundled dir, not against the lock.
+15. Project table rows `isMainCheckout` (:59) and `trusted` (:60): not modelled or used in code.
 
 ### docs/glossary.md
-23. "Lock file" entry: "used to detect user edits" is not true (see 20).
-24. No other mismatch found; glossary has no entry for the blocked/`foreign`/`edited`/`older`/`newer` states.
+16. "Lock file" entry says it is "used to detect user edits". Code: never read (see 14).
 
-### Cross-cutting
-25. No doc mentions `.pi/` legacy cleanup prompt text, or that a blocked `/opsx-init` may already have changed `config.yaml`.
-26. `docs-release` artifacts themselves (plan.md 26-28, 128; specs/usage-guide/spec.md 29, 37; specs/release-metadata if it references `--force`) assume upgrade/`--force` behaviour that does not ship; flagged to the controller.
+### Confirmed correct (no action)
+- architecture.md: schema `version: 5`; lock path `openspec/schemas/superspec/.pi-superspec.json` and shape; init steps 1-4, 6-8; routing note insertion point; non-goals about installing OpenSpec/Superpowers.
+- workflow.md: routing note and `session_start` warning (hasUI-gated) match the code; other command rows match the prompts.
+- domain-model.md: Project `activated`.
