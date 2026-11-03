@@ -108,7 +108,7 @@ context (activated project)
 ## `/opsx-init`
 
 Always available, idempotent: re-running on an initialised project changes nothing
-unless you pass `--lang` or answer the language prompt.
+unless you pass `--lang`, answer the language prompt, or `language:` is missing or invalid (it is then set to `en`).
 It does not repair or upgrade an existing schema (planned, see below).
 
 1. Require `openspec --version` ≥ 1.4; otherwise print the install line and stop.
@@ -126,9 +126,11 @@ It does not repair or upgrade an existing schema (planned, see below).
    flag, quotes stripped, 1 to 64 characters, no control characters; an invalid or
    missing value stops with an error before any file is written; an argument that does not
    start with `--lang` is rejected as unknown, and text after `--lang` is part of the value.
-   Without the flag, when `language:` is missing or invalid and a UI is available, ask
-   once per run; an empty answer or cancel writes nothing. Without a UI it never asks.
-   A valid existing value is never changed without the flag.
+   Without the flag, when `language:` is missing or invalid, the default is `en`. With a UI,
+   ask once per run, offering `en`; an empty answer, cancel or invalid answer (the latter with a
+   warning) writes `language: en`. Without a UI, `en` is written directly and nothing is asked.
+   An invalid existing `language:` line is replaced by `language: en`. A valid existing value is
+   never changed without the flag.
 8. Run `openspec schema validate superspec` and report.
 9. `ctx.reload()` so the commands appear; print the next step (`/opsx-new <name>`).
 
