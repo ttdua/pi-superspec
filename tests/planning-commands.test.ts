@@ -236,8 +236,8 @@ describe("planning commands", () => {
 		});
 
 		it("gate keeps review notes, late brainstorm cascade and resume point explicit", () => {
-			expect(gate).toContain("never infer the outcome from `message`");
-			expect(gate).toContain("Use `message` only as the reviewer's notes to apply");
+			expect(gate).toContain("Decide approve-or-not from `decision` only");
+			expect(gate).toContain("use `message` as the reviewer's notes to apply");
 			expect(gate).toContain("open the next gate on every artifact that depends on it");
 			expect(gate).toContain("missing or unreadable");
 			expect(gate).toContain("at step 3");
@@ -271,6 +271,78 @@ describe("planning commands", () => {
 			expect(text.toLowerCase()).toContain("code review");
 			expect(gate).toContain("finalize");
 			expect(gate.toLowerCase()).toContain("code review");
+		});
+
+		it("code review CLI tier pins the full branch diff mode", () => {
+			const tier2 = gate.split("\n").find((l) => l.includes("plannotator review --base"));
+			expect(tier2).toBeDefined();
+			expect(tier2).toContain("--diff-type merge-base");
+		});
+
+		it("code review tool tier asks to confirm the full branch diff", () => {
+			const tier1 = gate.split("\n").find((l) => l.includes("`review` action"));
+			expect(tier1).toBeDefined();
+			expect(tier1).toContain("full branch diff");
+			expect(tier1).toContain("fall to Tier 2");
+		});
+
+		it("code review CLI tier keeps approve with notes", () => {
+			expect(gate).not.toContain("can only produce");
+			expect(gate).toContain("When `decision` is `approved`, read `message`");
+			expect(gate).toContain("Code review completed — no changes requested.");
+			const tier2 = gate.split("\n").find((l) => l.includes("plannotator review --base"));
+			expect(tier2).toContain("`approved_with_notes`");
+		});
+
+		it("tool tier takes its decision message as the result", () => {
+			const classify = gate.split("\n").find((l) => l.includes("**Classify the result**"));
+			expect(classify).toBeDefined();
+			expect(classify).toContain("never from message text");
+			expect(classify).toContain("the decision message is the result");
+			expect(classify).toContain("ask the user in chat");
+		});
+
+		it("a non-zero exit without a result file is a tier failure", () => {
+			const fail = gate.split("\n").find((l) => l.includes("**When a tier fails to open**"));
+			expect(fail).toContain("non-zero and leaves no result file");
+		});
+
+		it("code review fixes update apply.md as a new iteration", () => {
+			expect(gate).not.toMatch(/append an iteration/i);
+			expect(gate).toContain("update `apply.md` as iteration N+1");
+			expect(gate).toContain("raise `Iteration:`");
+			expect(gate).toContain("gate outcome");
+		});
+
+		it("late brainstorm revision reopens brainstorm.md plus all five", () => {
+			expect(gate).toContain("`brainstorm.md` plus all five");
+		});
+
+		it("continue runs the finalize code review gate before the document gate", () => {
+			const start = text.indexOf("**Act based on status**");
+			const end = text.indexOf("\n**Review gate**");
+			const step3 = text.slice(start, end);
+			inOrder(step3, [
+				"If the artifact is `finalize`",
+				"before the git-side closeout",
+				"Run the **Review gate** on the written file(s)",
+				"follow-up commit and push on the feature branch",
+			]);
+		});
+
+		it("continue artifact rule makes the brainstorm gate the design-doc approval", () => {
+			const rule = text.slice(
+				text.indexOf("\n**Superpowers artifact rule**\n"),
+				text.indexOf("\n**Review gate**\n"),
+			);
+			expect(rule).toContain("the brainstorming skill's design-doc approval");
+			expect(rule).toContain("do not ask for it separately");
+		});
+
+		it("continue frontmatter mentions the review gate", () => {
+			const fm = text.split("---")[1];
+			expect(fm).toContain("run a review gate on it, then stop");
+			expect(fm).not.toContain("then stop for review");
 		});
 	});
 
@@ -335,6 +407,24 @@ describe("planning commands", () => {
 		it("ff reopens everything when brainstorm changes late", () => {
 			expect(text).toContain("all five");
 		});
+
+		it("ff artifact rule makes the brainstorm gate the design-doc approval", () => {
+			const rule = text.slice(
+				text.indexOf("\n**Superpowers artifact rule**\n"),
+				text.indexOf("\n**Review gate**\n"),
+			);
+			expect(rule).toContain("the brainstorming skill's design-doc approval");
+			expect(rule).toContain("do not ask for it separately");
+		});
+
+		it("ff frontmatter and guardrail reflect the gates", () => {
+			const fm = text.split("---")[1];
+			expect(fm).not.toContain("without stopping");
+			expect(fm).toContain("unattended");
+			const guard = text.slice(text.indexOf("**Guardrails**"));
+			expect(guard).toContain("stop after the final gate");
+			expect(guard).not.toContain("stop after the artifacts");
+		});
 	});
 
 	it("explore forbids writing implementation code", () => {
@@ -362,5 +452,20 @@ describe("planning commands", () => {
 		expect(row).toContain("plannotator review");
 		expect(row).toContain("stdout is redirected");
 		expect(row).toContain("ask_user_question");
+	});
+
+	it("docs describe apply.md iterations and the brainstorm approval consistently", () => {
+		const docs = ["docs/workflow.md", "docs/usage-guide.md", "docs/e2e-checklist.md"];
+		for (const d of docs) {
+			const t = read(d);
+			expect(t, d).not.toMatch(/append (a|an) "?(post-PR )?iteration/i);
+			expect(t, d).not.toContain("approve the design");
+			expect(t, d).not.toContain("after you approve the design, a review gate");
+		}
+		const e2e = read("docs/e2e-checklist.md");
+		expect(e2e).not.toContain("Then, with the gate approved: the project's tests run");
+		const runB = e2e.slice(e2e.indexOf("## Run B"));
+		const finalizeB = runB.split("\n").find((l) => l.includes("(step 9, finalize)"));
+		expect(finalizeB).toContain("code review gate");
 	});
 });

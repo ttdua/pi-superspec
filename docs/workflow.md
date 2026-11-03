@@ -33,8 +33,8 @@ completes and archive does not warn.
 
 After a PR is open, review feedback is handled with Superpowers
 `receiving-code-review` on the feature branch in the main checkout (TDD per fix);
-then append a "post-PR iteration N+1" entry with the new commit range to
-`apply.md`, re-run verify, update `finalize.md`, and push / upsert the reviewer
+then update `apply.md` as post-PR iteration N+1 (raise `Iteration:`, extend the
+commit range to the new HEAD), re-run verify, update `finalize.md`, and push / upsert the reviewer
 comment under the same policy as finalize.
 
 ## Step rules
@@ -92,8 +92,10 @@ closed or dismissed review is not an approval: the agent asks in chat how to pro
   repeated in the final gate.
 - finalize runs a code review gate (step 2b) after the in-worktree test run and before
   the feature branch is checked out, merged, pushed or opened as a PR. Notes or requested
-  changes stop finalize: fix on the worktree branch, record an iteration in `apply.md`,
-  run `/opsx-verify` again and re-enter finalize.
+  changes stop finalize: fix on the worktree branch, update `apply.md` as iteration N+1
+  (raise `Iteration:`, extend the commit range), run `/opsx-verify` again and re-enter
+  finalize. The escape hatch runs the same gate before merging locally or opening a PR;
+  `skipped` is recorded only for keep-as-is, discard, or a gate you waive in chat.
 - Reviewer, chosen each time a gate opens, in this order:
   1. the `plannotator` agent tool;
   2. the Plannotator CLI, run in the background, with its JSON result read from a file;

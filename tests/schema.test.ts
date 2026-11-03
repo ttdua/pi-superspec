@@ -366,9 +366,42 @@ run("bundled schema", () => {
 		it("brainstorm and finalize instructions name no review tool", () => {
 			for (const id of ["brainstorm", "finalize"]) {
 				expect(instructionFor(id), id).not.toMatch(
-					/plannotator|AskUserQuestion|ask_user_question/,
+					/plannotator|AskUserQuestion|ask_user_question|rpiv-|pi-subagents|Skill tool/,
 				);
 			}
+		});
+
+		it("finalize step 2b stops, updates apply.md and defines skipped", () => {
+			const flat = instructionFor("finalize");
+			const gate = flat.slice(
+				flat.indexOf("2b."),
+				flat.indexOf("3. Switch to the feature branch and pull:"),
+			);
+			expect(gate).toContain("do not run step 3");
+			expect(gate).toContain("or when unsure");
+			expect(gate).not.toMatch(/append an iteration/i);
+			expect(gate).toContain("update apply.md as iteration N+1");
+			expect(gate).toContain("gate outcome");
+			expect(gate).toContain("`skipped (<reason>)` is allowed only");
+		});
+
+		it("finalize escape hatch runs the code review gate before Options 1 and 2", () => {
+			const flat = instructionFor("finalize");
+			const hatch = flat.slice(flat.indexOf("Escape hatch: manual skill invocation"));
+			expect(hatch).toContain("code review gate");
+			expect(hatch).toContain("step 2b");
+			expect(hatch).toContain("Option 1 or Option 2");
+			expect(hatch).toContain("`skipped (<reason>)` only for Options 3 and 4");
+		});
+
+		it("finalize step 8 and template point to step 2b for skipped", () => {
+			const flat = instructionFor("finalize");
+			const eight = flat.slice(
+				flat.indexOf("8. Write finalize.md"),
+				flat.indexOf("9. Commit the receipt"),
+			);
+			expect(eight).toContain("as step 2b allows");
+			expect(tpl("finalize.md")).toContain("finalize step 2b");
 		});
 
 		it("finalize step 2b sits between the worktree tests and the checkout", () => {

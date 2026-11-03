@@ -332,17 +332,26 @@ artifacts:
 
       2b. Code review gate: before the feature branch is touched,
           obtain the reviewer's approval of the worktree's code
-          changes compared with $FEATURE_BRANCH. The commit range to
-          review comes from apply.md. Outcomes:
+          changes compared with $FEATURE_BRANCH: the full diff of
+          every commit on the worktree branch since that branch. The
+          commit range to review comes from apply.md. Outcomes:
           - approved: continue to step 3.
-          - approved with notes, or changes requested: apply them on
-            the worktree branch, append an iteration entry to
-            apply.md, run `/opsx-verify`, then re-enter finalize.
-            The gate reopens after changes requested; after notes it
-            reopens only when a note changed behaviour or a
-            requirement.
+          - approved with notes, or changes requested: do not run
+            step 3. Apply them on the worktree branch, then
+            update apply.md as iteration N+1 (raise `Iteration:`,
+            extend the commit range to the new HEAD, and note the
+            gate outcome and where finalize resumes in its Next
+            step), as the apply template directs. Run
+            `/opsx-verify`, then re-enter finalize. The gate reopens
+            after changes requested; after notes it reopens only
+            when a note changed behaviour or a requirement, or when
+            unsure. Otherwise finalize resumes at step 3.
           - no decision: ask the user, and never treat a missing
             decision as an approval.
+          `skipped (<reason>)` is allowed only when the user waives
+          this gate in chat, or for an escape-hatch option that
+          merges and pushes nothing (Options 3 and 4, see "Escape
+          hatch"). It never stands in for a missing decision.
           Record the outcome, the reviewer tier and the commit range
           reviewed in finalize.md (step 8).
 
@@ -404,8 +413,8 @@ artifacts:
          - Cleanup: `removed` (or `preserved (harness-owned)`)
          - Tests baseline status at finish: `passing`
          - Code review: `approved` | `approved with notes` |
-           `skipped (<reason>)`, with the reviewer tier and the
-           commit range reviewed (from step 2b)
+           `skipped (<reason>)` (only as step 2b allows), with the
+           reviewer tier and the commit range reviewed (from step 2b)
          - PR comment status: filled in by step 12 below (or by
            step 11 if the user declines the PR-creation prompt /
            the session is non-interactive)
@@ -630,6 +639,13 @@ artifacts:
       (Option 3); or discard the work (Option 4) — invoke
       `superpowers:finishing-a-development-branch` directly via
       the skill loader and pick the matching option.
+
+      Before Option 1 or Option 2 merges or pushes anything, run the
+      step 2b code review gate, with the diff base set to the branch
+      the option merges into (Option 1) or opens the PR against
+      (Option 2), and stop on notes or requested changes as step 2b
+      directs. Record `skipped (<reason>)` only for Options 3 and 4,
+      or when the user waives the gate in chat.
 
       After the skill returns:
       1. Hand-write finalize.md from
