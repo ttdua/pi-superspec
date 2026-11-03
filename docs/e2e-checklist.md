@@ -38,11 +38,12 @@ Setup: install `pi-subagents` and pi-superspec, then start pi in the scratch rep
 
 ### Apply, verify, finalize, archive
 
-- [ ] Confirm you are on the feature branch, then run `/opsx-apply` (step 7, apply). Expected: a commit `docs(openspec): scaffold e2e-a change` exists if the change directory was uncommitted; `git worktree list` shows a worktree on a new branch named `e2e-a`.
+- [ ] Commit the `/opsx-init` output on the feature branch (`git add openspec/config.yaml openspec/schemas/superspec`, then `git commit`), because apply commits only the change directory and the worktree is created from the feature branch. Expected: `git status --porcelain openspec/config.yaml openspec/schemas` prints nothing.
+- [ ] Confirm you are on the feature branch, then run `/opsx-apply` (step 7, apply). Expected: `git log` shows a commit `docs(openspec): scaffold e2e-a change` if the change directory was uncommitted; `git worktree list` shows a worktree on a new branch named `e2e-a`.
 - [ ] Watch the executor during apply. Expected: the agent uses the `subagent` tool for subagent-driven development (a fresh subagent per task, a reviewer per task, a final whole-implementation review), and `tasks.md` boxes in the worktree are ticked as tasks pass review.
 - [ ] Read the apply result in the worktree. Expected: `openspec/changes/e2e-a/apply.md` exists in the worktree and is committed, lists the worktree path, branches, commit range and `Iteration: 1`, and records subagent-driven development as the executor; the agent tells you to run `/opsx-verify`.
 - [ ] With the worktree as the working directory, run `/opsx-verify` (step 8, verify). Expected: `openspec/changes/e2e-a/verify.md` exists in the worktree with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL` under Overall Decision; on `FAIL`, rerun `/opsx-apply` then `/opsx-verify` until it is not `FAIL`.
-- [ ] With the worktree as the working directory, run `/opsx-continue` (step 9, finalize). Expected: tests run, the worktree branch is merged into the feature branch with `--ff-only`, the worktree is removed or recorded as `preserved (harness-owned)`, and `openspec/changes/e2e-a/finalize.md` exists on the feature branch with an outcome and a `PR comment status` line.
+- [ ] With the worktree as the working directory, run `/opsx-continue` (step 9, finalize). Expected: the project's tests run (or a "no tests" result is recorded), the worktree branch is merged into the feature branch with `--ff-only`, the worktree is removed or recorded as `preserved (harness-owned)`, and `openspec/changes/e2e-a/finalize.md` exists on the feature branch with an outcome and a `PR comment status` line.
 - [ ] Check the remote after finalize. Expected: `git log origin/<feature-branch> --oneline` shows the `finalize.md` commit, because finalize pushed the feature branch.
 - [ ] Back in the main checkout on the feature branch, run `/opsx-archive` (step 10, archive) and confirm the prompts. Expected: the directory `openspec/changes/archive/YYYY-MM-DD-e2e-a/` exists, `openspec/changes/e2e-a/` is gone, and nothing was committed by the command (the move shows in `git status`).
 
@@ -62,27 +63,27 @@ Setup: install `pi-subagents` and pi-superspec, then start pi in the scratch rep
 
 ## Run B — without pi-subagents
 
-Setup: remove `pi-subagents`, keep pi-superspec installed, restart pi, and use a fresh scratch repository with a new feature branch (for example `feat/e2e-b`). Run `/opsx-init` as in Run A first.
+Setup: remove `pi-subagents`, reinstall pi-superspec (Run A ends by removing it), restart pi, and use a fresh scratch repository with a new feature branch (for example `feat/e2e-b`).
 
 ### Init
 
 - [ ] Run `/opsx-init` in the fresh repository. Expected: the output ends with `Superspec is set up. Next: /opsx-new <name>`, `openspec/schemas/superspec/.pi-superspec.json` exists, and the `/opsx-*` commands are listed.
-- [ ] Check that the session has no `subagent` tool. Expected: asking the agent to list its tools shows no `subagent` tool.
 
 ### Steps one to six, step by step
 
 - [ ] Run `/opsx-new e2e-b`. Expected: the directory `openspec/changes/e2e-b/` exists and no artifact file has been created yet.
 - [ ] Run `/opsx-continue`, answer the brainstorm questions and approve the design (step 1, brainstorm). Expected: `openspec/changes/e2e-b/brainstorm.md` exists and the agent stops for review.
 - [ ] Run `/opsx-continue` (step 2, proposal). Expected: `openspec/changes/e2e-b/proposal.md` exists with a Capabilities list.
-- [ ] Run `/opsx-continue` (step 3, design, optional). Expected: `openspec/changes/e2e-b/design.md` exists, either with decisions or the two-line `No design needed: <reason>`.
+- [ ] Run `/opsx-continue` (step 3, design, optional). Expected: `openspec/changes/e2e-b/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
 - [ ] Run `/opsx-continue` (step 4, specs). Expected: `openspec/changes/e2e-b/specs/<capability>/spec.md` exists for each capability, with `#### Scenario:` blocks.
 - [ ] Run `/opsx-continue` (step 5, tasks). Expected: `openspec/changes/e2e-b/tasks.md` exists with a checklist of tasks.
 - [ ] Run `/opsx-continue` (step 6, plan). Expected: `openspec/changes/e2e-b/plan.md` exists and every plan task names a `tasks.md` ID.
 
 ### Apply, verify, finalize, archive
 
+- [ ] Commit the `/opsx-init` output on the feature branch (`git add openspec/config.yaml openspec/schemas/superspec`, then `git commit`), because apply commits only the change directory and the worktree is created from the feature branch. Expected: `git status --porcelain openspec/config.yaml openspec/schemas` prints nothing.
 - [ ] Confirm you are on the feature branch, then run `/opsx-apply` (step 7, apply). Expected: a worktree on a new branch named `e2e-b` appears in `git worktree list`.
-- [ ] Watch the executor during apply. Expected: the agent uses Superpowers `executing-plans` in the current session, tells you that TDD and review are not enforced for it, never calls a `subagent` tool, and ticks `tasks.md` boxes in the worktree.
+- [ ] Watch the executor during apply. Expected: the agent says it uses Superpowers `executing-plans` in the current session, tells you that TDD and review are not enforced for it, makes no subagent calls, and ticks `tasks.md` boxes in the worktree.
 - [ ] Watch the end of apply. Expected: before `apply.md` is written the agent requests a whole-branch review over the full commit range (`requesting-code-review`), and then `openspec/changes/e2e-b/apply.md` exists in the worktree and records `executing-plans` as the executor.
 - [ ] With the worktree as the working directory, run `/opsx-verify` (step 8, verify). Expected: `openspec/changes/e2e-b/verify.md` exists in the worktree with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`; on `FAIL`, rerun `/opsx-apply` then `/opsx-verify`.
 - [ ] With the worktree as the working directory, run `/opsx-continue` (step 9, finalize). Expected: the worktree branch is merged into the feature branch with `--ff-only`, `openspec/changes/e2e-b/finalize.md` exists on the feature branch, and the feature branch is pushed to `origin`.
