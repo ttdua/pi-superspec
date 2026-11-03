@@ -235,6 +235,15 @@ describe("planning commands", () => {
 			expect(gate).toMatch(/changed behaviour or a requirement/);
 		});
 
+		it("gate keeps review notes, late brainstorm cascade and resume point explicit", () => {
+			expect(gate).toContain("never infer the outcome from `message`");
+			expect(gate).toContain("Use `message` only as the reviewer's notes to apply");
+			expect(gate).toContain("open the next gate on every artifact that depends on it");
+			expect(gate).toContain("missing or unreadable");
+			expect(gate).toContain("at step 3");
+			expect(gate).toContain("not at step 2b");
+		});
+
 		it("gate does not depend on its position or on continue", () => {
 			expect(gate).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
 		});
