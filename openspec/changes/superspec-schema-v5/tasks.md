@@ -18,5 +18,5 @@
 
 ## 4. Manifest and verification
 
-- [ ] 4.1 Add `schema` to `package.json` `files`; update the manifest test
-- [ ] 4.2 Run `npm test`, `npm run typecheck`; confirm `openspec/schemas/superspec/` is unchanged
+- [x] 4.1 Add `schema` to `package.json` `files`; update the manifest test
+- [x] 4.2 Run `npm test`, `npm run typecheck`; confirm `openspec/schemas/superspec/` is unchanged
