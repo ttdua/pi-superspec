@@ -13,12 +13,12 @@
 
 ## 3. Docs
 
-- [ ] 3.1 Update `docs/architecture.md` (`/opsx-init` flag, components, runtime flow note that the new prompt is discovered after activation)
-- [ ] 3.2 Update `docs/usage-guide.md` with the existing-codebase bootstrap section
-- [ ] 3.3 Update the command table in `README.md` and `README.vi.md` (add `/opsx-generate-specs`, mention `--generate` on the init row) and keep the table test green
-- [ ] 3.4 Add a `CHANGELOG.md` entry
+- [x] 3.1 Update `docs/architecture.md` (`/opsx-init` flag, components, runtime flow note that the new prompt is discovered after activation)
+- [x] 3.2 Update `docs/usage-guide.md` with the existing-codebase bootstrap section
+- [x] 3.3 Update the command table in `README.md` and `README.vi.md` (add `/opsx-generate-specs`, mention `--generate` on the init row) and keep the table test green
+- [x] 3.4 Add a `CHANGELOG.md` entry
 
 ## 4. Verification
 
-- [ ] 4.1 Run `npm run typecheck` and `npm test`
-- [ ] 4.2 Run `openspec validate init-generate-spec --strict`
+- [x] 4.1 Run `npm run typecheck` and `npm test`
+- [x] 4.2 Run `openspec validate init-generate-spec --strict`
