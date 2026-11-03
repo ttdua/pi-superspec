@@ -2,7 +2,7 @@
 
 **Change**: `pi-opsx-planning-commands`
 **Finalized at**: `2026-11-03 15:05`
-**Outcome**: `kept-as-is`
+**Outcome**: `pr-created`
 
 ---
 
@@ -10,10 +10,10 @@
 
 - **Branch**: `feat/pi-opsx-planning-commands`
 - **Base branch**: `main`
-- **Final state**: `kept-open`
-- **PR URL**: `N/A`
+- **Final state**: `pr-open`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/1`
 
-Apply ran directly in the existing linked worktree on the feature branch, so there is no separate `<change-name>` worktree branch to merge back. No merge, push or PR was performed: none was authorised in this session.
+Apply ran directly in the existing linked worktree on the feature branch, so there is no separate `<change-name>` worktree branch to merge back. No merge was performed. The branch was pushed and PR #1 opened after an explicit go-ahead in this session.
 
 ---
 
@@ -26,7 +26,7 @@ Apply ran directly in the existing linked worktree on the feature branch, so the
 
 ## PR comment
 
-- **Comment status**: `skipped (no PR)`
+- **Comment status**: `posted`
 
 ---
 
@@ -38,10 +38,7 @@ Apply ran directly in the existing linked worktree on the feature branch, so the
 
 ## Next step
 
-Open items before integration:
-
 1. Run the manual in-pi check (`tasks.md` 4.2) and tick it.
-2. With an explicit go-ahead: push `feat/pi-opsx-planning-commands` and open a PR against `main`; then re-enter finalize to post the code-reviewer comment.
-3. `/opsx-archive` on this feature branch (syncs the `planning-commands` and `package-activation` delta specs), push the archive commits, then merge the PR.
+2. After code review approval: `/opsx-archive` on this feature branch (syncs the `planning-commands` and `package-activation` delta specs), push the archive commits to update the PR, then merge the PR.
 
 `package-lock.json` has an unrelated uncommitted change (3 lines from `npm install`); decide separately whether to commit or discard it.
