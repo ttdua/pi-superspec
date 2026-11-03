@@ -61,7 +61,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 
 | Command | What it does |
 |---|---|
-| `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. |
+| `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. Optional `--lang <language>` sets the language of OpenSpec documents. |
 | `/opsx-explore` | Explores ideas and clarifies requirements before or during a change. Writes no application code. |
 | `/opsx-new` | Starts a change and shows the first artifact instructions. |
 | `/opsx-continue` | Creates the next artifact, then stops for review. |

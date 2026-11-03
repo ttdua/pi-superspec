@@ -65,8 +65,11 @@ A repository (or the nearest ancestor of `cwd` containing `openspec/`).
 
 ## ProjectConfig
 
-`openspec/config.yaml`. The package only sets `schema: superspec`; `context` and
-per-artifact `rules` belong to the user and are preserved.
+`openspec/config.yaml`. The package sets `schema: superspec` and, on request, `language` (see
+`/opsx-init --lang`); `context` and per-artifact `rules` belong to the user and are
+preserved. `language` is an optional top-level string of 1 to 64 characters with no
+control characters. When set, the routing note tells agents to write the prose of
+OpenSpec documents in that language.
 
 ## Change
 

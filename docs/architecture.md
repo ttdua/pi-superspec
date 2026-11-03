@@ -81,7 +81,7 @@ only to develop pi-superspec itself and is never edited by a change.
 
 | Component | Responsibility |
 |---|---|
-| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event. It does not check or upgrade the project schema at `session_start` (planned, see below). |
+| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event, with a document language paragraph when `language` is set in `openspec/config.yaml` (read on every turn). It does not check or upgrade the project schema at `session_start` (planned, see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
 
@@ -99,6 +99,8 @@ session_start (activated project)
      `pi install git:github.com/obra/superpowers`
      (no schema version comparison or upgrade here yet: planned, see below)
 context (activated project)
+  └─ (adds a document language paragraph when `language:` is set in openspec/config.yaml;
+      read each turn, so a change takes effect without reload)
   └─ append routing note after the Superpowers bootstrap message; when that message is
      absent (e.g. from the second agent run), at the head after compaction summaries
 ```
@@ -112,13 +114,21 @@ It does not repair or upgrade an existing schema (planned, see below).
 2. Warn (do not stop) when not in a git repo or when Superpowers skills are not
    discoverable.
 3. If `openspec/` is missing, run `openspec init --tools none` (no harness files).
-4. Write or update `openspec/config.yaml`: set `schema: superspec`, keep all other keys.
+4. Write or update `openspec/config.yaml`: set `schema: superspec`, optionally set `language` (step 7), keep all other keys.
 5. Install the schema on a fresh project (`absent`). An identical schema is left as is;
    any other existing state stops with a warning and writes nothing (see below).
 6. If files from `openspec init --tools pi` exist (`.pi/prompts/opsx-*.md`,
    `.pi/skills/openspec-*`), list them and **ask** before deleting them.
-7. Run `openspec schema validate superspec` and report.
-8. `ctx.reload()` so the commands appear; print the next step (`/opsx-new <name>`).
+7. Set the document language, after the legacy cleanup (a project blocked on an existing
+   schema writes no language and is not asked). With `--lang <value>` (or `--lang=<value>`), write or
+   overwrite `language:` directly after `schema:`. The value is everything after the
+   flag, quotes stripped, 1 to 64 characters, no control characters; an invalid or
+   missing value, or any other argument, stops with an error before any file is written.
+   Without the flag, when `language:` is missing or invalid and a UI is available, ask
+   once per run; an empty answer or cancel writes nothing. Without a UI it never asks.
+   A valid existing value is never changed without the flag.
+8. Run `openspec schema validate superspec` and report.
+9. `ctx.reload()` so the commands appear; print the next step (`/opsx-new <name>`).
 
 ## Schema identity, version and upgrade
 
