@@ -193,6 +193,7 @@ For a project that already has code but no specs, draft a first set from the cod
 /opsx-ff bootstrap-specs
 /opsx-apply
 /opsx-verify
+/opsx-continue   # creates finalize, see step 9
 /opsx-archive
 ```
 

@@ -464,5 +464,15 @@ describe("runInit", () => {
 			expect(await runInit(io, packageRoot, "--lang vi --generate")).toBe("activated");
 			expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("language: vi");
 		});
+
+		it("writes the same config.yaml with and without --generate", async () => {
+			const plain = tmp();
+			const flagged = tmp();
+			expect(await runInit(recording(plain).io, packageRoot)).toBe("activated");
+			expect(await runInit(recording(flagged).io, packageRoot, "--generate")).toBe("activated");
+			expect(readFileSync(join(flagged, "openspec", "config.yaml"), "utf8")).toBe(
+				readFileSync(join(plain, "openspec", "config.yaml"), "utf8"),
+			);
+		});
 	});
 });

@@ -25,6 +25,10 @@ describe("parseInitArgs", () => {
 			expect("error" in result && result.error).toContain("--lang");
 		}
 	});
+	it("rejects --lang followed only by --generate", () => {
+		const result = parseInitArgs("--lang --generate");
+		expect("error" in result && result.error).toContain("--lang");
+	});
 	it("rejects invalid values", () => {
 		for (const input of [`--lang ${"a".repeat(65)}`, "--lang a\nb", "--lang a\u0007b", "--lang a\u0085b"]) {
 			expect("error" in parseInitArgs(input)).toBe(true);

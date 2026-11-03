@@ -13,7 +13,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 1. **Check the precondition**
 
-   Run in an activated project only (`openspec/config.yaml` exists). If it does not, tell the user to run `/opsx-init` and stop.
+   Run in an activated project only (the `superspec` schema is installed under `openspec/schemas/`). If it is not, tell the user to run `/opsx-init` and stop.
 
    List the files outside ignored directories (`openspec/`, `.git`, `node_modules`, `dist`, `build`, `vendor`, generated files). If there is no source code, say "There is no code to scan" and stop. Create no change.
 
@@ -36,28 +36,42 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
    Before any scout runs, show every remaining candidate with its purpose and a work estimate (candidate count and directories covered). Ask once whether to keep, drop or rename candidates. Run no scout before the user confirms.
 
-   If the user cancels, stop. Create no change and run no scout. Scout only the capabilities left after the user's edits.
+   If the user cancels, stop. Create no change and run no scout. Scout only the capabilities left after the user's edits, and apply step 3 again to the edited list: drop any name that now matches a directory under `openspec/specs/` or a spec file already present in an existing `bootstrap-specs` change.
 
 5. **Create the bootstrap change**
 
+   Run `openspec list --json` first. If no change named `bootstrap-specs` exists, run:
    ```bash
    openspec new change "bootstrap-specs"
    ```
-
-   Omit `--schema`. If `bootstrap-specs` already exists (check `openspec list --json`), ask whether to continue it. If confirmed, read `openspec status --change "bootstrap-specs" --json`, skip every artifact that is `done`, and never overwrite it.
+   Omit `--schema`. If it already exists, ask whether to continue it. If confirmed, read `openspec status --change "bootstrap-specs" --json`, skip every artifact that is `done`, and never overwrite it. The `specs` artifact is the exception: it becomes `done` once any one spec file exists, so resume per capability file. Scout only confirmed capabilities whose `specs/<capability>/spec.md` is missing, and never rewrite one that exists.
 
 6. **Scout contract**
 
-   Each scout writes `openspec/changes/bootstrap-specs/specs/<capability>/spec.md` containing only a `## ADDED Requirements` section. Rules:
-   - Every requirement uses `SHALL` or `MUST` and has at least one `#### Scenario:` with `WHEN` and `THEN` lines.
+   Each scout writes `openspec/changes/bootstrap-specs/specs/<capability>/spec.md` containing only a `## ADDED Requirements` section. Use this block for every requirement, in this order:
+
+   ```markdown
+   ### Requirement: <name>
+   The system SHALL <observable behaviour>.
+   Evidence: <path[:line]>, <test or doc path>
+   Confidence: inferred
+
+   #### Scenario: <name>
+   - **WHEN** <condition>
+   - **THEN** <result>
+   ```
+
+   Rules:
+   - The `SHALL` or `MUST` sentence is the first line of the requirement body. OpenSpec checks only that line, so `Evidence:` and `Confidence:` come after it. The `### Requirement:` header is required, or nothing is parsed.
+   - Every requirement has at least one `#### Scenario:` with `WHEN` and `THEN` lines.
    - Every requirement has an `Evidence:` line naming the files (with line numbers where known), tests or documents it is drawn from.
-   - A requirement backed by code alone, with no test or document that states the behaviour, also has a `Confidence: inferred` line.
+   - Add the `Confidence: inferred` line only when code alone backs the requirement, with no test or document that states the behaviour; otherwise omit it.
    - Describe observable behaviour, not module or function structure.
    - Read tests and documentation as well as source.
 
 7. **Language**
 
-   Read `language:` from `openspec/config.yaml`. Write all generated prose in that language. Keep the keywords `SHALL`, `MUST`, `WHEN`, `THEN`, `Requirement` and `Scenario` in English.
+   Read `language:` from `openspec/config.yaml`. Write all generated prose in that language. Keep these tokens in English: `SHALL`, `MUST`, `WHEN`, `THEN`, `Evidence:`, `Confidence: inferred`, and the `### Requirement:` and `#### Scenario:` headers.
 
 8. **SCOUT each capability**
 
@@ -69,12 +83,12 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 9. **Write the other artifacts**
 
-   In `openspec/changes/bootstrap-specs/`:
+   For each of these, first run `openspec instructions <artifact> --change bootstrap-specs --json` and follow its `template`. Write into `openspec/changes/bootstrap-specs/`:
    - `brainstorm.md`: the map result and the confirmed capability list.
-   - `proposal.md`: why the specs are generated, scope, excluded directories and the capability list.
-   - `design.md`: a two-line stub whose first line begins `No design needed:`.
+   - `proposal.md`: why the specs are generated, scope, excluded directories, and under `## Capabilities` a `### New Capabilities` list naming every capability.
+   - `design.md`: a two-line stub whose first line begins `No design needed:`. No scout is involved.
 
-   Skip any of these that is already `done`.
+   Both `brainstorm.md` and `proposal.md` state: "No product code changes; tasks verify each spec against the code and its evidence". Skip any of these three that is already `done`.
 
 10. **Validate**
 

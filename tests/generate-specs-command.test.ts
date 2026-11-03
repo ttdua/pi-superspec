@@ -55,8 +55,8 @@ describe("opsx-generate-specs command", () => {
 			"openspec/specs/",
 			"node_modules",
 			"openspec validate bootstrap-specs --strict",
-			"language",
-			"12",
+			"`language:` from `openspec/config.yaml`",
+			"at most 12 capability candidates",
 		]) {
 			expect(skill, `skill lacks ${needle}`).toContain(needle);
 		}
@@ -79,9 +79,55 @@ describe("opsx-generate-specs command", () => {
 		expect(section).toMatch(/every scout/i);
 	});
 
+	it("gives the scout a literal requirement template in validating order", () => {
+		const skill = read(SKILL);
+		const header = skill.indexOf("### Requirement: <name>");
+		expect(header).toBeGreaterThan(-1);
+		const shall = skill.indexOf("SHALL", header);
+		const evidence = skill.indexOf("Evidence: <", header);
+		const scenario = skill.indexOf("#### Scenario: <name>", header);
+		expect(shall).toBeGreaterThan(header);
+		expect(shall).toBeLessThan(evidence);
+		expect(evidence).toBeLessThan(scenario);
+		expect(skill).toContain("first line of the requirement body");
+	});
+
+	it("resumes per capability file and re-applies the name filter after confirm", () => {
+		const skill = read(SKILL);
+		expect(skill).toContain("specs/<capability>/spec.md` is missing");
+		expect(skill).toMatch(/never rewrite one that exists/i);
+		expect(skill).toMatch(/after the user's edits[^]*openspec\/specs\//i);
+	});
+
+	it("states that no product code changes and follows artifact instructions", () => {
+		const skill = read(SKILL);
+		expect(skill).toContain("No product code changes; tasks verify each spec against the code and its evidence");
+		expect(skill).toContain("openspec instructions");
+		expect(skill).toContain("### New Capabilities");
+	});
+
+	it("checks for an existing change before creating one", () => {
+		const skill = read(SKILL);
+		expect(skill.indexOf("openspec list --json")).toBeLessThan(skill.indexOf("openspec new change"));
+	});
+
+	it("keeps the evidence and header tokens in English", () => {
+		const skill = read(SKILL);
+		const language = skill.slice(skill.indexOf("**Language**"), skill.indexOf("**SCOUT each capability**"));
+		for (const token of ["Evidence:", "Confidence: inferred", "### Requirement:", "#### Scenario:"]) {
+			expect(language).toContain(token);
+		}
+	});
+
+	it("confirms before scouting", () => {
+		const skill = read(SKILL);
+		expect(skill.indexOf("**CONFIRM once**")).toBeLessThan(skill.indexOf("**SCOUT each capability**"));
+	});
+
 	it("never writes tasks.md", () => {
 		expect(read(SKILL)).toContain("Do not write tasks.md");
 	});
+
 	it("lists every prompt command in a table row of both READMEs, and --generate on the init row", () => {
 		const names = readdirSync(new URL("prompts/", root))
 			.filter((file) => /^opsx-.+\.md$/.test(file))
