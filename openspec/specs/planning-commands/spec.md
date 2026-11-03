@@ -1,7 +1,8 @@
 # planning-commands Specification
 
 ## Purpose
-TBD - created by archiving change pi-opsx-planning-commands. Update Purpose after archive.
+Defines the `/opsx-explore`, `/opsx-new`, `/opsx-continue` and `/opsx-ff` command and skill pairs that create and plan a change. They cover free-form exploration, change scaffolding, one artifact per run with review gates, and fast-forward planning.
+
 ## Requirements
 ### Requirement: Command and skill pairs
 The package SHALL provide `opsx-explore`, `opsx-new`, `opsx-continue` and `opsx-ff`, each as a skill `skills/<name>/SKILL.md` whose frontmatter `name` equals its directory name, and a prompt `prompts/<name>.md`. Each prompt MUST instruct the agent to read the matching `SKILL.md`, follow it, and treat `$@` as the user input, and MUST NOT carry the command logic itself.

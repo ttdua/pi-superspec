@@ -1,7 +1,8 @@
 # execution-commands Specification
 
 ## Purpose
-TBD - created by archiving change pi-opsx-execution-commands. Update Purpose after archive.
+Defines the `/opsx-apply`, `/opsx-verify`, `/opsx-sync` and `/opsx-archive` command and skill pairs that execute a planned change. Apply follows the schema apply block, verify checks the result in the worktree, sync merges delta specs into main specs, and archive performs the delta-sync check and archives the change.
+
 ## Requirements
 ### Requirement: Execution command and skill pairs
 The package SHALL provide `opsx-apply`, `opsx-verify`, `opsx-sync` and `opsx-archive`, each as a skill `skills/<name>/SKILL.md` whose frontmatter `name` equals its directory name, and a prompt `prompts/<name>.md`. Each prompt MUST instruct the agent to read the matching `SKILL.md`, follow it, and treat `$@` as the user input, and MUST NOT carry the command logic itself. The package MUST NOT ship `opsx-propose` or `opsx-bulk-archive`.
