@@ -1,0 +1,89 @@
+---
+name: opsx-apply
+description: Implement an OpenSpec change in an isolated worktree using the Superpowers executor, then write the apply.md receipt. Also handles PR review feedback after a PR is open. Use when the user wants to start or continue implementation.
+---
+
+<!-- Adapted from OpenSpec 1.4.1 openspec-apply-change (MIT) for pi. -->
+
+Implement the tasks of an OpenSpec change. The CLI returns the apply instruction at runtime; this skill wraps it and adds the executor choice, the receipt, and the post-PR loop.
+
+**Input**: Optionally a change name. If omitted, infer it from conversation context. If vague or ambiguous you MUST ask which change.
+
+**Steps**
+
+1. **Select the change**
+
+   - Use the given name, or infer it from conversation context.
+   - Auto-select if only one active change exists.
+   - If ambiguous, run `openspec list --json` and ask the user to pick. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+
+   Always announce: "Using change: <name>" and how to override (e.g., `/opsx-apply <other>`).
+
+2. **Check status and get apply instructions**
+   ```bash
+   openspec status --change "<name>" --json
+   openspec instructions apply --change "<name>" --json
+   ```
+   From status, read `schemaName`, `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`. The apply instructions return `contextFiles`, progress, the task list, a `state`, and the instruction text.
+
+   **Handle states:**
+   - `state: "blocked"` (missing artifacts): show the message, suggest `/opsx-continue`, and STOP without any code changes.
+   - `state: "all_done"`: report that all tasks are complete, suggest `/opsx-verify` and then `/opsx-archive`, and STOP.
+   - Otherwise proceed.
+
+   **Workspace guard:** If status reports `actionContext.mode: "workspace-planning"` and `allowedEditRoots` is empty, explain that full workspace apply is not supported here, treat linked repos as read-only context, and STOP before editing files.
+
+3. **Post-PR check**
+
+   If `apply.md` and `finalize.md` both exist and the user is addressing PR review feedback, go to **Post-PR mode** below. Otherwise continue.
+
+4. **Read context and follow the apply instruction**
+
+   Read every file path listed under `contextFiles`. Then follow the instruction returned by `openspec instructions apply` for the setup: step 0 commit, the worktree on branch `<change-name>`, the executor, and the `apply.md` receipt. Do not copy the schema's step text into your own plan; the CLI output is the source of truth. Show progress as "N/M tasks complete" and the remaining tasks. Track tasks with the `todo` tool if available; otherwise state the checklist in your reply.
+
+   If `instruction` names `superpowers:<x>`, follow the **Superpowers rule** below.
+
+5. **Choose the executor**
+
+   - If the `subagent` tool from `pi-subagents` exists in this session, follow **2a**: read the `subagent-driven-development` skill and execute `plan.md` through it.
+   - If it does not exist, follow **2b**: read the `executing-plans` skill, tell the user that TDD and review are not enforced for you, follow TDD manually, and request a whole-branch review (`requesting-code-review`) over the full commit range before writing `apply.md`.
+   - Never invent subagent calls.
+
+   Record the executor actually used in `apply.md`. `tasks.md` is authoritative for progress: tick each box in the worktree copy as the task completes.
+
+   **Pause if:** a task is unclear (ask), implementation reveals a design issue (suggest updating artifacts), or an error or blocker occurs (report and wait). Do not guess.
+
+6. **Write the receipt and STOP**
+
+   After the final whole-branch review, write `apply.md` as the schema's receipt directs (worktree path, branch facts, commit range, iteration, executor, tasks X of Y) and commit it in the worktree. Then STOP. Do NOT invoke `finishing-a-development-branch`; finishing belongs to the later finalize step. Tell the user to run `/opsx-verify`.
+
+7. **Post-PR mode**
+
+   Used when a PR is open and the user brings review feedback.
+   - Read the `receiving-code-review` skill and follow it.
+   - Fix on the feature branch in the main checkout, using TDD for each fix.
+   - Append a `post-PR iteration N+1` entry with the new commit range to `apply.md`.
+   - Tell the user to run `/opsx-verify`, then update `finalize.md`.
+   - Push and reviewer-comment follow the policy in `finalize.md`; a policy in the project `AGENTS.md` overrides it.
+
+**Superpowers rule**
+
+If an instruction says to use `superpowers:<x>`, drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the apply instruction says (never under `docs/superpowers/`) and ignore that skill's own closing handoff (invoking another skill or a next-step handoff). If skill `<x>` is not available, STOP and tell the user to install Superpowers.
+
+**Output**
+
+On completion:
+- Change name, schema, and "N/M tasks complete"
+- Executor used and the commit range
+- "Run `/opsx-verify` to verify the change."
+
+On pause: describe the issue, offer options (use `ask_user_question` if available; otherwise numbered options), and wait.
+
+**Guardrails**
+- A `blocked` or `all_done` change gets no code changes
+- Always read the `contextFiles` before starting
+- Keep changes minimal and scoped to each task; update the task checkbox right after finishing it
+- Pause on errors, blockers, or unclear requirements; do not guess
+- Never invoke `finishing-a-development-branch`
+- Use `contextFiles` from the CLI output; do not assume file names
+- If implementation reveals issues, suggest artifact updates rather than working around them
