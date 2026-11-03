@@ -111,14 +111,16 @@ warns once per session start (including reload) with `pi install git:github.com/
 
 | Command | Behaviour |
 |---|---|
-| `/opsx-init` | Always available. Set up, repair or upgrade the project. |
-| `/opsx-explore` | Free-form thinking, no code. |
+| `/opsx-init` | Always available. Set up the project; an existing non-identical schema is left unchanged with a warning (automatic upgrade and repair are planned, not shipped). |
+| `/opsx-explore [topic]` | Free-form thinking, no code. |
 | `/opsx-new <name>` | Create a change with the `superspec` schema. |
 | `/opsx-continue [name]` | Create the next ready artifact, then stop for review. **Default path.** |
-| `/opsx-ff <name>` | Brainstorm interactively, then generate proposal → plan unattended; stop before apply. |
+| `/opsx-ff <name or description>` | Brainstorm interactively, then generate proposal → plan unattended; stop before apply. |
 | `/opsx-apply [name]` | Run the schema's apply block. |
 | `/opsx-verify [name]` | Produce `verify.md`. |
 | `/opsx-sync [name]` | Sync delta specs into living specs without archiving. |
 | `/opsx-archive [name]` | Sync if needed, then archive. |
+
+`finalize` is not a command: create it with `/opsx-continue` after verify passes.
 
 Not shipped: `opsx-propose` (skips brainstorm and plan) and `opsx-bulk-archive`.

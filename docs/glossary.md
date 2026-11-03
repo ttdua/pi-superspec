@@ -45,7 +45,8 @@ recover after context loss.
 **Living specs** — `openspec/specs/`, the current specification of the system.
 
 **Lock file** — `.pi-superspec.json` next to the project schema: installed version
-and file hashes, used to detect user edits.
+and file hashes. Written on a fresh install; not read yet (detecting user edits
+from it is planned with `schema-auto-upgrade`, not shipped).
 
 **Main checkout** — The repository's primary working tree, as opposed to a linked
 worktree.
