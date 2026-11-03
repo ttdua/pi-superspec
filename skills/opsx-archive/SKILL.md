@@ -34,7 +34,7 @@ This skill runs in the main checkout, after the branch is finalized and before t
 
 3. **Check task completion**
 
-   Run `openspec list --json` and find this change's entry; take `completedTasks` and `totalTasks` from `openspec list --json`; if that output is invalid, stop with an error and do not archive. If `completedTasks` is less than `totalTasks`, warn with the number of open tasks and ask the user to confirm before continuing. Continue only on confirmation; otherwise STOP without archiving. If `totalTasks` is 0 (no tasks), skip this check.
+   Run `openspec list --json` and find this change's entry (if it is not listed, stop and report); take `completedTasks` and `totalTasks` from `openspec list --json`; if that output is invalid, stop with an error and do not archive. If `completedTasks` is less than `totalTasks`, warn with the number of open tasks and ask the user to confirm before continuing. Continue only on confirmation; otherwise STOP without archiving. If `totalTasks` is 0 (no tasks), skip this check.
 
    Warnings never block silently: inform, ask, and respect the answer.
 
@@ -51,10 +51,15 @@ This skill runs in the main checkout, after the branch is finalized and before t
 
    Treat entries that are already applied as synced, so the check is idempotent: after a sync, a second check reports "already synced" and never asks again.
 
-   - **Not synced**: report the differences per capability (what would be added, modified, removed, renamed), then ask the user how to proceed with options "Sync now (recommended)", "Archive without syncing", "Cancel" (ask as in step 1, recommended first). If the answer is none of the offered choices, ask again and do not archive. On "Sync now", read `skills/opsx-sync/SKILL.md` (or run `/skill:opsx-sync`) and follow its merge and validate steps for this change, but do not stop at its report: return here and continue. On "Archive without syncing", continue and note it in the summary. On "Cancel", STOP.
-   - **Sync blocked**: If the sync is blocked for any capability, offer only "Archive without syncing" or "Cancel" (the sync report lists each as "Blocked: <reason>"; ask as in step 1); never offer "Sync now" again. If the answer is none of the offered choices, ask again and do not archive. On "Archive without syncing", continue and note the blocked capabilities in the summary. On "Cancel", STOP.
+   Classify the result, checking in this order:
+
    - **All synced**: report "already synced" and go straight to step 5 without syncing.
-   - **After a sync**: Compare every delta again with its main spec. Report "Synced" only if all match; if any differs, stop and do not archive.
+   - **Sync blocked** (checked before "Not synced"): if the sync is blocked for any capability, either predicted from the delta operations above or reported "Blocked: <reason>" by `opsx-sync`, report the blocked capabilities and offer only "Archive without syncing" or "Cancel" (ask as in step 1); never offer "Sync now" for a blocked capability. If the answer is none of the offered choices, ask again and do not archive. On "Archive without syncing", continue and note the blocked capabilities in the summary. On "Cancel", STOP. Other capabilities that are not synced are not synced either on this path.
+   - **Not synced** (no capability blocked): report the differences per capability (what would be added, modified, removed, renamed), then ask the user how to proceed with options "Sync now (recommended)", "Archive without syncing", "Cancel" (ask as in step 1, recommended first). If the answer is none of the offered choices, ask again and do not archive. On "Archive without syncing", continue and note it in the summary. On "Cancel", STOP. On "Sync now", read `skills/opsx-sync/SKILL.md` (or run `/skill:opsx-sync`) and follow its merge and validate steps for this change, but do not stop at its report: return here and continue with the post-sync steps below.
+
+   **After "Sync now"**, in order:
+   1. If the sync report lists any capability as "Blocked: <reason>" (a fallback when the block was not predicted), take the "Sync blocked" path above for those capabilities: offer only "Archive without syncing" or "Cancel".
+   2. Compare every delta again with its main spec. Report "Synced" only if all match; if any differs, stop and do not archive. Capabilities reported Blocked are excluded from this re-compare, because the user already chose to archive without syncing them.
 
    This check lives here, not in `/opsx-verify`.
 
@@ -88,7 +93,7 @@ This skill runs in the main checkout, after the branch is finalized and before t
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Archived to:** <archive path>
-**Specs:** Synced to main specs (or "Already synced", "No delta specs", "Sync skipped", "Sync blocked: <capabilities>, archived without syncing")
+**Specs:** Synced to main specs (or "Already synced", "No delta specs", "Sync skipped", "Sync blocked: <capabilities>, archived without syncing", or for a partial sync "Partially synced: <synced capabilities>; blocked: <capabilities>")
 
 Warnings accepted: <incomplete artifacts / open tasks, or "none">
 ```
@@ -99,6 +104,6 @@ Warnings accepted: <incomplete artifacts / open tasks, or "none">
 - Report "Synced" only after the post-sync re-compare matches every delta; if any differs, stop without archiving
 - Take task counts from `openspec list --json`; stop with an error if it is invalid
 - Run the delta-sync check whenever delta specs exist; a second check after a sync must report "already synced"
-- Offer "Sync now" first; when everything is synced, archive without syncing
+- Offer "Sync now" first, except when a capability is blocked (then only "Archive without syncing" or "Cancel"); when everything is synced, archive without syncing
 - Archive with `openspec archive "<name>" --skip-specs`; the skill owns the spec update, the CLI only moves the change; never pass `--no-validate`; never move the change directory by hand
 - Run in the main checkout, after finalize and before the PR merges

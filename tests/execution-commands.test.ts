@@ -232,10 +232,24 @@ describe("execution commands", () => {
 			"A missing main spec is not unsynced by itself; decide by the delta operations as `opsx-sync` defines",
 		);
 		expect(flat).toContain(
-			"If the sync is blocked for any capability, offer only \"Archive without syncing\" or \"Cancel\"",
+			"report the blocked capabilities and offer only \"Archive without syncing\" or \"Cancel\" (ask as in step 1); never offer \"Sync now\" for a blocked capability. If the answer is none of the offered choices, ask again and do not archive.",
 		);
 		expect(flat).toContain(
-			"If the answer is none of the offered choices, ask again and do not archive.",
+			"**Sync blocked** (checked before \"Not synced\"): if the sync is blocked for any capability, either predicted from the delta operations above",
+		);
+		expect(flat).toContain(
+			"(no capability blocked): report the differences per capability (what would be added, modified, removed, renamed), then ask the user how to proceed with options \"Sync now (recommended)\", \"Archive without syncing\", \"Cancel\" (ask as in step 1, recommended first). If the answer is none of the offered choices, ask again and do not archive.",
+		);
+		expect(flat).toContain(
+			"Capabilities reported Blocked are excluded from this re-compare",
+		);
+		expect(flat).toContain("If `totalTasks` is 0 (no tasks), skip this check.");
+		expect(flat).toContain("(if it is not listed, stop and report)");
+		expect(flat).toContain(
+			"\"Sync blocked: <capabilities>, archived without syncing\"",
+		);
+		expect(flat).toContain(
+			"Offer \"Sync now\" first, except when a capability is blocked (then only \"Archive without syncing\" or \"Cancel\")",
 		);
 	});
 
