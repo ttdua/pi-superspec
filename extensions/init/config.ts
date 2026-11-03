@@ -27,19 +27,22 @@ export const MAX_LANGUAGE_LENGTH = 64;
 
 export function validateLanguage(value: string): string | undefined {
 	const trimmed = value.trim();
-	if (trimmed === "" || trimmed.length > MAX_LANGUAGE_LENGTH || /[\u0000-\u001f\u007f]/.test(trimmed)) return undefined;
+	if (trimmed === "" || trimmed.length > MAX_LANGUAGE_LENGTH || /[\p{Cc}\u2028\u2029]/u.test(trimmed)) return undefined;
 	return trimmed;
 }
 
 export function parseLanguage(text: string): string | undefined {
 	// A leading BOM would stop `^` from matching the first line.
-	const body = text.startsWith("﻿") ? text.slice(1) : text;
+	const body = text.startsWith("\uFEFF") ? text.slice(1) : text;
 	const match = /^language:(.*)$/m.exec(body);
 	if (!match) return undefined;
 	const raw = match[1].trim();
 	if (raw.startsWith('"')) {
+		// A double-quoted value may be followed by a trailing comment.
+		const quoted = /^("(?:[^"\\]|\\.)*")\s*(?:#.*)?$/.exec(raw);
+		if (!quoted) return undefined;
 		try {
-			const parsed: unknown = JSON.parse(raw);
+			const parsed: unknown = JSON.parse(quoted[1]);
 			return typeof parsed === "string" ? validateLanguage(parsed) : undefined;
 		} catch {
 			return undefined;
@@ -61,7 +64,7 @@ export function readLanguage(root: string): string | undefined {
 export function mergeLanguage(text: string | undefined, value: string): string {
 	// Keep a leading BOM in place so `^` matches the first real line.
 	if (text?.startsWith("\uFEFF")) return `\uFEFF${mergeLanguage(text.slice(1), value)}`;
-	const formatted = /^[\p{L}\p{N} _.()-]+$/u.test(value) ? value : JSON.stringify(value);
+	const formatted = /^[\p{L}\p{N}][\p{L}\p{N} _.()-]*$/u.test(value) ? value : JSON.stringify(value);
 	const line = `language: ${formatted}`;
 	if (text === undefined || text === "") return `${line}\n`;
 	// "." does not match "\r", so a CRLF line ending is left in place.

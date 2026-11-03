@@ -82,6 +82,14 @@ describe("validateLanguage", () => {
 	});
 });
 
+describe("validateLanguage separators", () => {
+	it("rejects C1 control characters and Unicode line separators", () => {
+		expect(validateLanguage("a\u0085b")).toBeUndefined();
+		expect(validateLanguage("a\u2028b")).toBeUndefined();
+		expect(validateLanguage("a\u2029b")).toBeUndefined();
+	});
+});
+
 describe("parseLanguage / readLanguage", () => {
 	it("reads a top-level language", () => {
 		expect(parseLanguage("schema: superspec\nlanguage: vi\n")).toBe("vi");
@@ -91,6 +99,28 @@ describe("parseLanguage / readLanguage", () => {
 	it("handles quoted values and comments", () => {
 		expect(parseLanguage('language: "zh: simplified"\n')).toBe("zh: simplified");
 		expect(parseLanguage("language: vi # note\n")).toBe("vi");
+	});
+	it("reads a quoted value followed by a comment", () => {
+		expect(parseLanguage('language: "vi" # note\n')).toBe("vi");
+		expect(parseLanguage('language: "Tiếng Việt" # docs\n')).toBe("Tiếng Việt");
+		expect(parseLanguage('language: "a # b"\n')).toBe("a # b");
+		expect(parseLanguage('language: "vi" junk\n')).toBeUndefined();
+	});
+	it("ignores quoted values with C1 controls or Unicode separators", () => {
+		expect(parseLanguage('language: "a\u2028b"\n')).toBeUndefined();
+		expect(parseLanguage('language: "a\u2029b"\n')).toBeUndefined();
+		expect(parseLanguage('language: "a\u0085b"\n')).toBeUndefined();
+		expect(parseLanguage('language: "a\\u0085b"\n')).toBeUndefined();
+		expect(parseLanguage('language: "a\\u2028b"\n')).toBeUndefined();
+	});
+	it("round-trips values that start with a dash through quoting", () => {
+		for (const value of ["-", "- vi"]) {
+			const text = mergeLanguage("schema: superspec\n", value);
+			expect(text).toBe(`schema: superspec\nlanguage: ${JSON.stringify(value)}\n`);
+			expect(parseLanguage(text)).toBe(value);
+		}
+		expect(mergeLanguage(undefined, "vi-VN")).toBe("language: vi-VN\n");
+		expect(mergeLanguage(undefined, "Tiếng Việt")).toBe("language: Tiếng Việt\n");
 	});
 	it("ignores nested, empty and invalid values", () => {
 		expect(parseLanguage("x:\n  language: vi\n")).toBeUndefined();

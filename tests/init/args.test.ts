@@ -26,7 +26,7 @@ describe("parseInitArgs", () => {
 		}
 	});
 	it("rejects invalid values", () => {
-		for (const input of [`--lang ${"a".repeat(65)}`, "--lang a\nb", "--lang a\u0007b"]) {
+		for (const input of [`--lang ${"a".repeat(65)}`, "--lang a\nb", "--lang a\u0007b", "--lang a\u0085b"]) {
 			expect("error" in parseInitArgs(input)).toBe(true);
 		}
 		expect(parseInitArgs(`--lang ${"a".repeat(64)}`)).toEqual({ lang: "a".repeat(64) });
