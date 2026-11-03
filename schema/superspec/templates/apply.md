@@ -34,4 +34,4 @@
 
 ## Next step
 
-`<e.g., "Run /opsx:verify" or "Re-run apply to address <issue>">`
+`<e.g., "Run /opsx-verify" or "Re-run apply to address <issue>">`
