@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
 	BOOTSTRAP_MARKER,
 	createRoutingNoteMessage,
+	hasSuperpowers,
 	insertRoutingNote,
 	ROUTING_NOTE,
 	ROUTING_NOTE_MARKER,
+	SUPERPOWERS_MISSING_WARNING,
 } from "../extensions/routing-note.ts";
 
 type Msg = { role: string; content: unknown };
@@ -69,5 +71,23 @@ describe("ROUTING_NOTE", () => {
 		expect(message.role).toBe("user");
 		expect(message.content).toEqual([{ type: "text", text: ROUTING_NOTE }]);
 		expect(typeof message.timestamp).toBe("number");
+	});
+});
+
+describe("hasSuperpowers", () => {
+	it("is true when skill:brainstorming is registered", () => {
+		expect(hasSuperpowers([{ name: "skill:brainstorming" }])).toBe(true);
+	});
+
+	it("is false without it", () => {
+		expect(hasSuperpowers([])).toBe(false);
+		expect(hasSuperpowers([{ name: "opsx-init" }])).toBe(false);
+	});
+});
+
+describe("SUPERPOWERS_MISSING_WARNING", () => {
+	it("mentions Superpowers and the install command", () => {
+		expect(SUPERPOWERS_MISSING_WARNING).toContain("Superpowers");
+		expect(SUPERPOWERS_MISSING_WARNING).toContain("pi install git:github.com/obra/superpowers");
 	});
 });

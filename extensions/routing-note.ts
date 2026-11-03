@@ -48,3 +48,11 @@ export function createRoutingNoteMessage(): {
 } {
 	return { role: "user", content: [{ type: "text", text: ROUTING_NOTE }], timestamp: Date.now() };
 }
+
+/** True when the Superpowers plugin is installed (it registers a `skill:brainstorming` command). */
+export function hasSuperpowers(commands: { name: string }[]): boolean {
+	return commands.some((command) => command.name === "skill:brainstorming");
+}
+
+export const SUPERPOWERS_MISSING_WARNING =
+	"pi-superspec needs Superpowers, which is not installed. Install it with: pi install git:github.com/obra/superpowers";

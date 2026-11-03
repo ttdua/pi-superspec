@@ -4,6 +4,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { findProjectRoot, isActivated } from "./activation.ts";
 import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
+import { hasSuperpowers } from "./routing-note.ts";
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -34,8 +35,7 @@ export default function (pi: ExtensionAPI) {
 				report: (message) =>
 					pi.sendMessage({ customType: "superspec-init", content: message, display: true }),
 				reload: () => ctx.reload(),
-				superpowersAvailable: () =>
-					pi.getCommands().some((c) => c.name === "skill:brainstorming"),
+				superpowersAvailable: () => hasSuperpowers(pi.getCommands()),
 			};
 			await runInit(io, packageRoot);
 		},
