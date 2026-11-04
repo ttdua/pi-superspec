@@ -13,9 +13,9 @@
 
 ## 3. Verify
 
-- [ ] 3.1 Widen check 5 in the `verify` instruction of `schema.yaml` and in `schema/superspec/templates/verify.md` to design decisions plus `plan.md` Contracts and deviations, with the warning and `not verified` rules
+- [x] 3.1 Widen check 5 in the `verify` instruction of `schema.yaml` and in `schema/superspec/templates/verify.md` to design decisions plus `plan.md` Contracts and deviations, with the warning and `not verified` rules
 - [ ] 3.2 Update `skills/opsx-verify/SKILL.md` for the contract comparison, with tests in `tests/execution-commands.test.ts`
-- [ ] 3.3 Update the schema tests that read the verify text (including the `six checks` test) so they still pass
+- [x] 3.3 Update the schema tests that read the verify text (including the `six checks` test) so they still pass
 
 ## 4. Docs
 
