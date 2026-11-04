@@ -19,7 +19,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 2. **MAP the codebase**
 
-   Before delegating, read [subagent routing](../references/subagent-routing.md) and follow it. Run one `superspec.scout` for the map, using the configured model settings with no per-call model/thinking override, and bind its report with `output`. This map scout is not a capability scout. When the optional `pi-subagents` integration is absent, do the map yourself inline. Never invent subagent calls.
+   Before delegating, read [subagent routing](../references/subagent-routing.md) and follow it. Run one `superspec.scout` for the map, using the configured model settings with no per-call model/thinking override, and bind its report with `output`. This map scout is not a capability scout. When the optional `pi-subagents` integration is absent, do the map yourself inline. A disabled or missing role or a failed map scout stops the stage with the named cause per the shared reference, with no substitute and no silent inline run. Never invent subagent calls.
 
    The map reads the directory tree, package manifests, README and entry points. It skips `node_modules`, `dist`, `build`, `vendor`, `.git` and generated files. It returns at most 12 capability candidates, each with:
    - a kebab-case name of at least two words (for example `user-auth`)

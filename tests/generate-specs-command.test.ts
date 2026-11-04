@@ -187,6 +187,7 @@ describe("generate-specs evidence-only scouts", () => {
 		expect(text).toMatch(/no (per-(call|dispatch) )?model\/thinking override|without (a )?(per-(call|dispatch) )?model\/thinking override/i);
 		expect(text).not.toMatch(/fast model/i);
 		expect(skill()).not.toMatch(/fast model/i);
+		expect(text).toMatch(/disabled or missing role or a failed map scout stops[^.]*named cause[^.]*no substitute[^.]*no silent inline/i);
 	});
 
 	it("SA-G03 map scout runs before confirmation and capability scouts only follow the confirmed list", () => {

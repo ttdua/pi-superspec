@@ -95,6 +95,7 @@ describe("subagent routing reference", () => {
 			expect(text).toMatch(cause);
 		}
 		expect(text).toMatch(/named cause/i);
+		expect(text).toMatch(/never chooses[^.]*silently[^.]*user decides/i);
 		expect(text).toMatch(/stop the affected (?:delegated )?stage/i);
 		expect(text).toMatch(/do not (?:rewrite|write)[^.]*settings/i);
 		expect(text).toMatch(/generic agent/i);

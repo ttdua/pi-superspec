@@ -58,7 +58,7 @@ The parent owns official artifact writes, task checkbox updates, receipt outcome
 
 ## Failures
 
-- **Named cause, stop.** When a required canonical role is disabled or missing, discovery is unsupported, or required skills or tools are unavailable, report the named cause and stop the affected delegated stage. Do not rewrite settings, and do not fall back to a generic agent, an alternate CLI, or inline recovery. Offer a package update or an explicitly chosen inline route as options for the user.
+- **Named cause, stop.** When a required canonical role is disabled or missing, discovery is unsupported, or required skills or tools are unavailable, report the named cause and stop the affected delegated stage. Do not rewrite settings, and do not fall back to a generic agent, an alternate CLI, or inline recovery. Offer a package update or an explicitly chosen inline route as options for the user. The parent never chooses either route silently; the user decides.
 - **Launch or runtime failure.** Stop the lane. Retain and report the exact error, run identity, cwd/worktree, and any partial state. Do not retry with another mechanism or recover inline in the background.
 - **Incomplete report.** Record the gap and treat the task as not complete.
 
