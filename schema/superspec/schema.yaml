@@ -184,6 +184,13 @@ artifacts:
         covers it.
       - The plan header's spec reference points at this change's
         `specs/` and `design.md`.
+      - The plan MUST have a `## Contracts` section before the tasks,
+        with one entry per new or modified type, schema, signature, CLI
+        argument, config key or file format: its name, `new` or
+        `modified`, its exact shape, and a `public` flag. When the
+        change declares none, write `None – <reason>`; never omit the
+        section. Per-task `Interfaces` blocks refer to contract names
+        instead of restating shapes.
     requires:
       - tasks
 

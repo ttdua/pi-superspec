@@ -11,6 +11,19 @@
 
 ---
 
+## Contracts
+
+<!-- One entry per new or modified type, schema, signature, CLI argument,
+config key or file format: name, `new` or `modified`, the exact shape, and
+whether it is `public`. If the change declares none, replace the table with
+`None – <reason>`; never leave the section out. -->
+
+| Name | new / modified | Shape | public |
+|---|---|---|---|
+| — | — | — | — |
+
+---
+
 ## Task 1: <!-- Component Name --> — implements X.Y
 
 - [ ] **Step 1:** <!-- micro-step -->

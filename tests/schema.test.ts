@@ -468,6 +468,21 @@ run("bundled schema", () => {
 			expect(t).toMatch(/^## Scenario → test$/m);
 		});
 
+		it("plan template has a Contracts section before Task 1", () => {
+			const t = tpl("plan.md");
+			expect(t).toContain("## Contracts");
+			expect(t.indexOf("## Contracts")).toBeLessThan(t.indexOf("## Task 1"));
+			expect(t).toContain("| Name | new / modified | Shape | public |");
+		});
+
+		it("plan instruction requires Contracts, a reason after None and name references", () => {
+			const text = instructionFor("plan");
+			expect(text).toContain("## Contracts");
+			expect(text).toMatch(/None – <reason>/);
+			expect(text).toContain("refer to contract names");
+			expect(text).not.toMatch(/TypeScript/);
+		});
+
 		it("apply ticks tasks.md as official status and commits dirty change dirs", () => {
 			const text = instructionFor("apply");
 			expect(text).toContain(
