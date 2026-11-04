@@ -381,6 +381,8 @@ describe("execution specialist routing", () => {
 	it("SA-E03 apply stops on a missing, disabled or failed canonical role without a replacement", () => {
 		const t = skill("apply");
 		expect(t).toMatch(/(role|agent)[^\n]*(disabled|missing)[^\n]*fail[^\n]*STOP/i);
+		expect(t).toMatch(/launch (or|and) runtime failure|runtime failure/i);
+		expect(t).toMatch(/mid-run/i);
 		expect(t).toMatch(/no (generic )?(replacement|substitute)/i);
 		expect(t).toMatch(/not (silently )?(go|fall)[^.\n]*inline|never[^.\n]*silently[^.\n]*inline/i);
 	});
@@ -434,6 +436,7 @@ describe("execution specialist routing", () => {
 		}
 		expect(g).toMatch(/absent[^.\n]*inline/i);
 		expect(g).toMatch(/(disabled|incompatible)[^.\n]*stop/i);
+		expect(g).toMatch(/runtime failure[^.\n]*mid-run|mid-run[^.\n]*runtime failure/i);
 		expect(g).toMatch(/command[^.\n]*cwd[^.\n]*exit[^.\n]*count/i);
 		expect(g).toMatch(/parent[^.\n]*(writes|owns)[^.\n]*(apply\.md|receipt)/i);
 		expect(g).toMatch(/no (merge|push)|never (merge|push)/i);

@@ -212,7 +212,7 @@ For a project that already has code but no specs, draft a first set from the cod
 
 - With compatible `pi-subagents` and the canonical roles available: subagent-driven development. `superspec.implementer` runs each task with TDD as the single writer per worktree, `superspec.task-reviewer` gives one combined spec and quality review per task and again for the final whole-branch review, and there is no extra generic reviewer. The parent keeps progress, ticks `tasks.md`, and hands reviewers the exact BASE..HEAD range. Models come from your configuration. Fix-iteration and post-PR work use the same seats.
 - Without it (neither the `subagent` tool nor its activation helper): Superpowers `executing-plans`, in the current session. The agent tells you that TDD and review are not enforced for it, follows TDD manually, and still requests a whole-branch review over the full commit range with `requesting-code-review` before writing `apply.md`. It never invents subagent calls.
-- Absent integration selects inline execution. A disabled or missing role, an incompatible integration or a failed child launch is different: the affected lane stops with the named cause, and there is no generic substitute or silent inline run.
+- Absent integration selects inline execution. A disabled or missing role, an incompatible integration a failed child launch, or a child runtime failure mid-run is different: the affected lane stops with the named cause and any partial state, and there is no generic substitute or silent inline run.
 
 The parent writes `apply.md` and `verify.md` receipts; the next commands (`/opsx-verify`, `/opsx-continue`) are unchanged, and no seat has authority to merge or push.
 
