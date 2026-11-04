@@ -1,6 +1,6 @@
 ## 1. Publish the namespaced specialist catalog
 
-- [ ] 1.1 Add the six `agents/*.md` definitions and discovery/publication metadata in `package.json`; cover identities, tools, context, skills, model ownership, and report boundaries in `tests/agents.test.ts` and `tests/manifest.test.ts`; document package ownership in `docs/architecture.md`, `docs/domain-model.md`, and `docs/glossary.md`.
+- [x] 1.1 Add the six `agents/*.md` definitions and discovery/publication metadata in `package.json`; cover identities, tools, context, skills, model ownership, and report boundaries in `tests/agents.test.ts` and `tests/manifest.test.ts`; document package ownership in `docs/architecture.md`, `docs/domain-model.md`, and `docs/glossary.md`.
 
 ## 2. Define shared integration policy
 
