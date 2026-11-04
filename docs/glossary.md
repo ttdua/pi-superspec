@@ -23,6 +23,10 @@ otherwise.
 
 **Change** — One unit of work under `openspec/changes/<name>/`.
 
+**Contracts** — The `## Contracts` required section of `plan.md`, before the tasks: each shape the
+plan introduces or changes (name, new / modified, exact shape, public flag). Apply
+works to it and verify compares it with the code.
+
 **Delta spec** — A spec file inside a change using `## ADDED / MODIFIED / REMOVED /
 RENAMED Requirements` sections; merged into living specs at archive.
 

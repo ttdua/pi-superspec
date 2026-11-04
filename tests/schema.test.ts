@@ -159,6 +159,53 @@ run("bundled schema", () => {
 				expect(tpl, field).toContain(field);
 			}
 		});
+
+		it("apply instruction orders each task around the Contracts", () => {
+			const text = applyInstruction().replace(/\s+/g, " ");
+			const start = text.indexOf("Contracts rule");
+			expect(start).toBeGreaterThan(-1);
+			let at = start + "Contracts rule".length;
+			for (const word of [
+				"declarations or stubs",
+				"typecheck",
+				"failing test",
+				"implementation",
+			]) {
+				const i = text.indexOf(word, at);
+				expect(i, word).toBeGreaterThan(-1);
+				at = i;
+			}
+			expect(text).not.toContain("all contracts first");
+		});
+
+		it("apply instruction stops on a contract change", () => {
+			const text = applyInstruction();
+			const rule = text.indexOf("Contracts rule");
+			expect(rule).toBeGreaterThan(-1);
+			expect(rule).toBeLessThan(text.indexOf("2a."));
+			expect(rule).toBeLessThan(text.indexOf("2b."));
+			const flat = text.slice(rule, text.indexOf("2. **Executor**")).replace(/\s+/g, " ");
+			expect(flat).toMatch(/public[^.]*ask the user/);
+			expect(flat).toMatch(/internal[^.]*plan\.md[^.]*reason/);
+			expect(flat).toMatch(/only after the user decides[^.]*plan\.md[^.]*reason/);
+			expect(flat).toContain("Contract deviations");
+			expect(text.slice(text.indexOf("3. **Receipt"))).toContain(
+				"Contract deviations",
+			);
+		});
+
+		it("apply.md template has Contract deviations before Next step", () => {
+			const tpl = readFileSync(
+				join(SCHEMA_DIR, "templates", "apply.md"),
+				"utf8",
+			);
+			const dev = tpl.indexOf("## Contract deviations");
+			expect(dev).toBeGreaterThan(-1);
+			const next = tpl.indexOf("## Next step");
+			expect(next).toBeGreaterThanOrEqual(0);
+			expect(dev).toBeLessThan(next);
+			expect(tpl.slice(dev, next)).toContain("none");
+		});
 	});
 
 	describe("verify artifact", () => {
@@ -203,6 +250,25 @@ run("bundled schema", () => {
 			expect(instruction.replace(/\s+/g, " ")).toContain(
 				"project test command",
 			);
+		});
+
+		it("verify check 5 compares design decisions and plan Contracts", () => {
+			const flat = verifyInstruction().replace(/\s+/g, " ");
+			for (const text of [
+				"5. **Design and contract coherence**",
+				"Contract deviations",
+				"never a FAIL by itself",
+				"not verified with its reason",
+				"no Contracts section",
+			]) {
+				expect(flat, text).toContain(text);
+			}
+			const template = verifyTemplate();
+			expect(template).toContain(
+				"## 5. Design and Contract Coherence (warning only)",
+			);
+			expect(template).toContain("Contracts in plan.md");
+			expect(template).toContain("Not verified");
 		});
 
 		it("verify handles REMOVED/RENAMED and skipped checks", () => {
@@ -466,6 +532,43 @@ run("bundled schema", () => {
 			expect(t).toContain("Executed via `/opsx-apply`, which chooses the executor.");
 			expect(t).toMatch(/^## Task 1: .*implements X\.Y$/m);
 			expect(t).toMatch(/^## Scenario → test$/m);
+		});
+
+		it("plan template has a Contracts section before Task 1", () => {
+			const t = tpl("plan.md");
+			expect(t).toContain("## Contracts");
+			expect(t.indexOf("## Contracts")).toBeLessThan(t.indexOf("## Task 1"));
+			expect(t).toContain("| Name | new / modified | Shape | public |");
+			expect(t).toContain("None – <reason>");
+			expect(t).not.toContain("TypeScript");
+		});
+
+		it("plan instruction requires Contracts, a reason after None and name references", () => {
+			const text = instructionFor("plan");
+			expect(text).toContain("## Contracts");
+			expect(text).toMatch(/None – <reason>/);
+			expect(text).toContain("refer to contract names");
+			expect(text).not.toMatch(/TypeScript/);
+			for (const kind of [
+				"type",
+				"schema",
+				"signature",
+				"CLI argument",
+				"config key",
+				"file format",
+			]) {
+				expect(text, kind).toContain(kind);
+			}
+		});
+
+		it("design instruction and template point contract shapes to the plan", () => {
+			const text = instructionFor("design");
+			const t = tpl("design.md");
+			for (const src of [text, t]) {
+				expect(src).toContain("public");
+				expect(src).toContain("Contracts");
+			}
+			expect(text).toContain("No design needed:");
 		});
 
 		it("apply ticks tasks.md as official status and commits dirty change dirs", () => {

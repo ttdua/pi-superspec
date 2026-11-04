@@ -94,6 +94,7 @@ artifacts:
       - **Context**: Background, current state, constraints, stakeholders
       - **Goals / Non-Goals**: What this design achieves and explicitly excludes
       - **Decisions**: Key technical choices with rationale (why X over Y?). Include alternatives considered.
+        For any `public` contract, record the decision and the reason here; its full shape belongs in the `Contracts` section of plan.md.
       - **Risks / Trade-offs**: Known limitations, things that could go wrong. Format: [Risk] → Mitigation
       - **Migration Plan**: Steps to deploy, rollback strategy (if applicable)
       - **Open Questions**: Outstanding decisions or unknowns to resolve
@@ -184,6 +185,13 @@ artifacts:
         covers it.
       - The plan header's spec reference points at this change's
         `specs/` and `design.md`.
+      - The plan MUST have a `## Contracts` section before the tasks,
+        with one entry per new or modified type, schema, signature, CLI
+        argument, config key or file format: its name, `new` or
+        `modified`, its exact shape, and a `public` flag. When the
+        change declares none, write `None – <reason>`; never omit the
+        section. Per-task `Interfaces` blocks refer to contract names
+        instead of restating shapes.
     requires:
       - tasks
 
@@ -243,8 +251,13 @@ artifacts:
          project test command was run fresh in this step with the
          result recorded. Scenarios under a REMOVED requirement are
          skipped.
-      5. **Design coherence**: the decisions in design.md match the
-         code. Drift is a warning only.
+      5. **Design and contract coherence**: the decisions in design.md
+         and the Contracts in plan.md, together with the "Contract
+         deviations" recorded in apply.md, match the code. A mismatch
+         is a warning only, never a FAIL by itself. A Contracts entry
+         that cannot be compared with the code is recorded as not
+         verified with its reason; so is a plan.md that has no
+         Contracts section ("plan.md has no Contracts section").
       6. **Clean tree**: the working tree is clean and the commit range
          is recorded.
 
@@ -751,6 +764,27 @@ apply:
        `openspec` calls) runs with the worktree as the working
        directory.
 
+    **Contracts rule (both executors)**: plan.md has a `## Contracts`
+    section. Both the subagent-driven path (2a) and the
+    executing-plans fallback (2b) follow it, one task at a time. Work
+    for each task in this order: first the declarations or stubs
+    that match the plan's Contracts, then the typecheck when the
+    language has one, then the failing test, then the implementation.
+    The order repeats per task; it is not a project-wide phase.
+
+    If the work needs a contract shape that differs from the plan,
+    never change it silently. For a contract marked `public`, stop,
+    ask the user for a decision and wait for the answer; only after
+    the user decides, update the entry in plan.md with the reason and
+    record the change under "Contract deviations" in apply.md (step
+    3), noting the user's decision. For an internal contract, update
+    the entry in plan.md with the reason, record the change under
+    "Contract deviations", then continue without waiting. Until the
+    receipt is written, the change stays noted in that plan.md entry,
+    so the receipt step can collect it into apply.md. The deviations
+    list is cumulative across iterations: keep earlier entries when
+    apply is re-run.
+
     2. **Executor** — when subagents are available, you should
        **always use 2a**. 2b exists only as a fallback for platforms
        without subagent support; see the 2b section for details.
@@ -811,7 +845,8 @@ apply:
        file with current state: worktree path, worktree branch
        (<change-name>), feature branch (the branch checked out before
        step 0), base branch (the integration branch), commit range,
-       tasks completed X of Y, remaining tasks, executor identity, and
+       tasks completed X of Y, remaining tasks, executor identity,
+       "Contract deviations" (every entry so far, or `none`), and
        an ISO timestamp. Commit it in the worktree. The receipt is the
        artifact that satisfies the DAG so `verify` becomes reachable.
 

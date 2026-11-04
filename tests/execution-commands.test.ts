@@ -146,6 +146,29 @@ describe("execution commands", () => {
 		expect(text).toContain("iteration");
 	});
 
+	it("apply briefs the executor on Contracts and keeps deviations", () => {
+		const text = skill("apply");
+		const section = (from: string, to: string) => {
+			const start = text.indexOf(from);
+			const end = text.indexOf(to, start + from.length);
+			expect(start, from).toBeGreaterThanOrEqual(0);
+			expect(end, to).toBeGreaterThan(start);
+			return text.slice(start, end);
+		};
+		const step5 = section("5. **Choose the executor**", "6. **Write the receipt");
+		expect(step5).toContain("Contracts");
+		expect(step5).toContain("public");
+		expect(step5).toContain("plan.md");
+		expect(step5).toContain("per-task contract order");
+		expect(step5.replace(/\s+/g, " ")).toContain("in `plan.md` with the reason");
+		const step6 = section("6. **Write the receipt", "7. **Post-PR mode**");
+		expect(step6).toContain("Contract deviations");
+		const postPr = section("7. **Post-PR mode**", "8. **Fix-iteration mode**");
+		expect(postPr).toContain("Contract deviations");
+		const fix = section("8. **Fix-iteration mode**", "\n**Superpowers rule**\n");
+		expect(fix).toContain("Contract deviations");
+	});
+
 	it("verify runs in the worktree and requires apply.md", () => {
 		const text = skill("verify");
 		expect(text).toContain("openspec instructions verify");
@@ -164,6 +187,27 @@ describe("execution commands", () => {
 		expect(flat).toContain(
 			"is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`",
 		);
+	});
+
+	it("verify compares Contracts as a warning and marks uncomparable ones not verified", () => {
+		const text = skill("verify").replace(/\s+/g, " ");
+		const section = (from: string, to: string) => {
+			const start = text.indexOf(from);
+			const end = text.indexOf(to, start + from.length);
+			expect(start).toBeGreaterThanOrEqual(0);
+			expect(end).toBeGreaterThan(start);
+			return text.slice(start, end);
+		};
+		const step5 = section("5. **Read context and follow the verify instruction**", "6. **Write `verify.md`");
+		expect(step5).toContain("Contracts");
+		expect(step5).toContain("Contract deviations");
+		expect(step5).toContain("A mismatch is a warning");
+		expect(step5).toContain("not verified");
+		expect(step5).toContain("never FAIL by itself");
+		expect(step5).toContain("read-only");
+		const step6 = section("6. **Write `verify.md`", "7. **Handle the outcome**");
+		expect(step6).toContain("Contracts");
+		expect(step6).toContain("files compared");
 	});
 
 	it("sync merges deltas and does not archive", () => {

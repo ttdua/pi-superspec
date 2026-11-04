@@ -34,6 +34,15 @@
 
 ---
 
+## Contract deviations
+
+> Contracts changed during apply, each with its reason. Cumulative:
+> keep entries from earlier iterations. Write `none` if there are none.
+
+- `<contract name>`: `<what changed and why>`
+
+---
+
 ## Next step
 
 `<e.g., "Run /opsx-verify" or "Re-run apply to address <issue>">`
