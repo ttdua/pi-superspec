@@ -41,6 +41,23 @@ describe("subagent routing reference", () => {
 		expect(text).not.toMatch(/\bregisterAgent\b|npm install|bun add/);
 	});
 
+	it.each([
+		"opsx-explore",
+		"opsx-continue",
+		"opsx-ff",
+		"opsx-apply",
+		"opsx-verify",
+		"opsx-generate-specs",
+	])("SA-R00 %s links the shared reference to the packaged file", (name) => {
+		const skillUrl = new URL(`skills/${name}/SKILL.md`, root);
+		const link = /\]\((\.\.\/references\/subagent-routing\.md)\)/.exec(
+			readFileSync(skillUrl, "utf8"),
+		);
+		expect(link, `${name} lacks the shared reference link`).not.toBeNull();
+		expect(new URL(link![1], skillUrl).href).toBe(referenceUrl.href);
+		expect(existsSync(new URL(link![1], skillUrl))).toBe(true);
+	});
+
 	it("SA-R01 pins helper-only enable, next-turn re-evaluation, then management and role check", () => {
 		const text = section("Availability");
 		const enable = text.search(/subagents_enable/);

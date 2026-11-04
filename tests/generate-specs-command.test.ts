@@ -147,3 +147,118 @@ describe("opsx-generate-specs command", () => {
 		}
 	});
 });
+
+describe("generate-specs evidence-only scouts", () => {
+	const skill = () => read(SKILL);
+	const step = (from: string, to: string) => {
+		const text = skill();
+		return text.slice(text.indexOf(from), text.indexOf(to));
+	};
+	const map = () => step("**MAP the codebase**", "**Drop existing specs**");
+	const dispatch = () => step("**SCOUT each capability**", "**Write the other artifacts**");
+
+	it("SA-G00 reads the shared routing reference before delegating", () => {
+		expect(skill()).toContain("../references/subagent-routing.md");
+		expect(skill()).not.toContain("## Availability");
+		expect(skill()).not.toContain("Helper-only");
+	});
+
+	it("SA-G01 map returns at most 12 compound kebab-case candidates with purpose and directories", () => {
+		const text = map();
+		expect(text).toContain("at most 12 capability candidates");
+		expect(text).toMatch(/kebab-case name of at least two words/);
+		expect(text).toMatch(/one-line purpose/);
+		expect(text).toMatch(/directories it covers/);
+	});
+
+	it("SA-G14 map skips ignored roots", () => {
+		const text = map();
+		for (const root of ["node_modules", "dist", "build", "vendor", ".git", "generated files"]) {
+			expect(text).toContain(root);
+		}
+		expect(text).toMatch(/No candidate covers an ignored directory/);
+	});
+
+	it("SA-G02 map scout is one superspec.scout on configured settings without model or thinking override", () => {
+		const text = map();
+		expect(text).toContain("superspec.scout");
+		expect(text).toMatch(/one `?superspec\.scout`?|one map scout/i);
+		expect(text).toMatch(/configured model/i);
+		expect(text).toMatch(/no (per-(call|dispatch) )?model\/thinking override|without (a )?(per-(call|dispatch) )?model\/thinking override/i);
+		expect(text).not.toMatch(/fast model/i);
+		expect(skill()).not.toMatch(/fast model/i);
+	});
+
+	it("SA-G03 map scout runs before confirmation and capability scouts only follow the confirmed list", () => {
+		const text = skill();
+		expect(text.indexOf("**MAP the codebase**")).toBeLessThan(text.indexOf("**CONFIRM once**"));
+		const confirm = step("**CONFIRM once**", "**Create the bootstrap change**");
+		expect(confirm).toMatch(/map scout is not a capability scout/i);
+		expect(confirm).toMatch(/no capability scout runs before the user confirms/i);
+		expect(dispatch()).toMatch(/only for the confirmed list/i);
+	});
+
+	it("SA-G15 cancellation creates no change and no capability scout", () => {
+		const confirm = step("**CONFIRM once**", "**Create the bootstrap change**");
+		expect(confirm).toMatch(/cancels[^]*Create no change/);
+		expect(confirm).toMatch(/cancels[^]*no capability scout/i);
+	});
+
+	it("SA-G04 dispatches one evidence-only scout per confirmed missing capability and the parent writes official files", () => {
+		const text = dispatch();
+		expect(text).toMatch(/one evidence-only `?superspec\.scout`? per confirmed capability[^.\n]*missing/i);
+		expect(text).toMatch(/parent (alone )?writes[^.\n]*(official|spec)/i);
+		expect(text).toMatch(/scouts? (never|must never|do not|must not) write[^.\n]*spec/i);
+		expect(text).toMatch(/`output`/);
+		expect(text).toMatch(/scratch|run-managed/i);
+		expect(text).not.toMatch(/Scouts write their own files/i);
+		expect(text).not.toMatch(/output path `openspec\/changes\/bootstrap-specs\/specs/);
+	});
+
+	it("SA-G05 absent integration scouts inline sequentially and writes each spec before the next", () => {
+		const text = dispatch();
+		expect(text).toMatch(/absent[^]*one after another[^]*write each spec[^.\n]*before (starting )?the next/i);
+		expect(text).toMatch(/never (invent|fabricate)[^.\n]*(subagent|child)/i);
+	});
+
+	it("SA-G06 re-filters after rename and skips existing spec files and done artifacts", () => {
+		const text = skill();
+		expect(text).toMatch(/after the user's edits[^]*openspec\/specs\//i);
+		expect(text).toMatch(/spec file already present in an existing `bootstrap-specs` change/);
+		expect(text).toMatch(/skip every artifact that is `done`/);
+		expect(text).toMatch(/never rewrite one that exists/i);
+		expect(dispatch()).toMatch(/never (re-scout|overwrite)|not re-scout/i);
+	});
+
+	it("SA-G07..G11 scout evidence obligations: presence, content, inferred label, observable behaviour, tests and docs", () => {
+		const contract = step("**Scout contract**", "**Language**");
+		expect(contract).toMatch(/Every requirement has an `Evidence:` line/);
+		expect(contract).toMatch(/naming the files \(with line numbers where known\), tests or documents/);
+		expect(contract).toContain("Confidence: inferred");
+		expect(contract).toMatch(/only when code alone backs the requirement/);
+		expect(contract).toMatch(/observable behaviour, not module or function structure/);
+		expect(contract).toMatch(/Read tests and documentation as well as source/);
+		expect(dispatch()).toMatch(/Candidate behaviors/);
+		expect(dispatch()).toMatch(/tests and documentation/i);
+	});
+
+	it("SA-G12 reviews drafts internally, then strict-validates, fixes and reruns, and keeps the ff handoff", () => {
+		const text = skill();
+		const review = text.search(/superspec\.spec-reviewer/);
+		const validate = text.indexOf("openspec validate bootstrap-specs --strict");
+		const handoff = text.indexOf("/opsx-ff bootstrap-specs`.\"");
+		expect(review).toBeGreaterThan(text.indexOf("**SCOUT each capability**"));
+		expect(review).toBeLessThan(validate);
+		expect(validate).toBeLessThan(handoff);
+		expect(text).toMatch(/no new human gate|without a new human gate/i);
+		expect(text).toMatch(/fix the files and run it again until it passes/);
+		expect(text).toMatch(/absent[^.\n]*inline/i);
+	});
+
+	it("SA-G13 parent alone writes official artifacts; reports are run-managed scratch", () => {
+		const text = skill();
+		expect(text).toMatch(/parent (alone )?(writes|owns)[^.\n]*(official|artifact|spec)/i);
+		expect(text).toMatch(/reports? (remain|stay|are)[^.\n]*(run-managed|scratch)/i);
+		expect(text).toMatch(/Never let a (scout|child) write/i);
+	});
+});

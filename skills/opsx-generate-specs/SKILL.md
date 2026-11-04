@@ -1,6 +1,6 @@
 ---
 name: opsx-generate-specs
-description: Draft a first set of OpenSpec specs for an existing codebase. Map the code into capabilities, confirm them with the user, scout each one into a delta spec inside the bootstrap-specs change, then hand off to /opsx-ff bootstrap-specs.
+description: Draft a first set of OpenSpec specs for an existing codebase. Map the code into capabilities, confirm them with the user, gather evidence for each one, write it into a delta spec inside the bootstrap-specs change, then hand off to /opsx-ff bootstrap-specs.
 ---
 
 Generate draft specs for an existing codebase. The result is a change named `bootstrap-specs` that the user reviews and finishes with `/opsx-ff bootstrap-specs`. Nothing is written into `openspec/specs/` directly.
@@ -19,7 +19,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 2. **MAP the codebase**
 
-   Run one agent for the map. If the `subagent` tool from `pi-subagents` exists and lets a model be chosen, use a fast model; otherwise use the default model, or do the map yourself when the tool is absent. Never invent subagent calls.
+   Before delegating, read [subagent routing](../references/subagent-routing.md) and follow it. Run one `superspec.scout` for the map, using the configured model settings with no per-call model/thinking override, and bind its report with `output`. This map scout is not a capability scout. When the optional `pi-subagents` integration is absent, do the map yourself inline. Never invent subagent calls.
 
    The map reads the directory tree, package manifests, README and entry points. It skips `node_modules`, `dist`, `build`, `vendor`, `.git` and generated files. It returns at most 12 capability candidates, each with:
    - a kebab-case name of at least two words (for example `user-auth`)
@@ -34,9 +34,9 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 4. **CONFIRM once**
 
-   Before any scout runs, show every remaining candidate with its purpose and a work estimate (candidate count and directories covered). Ask once whether to keep, drop or rename candidates. Run no scout before the user confirms.
+   Before any capability scout runs, show every remaining candidate with its purpose and a work estimate (candidate count and directories covered). Ask once whether to keep, drop or rename candidates. No capability scout runs before the user confirms; the map scout is not a capability scout.
 
-   If the user cancels, stop. Create no change and run no scout. Scout only the capabilities left after the user's edits, and apply step 3 again to the edited list: drop any name that now matches a directory under `openspec/specs/` or a spec file already present in an existing `bootstrap-specs` change.
+   If the user cancels, stop. Create no change and run no capability scout. Scout only the capabilities left after the user's edits, and apply step 3 again to the edited list: drop any name that now matches a directory under `openspec/specs/` or a spec file already present in an existing `bootstrap-specs` change.
 
 5. **Create the bootstrap change**
 
@@ -48,7 +48,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 6. **Scout contract**
 
-   Each scout writes `openspec/changes/bootstrap-specs/specs/<capability>/spec.md` containing only a `## ADDED Requirements` section. Use this block for every requirement, in this order:
+   Scouts return evidence only and never write official specs. The parent turns that evidence into `openspec/changes/bootstrap-specs/specs/<capability>/spec.md` containing only a `## ADDED Requirements` section. Use this block for every requirement, in this order:
 
    ```markdown
    ### Requirement: <name>
@@ -75,11 +75,14 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 8. **SCOUT each capability**
 
-   Run one scout per confirmed capability. Give every scout, in its brief: the capability name and directories, the full scout contract from step 6 (copy its text), the output path `openspec/changes/bootstrap-specs/specs/<capability>/spec.md`, and the document language from step 7. A subagent has no other context.
-   - If the `subagent` tool from `pi-subagents` exists, dispatch the scouts as subagents, in parallel where the tool allows, on a fast model when the tool lets a model be chosen. Scouts write their own files.
-   - Otherwise scout the capabilities one after another in this session, applying the same contract, path and language, and write each spec file before starting the next. This is slower and fills context; say so once. Never invent subagent calls.
+   Read [subagent routing](../references/subagent-routing.md) again if this stage starts in a new turn. Run one evidence-only `superspec.scout` per confirmed capability whose spec file is still missing, and run scouts only for the confirmed list. Never re-scout or overwrite a spec file that exists. Give every scout, in its brief: the capability name and directories, the scout contract from step 6 (copy its text), the obligation to read source, tests and documentation, the document language from step 7, and a report contract with `## Summary`, `## Evidence`, `## Findings`, `## Limitations`, `## Candidate behaviors` and `## Start here`. Bind each report with `output` to a run-managed or scratch report, never to an official spec path. A scout must never write under `openspec/`, and a path in prose does not bind output. A scout has no other context.
+   - When the compatible integration is available, dispatch the scouts in parallel where useful, with configured models and fresh context.
+   - When the integration is absent, announce it once and scout the capabilities one after another in this session with the same contract and language, and write each spec file before starting the next. This is slower and fills context. Never invent subagent calls.
+   - A disabled or missing role, an incompatible integration or a failed child stops this stage with the named cause, per the shared reference.
 
-   After the scouts finish, check that every expected file exists. Redo any that is missing.
+   The parent alone writes the official spec files. Reports stay run-managed scratch artifacts. Inspect each report for missing evidence, ask for a redo of an incomplete one, then write only the missing `specs/<capability>/spec.md` files from the evidence, SHALL-first with `Evidence:` and `Confidence:` lines in the step 6 format. Never let a scout or child write official artifacts.
+
+   After writing, check that every expected file exists, then review the new drafts: when the integration is available dispatch `superspec.spec-reviewer` with the drafts and the proposal context, otherwise review them inline. Resolve substantive findings. This adds no new human gate.
 
 9. **Write the other artifacts**
 
@@ -96,7 +99,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
     openspec validate bootstrap-specs --strict
     ```
 
-    If it fails, fix the files and run it again until it passes.
+    This is the final strict validation after the internal review. If it fails, fix the files and run it again until it passes.
 
 11. **Stop and hand off**
 
@@ -106,7 +109,8 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 **Guardrails**
 - Never touch files under `openspec/specs/`
-- Never run a scout before the user confirms
+- Never run a capability scout before the user confirms
 - Never overwrite an artifact that is `done`
-- Never invent subagent calls when the `subagent` tool is absent
+- Never invent subagent calls when the integration is absent
+- Never let a scout write official specs; the parent writes them
 - Do not claim a requirement is certain when only code supports it; label it `Confidence: inferred`
