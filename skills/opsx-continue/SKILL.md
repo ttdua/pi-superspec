@@ -3,7 +3,7 @@ name: opsx-continue
 description: Continue an OpenSpec change by creating the next ready artifact, run a review gate on it, then stop. Use when the user wants to progress their change or create the next artifact.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-continue-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-continue-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Continue working on a change by creating the next artifact.
 
@@ -31,13 +31,17 @@ Continue working on a change by creating the next artifact.
    ```
    Parse the JSON. The response includes:
    - `schemaName`: The workflow schema in use
-   - `artifacts`: Array of artifacts with status ("done", "ready", "blocked")
-   - `isComplete`: Whether all artifacts are complete
+   - `artifacts`: Array of artifacts with status ("done", "skipped", "ready", "blocked")
+   - `isPlanningComplete`: Whether all planning artifacts are complete; older CLI versions expose the same value as `isComplete`, so fall back to `isComplete` when `isPlanningComplete` is absent
    - `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`: path and scope context. Use these instead of assuming repo-local paths.
+
+   An artifact with status "skipped" is satisfied: it has no files, so never create it and do not look for its files.
 
 3. **Act based on status**
 
-   **If all artifacts are complete (`isComplete: true`)**:
+   **Check `done` glob artifacts for missing files first**: a `done` artifact whose output is a glob (for example `specs`) can still be partial. For each such artifact, get its instructions, read the completed dependencies it needs, and compare the files the proposal calls for with `artifactPaths.<id>.existingOutputPaths`. If some are missing, that artifact is this call's one artifact: handle it as the partial-artifact case under "Create the artifact file" below, using the instructions you already fetched.
+
+   **If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**:
    - Show the final status including the schema used
    - Suggest: "All artifacts created! You can now run `/opsx-apply` or archive this change."
    - STOP
@@ -57,13 +61,14 @@ Continue working on a change by creating the next artifact.
      - `template`: The structure for the output file
      - `instruction`: Schema-specific guidance. If it names `superpowers:<x>`, follow the **Superpowers artifact rule** below before writing the artifact
      - `resolvedOutputPath`: Resolved path or pattern to write the artifact
-     - `dependencies`: Completed artifacts to read for context
+     - `dependencies`: Completed artifacts to read for context (entries with `skipped: true` have no files, so do not look for them)
    - **Create the artifact file**:
-     - Read any completed dependency files for context
+     - Read any completed dependency files for context; always re-read them from disk, even if you saw them earlier in the conversation (the user may have edited them)
      - Use `template` as the structure and fill in its sections
      - Apply `context` and `rules` as constraints, but do NOT copy them into the file
      - Write to `resolvedOutputPath`. If it is a glob pattern, choose the concrete file path using the schema instruction and workspace planning context
    - An artifact may span several files (for example the `specs` artifact: one spec per capability, as the schema instruction directs). Create all files for that one artifact; it still counts as one artifact
+   - For a partial glob artifact (see the check above), write only the missing files as that call's one artifact, then run the Review gate on the files you wrote and STOP (never overwrite existing files)
    - Create exactly one artifact, then show what was created and what is now unlocked
    - If the artifact is `finalize`, run the code review gate during creation, at its step 2b, before the git-side closeout, using the Review gate section
    - Run the **Review gate** on the written file(s). On `approved`, or on `approved_with_notes` handled per the gate, go on to STOP. On `changes_requested`, revise and reopen the gate. On `dismissed`, ask the user in chat. For `finalize`, the written `finalize.md` is already committed and pushed, so a `changes_requested` on it is handled as a follow-up commit and push on the feature branch
@@ -131,7 +136,7 @@ The artifact types depend on the schema. Use the `instruction` field from the in
 **Guardrails**
 - Create exactly one artifact per invocation
 - Approval does not create the next artifact; the next artifact needs the next `/opsx-continue`
-- Always read dependency artifacts before creating a new one
+- Always read dependency artifacts before creating a new one, and re-read them from disk rather than from conversation memory
 - Never skip artifacts or create them out of order
 - If context is unclear, ask the user before creating
 - Verify the artifact file exists after writing before reporting progress

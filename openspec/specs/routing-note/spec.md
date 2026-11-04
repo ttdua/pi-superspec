@@ -82,11 +82,23 @@ At `session_start` in an activated project with an interactive UI, the extension
 - **THEN** no warning is shown
 
 ### Requirement: Document language paragraph
-The routing note SHALL include a paragraph, built on each `context` event from the project's effective document language, that tells the agent to write the prose of OpenSpec documents in that language, to keep headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`, checkbox syntax, delta operation headers, file names and capability names in English, that code, comments and commits are not affected, and that a request to change the document language is handled by updating `language:` in `openspec/config.yaml`. The effective language is the valid `language:` value of `openspec/config.yaml`, or `en` when the file or the key is missing or the value is invalid. The note MUST still start with the routing note marker so that the duplicate check applies.
+The routing note SHALL include a paragraph, built on each `context` event from the project's effective document language, that tells the agent to write the prose of OpenSpec documents in that language. The effective language is the valid `language:` value of `openspec/config.yaml`, or `en` when the file or the key is missing or the value is invalid. The note MUST still start with the routing note marker so that the duplicate check applies.
 
 #### Scenario: Language set
 - **WHEN** a `context` event fires in an activated project whose config has `language: vi`
 - **THEN** the injected note contains `vi`, the instruction to keep structural tokens in English, and the instruction to update `language:` on request
+
+#### Scenario: Structural tokens stay English
+- **WHEN** the language paragraph is built
+- **THEN** it tells the agent to keep headings, requirement and scenario names, `WHEN`/`THEN`/`SHALL`/`MUST`, checkbox syntax, delta operation headers, file names and capability names in English
+
+#### Scenario: Code and commits unaffected
+- **WHEN** the language paragraph is built
+- **THEN** it states that code, comments and commits are not affected
+
+#### Scenario: Language change request
+- **WHEN** the language paragraph is built
+- **THEN** it tells the agent that a request to change the document language is handled by updating `language:` in `openspec/config.yaml`
 
 #### Scenario: Language absent
 - **WHEN** a `context` event fires in an activated project whose config has no `language:`
