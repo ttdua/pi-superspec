@@ -483,6 +483,16 @@ run("bundled schema", () => {
 			expect(text).not.toMatch(/TypeScript/);
 		});
 
+		it("design instruction and template point contract shapes to the plan", () => {
+			const text = instructionFor("design");
+			const t = tpl("design.md");
+			for (const src of [text, t]) {
+				expect(src).toContain("public");
+				expect(src).toContain("Contracts");
+			}
+			expect(text).toContain("No design needed:");
+		});
+
 		it("apply ticks tasks.md as official status and commits dirty change dirs", () => {
 			const text = instructionFor("apply");
 			expect(text).toContain(
