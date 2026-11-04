@@ -255,6 +255,16 @@ describe("generate-specs evidence-only scouts", () => {
 		expect(text).toMatch(/absent[^.\n]*inline/i);
 	});
 
+	it("SA-G12 step-8 review context uses only what exists and findings are all resolved", () => {
+		const text = dispatch();
+		const review = text.slice(text.indexOf("review the new drafts"));
+		expect(review).not.toMatch(/proposal/i);
+		expect(review).toMatch(/confirmed capability list/i);
+		expect(review).toMatch(/scout evidence reports/i);
+		expect(review).toMatch(/Resolve (all )?findings/);
+		expect(review).not.toMatch(/substantive/i);
+	});
+
 	it("SA-G13 parent alone writes official artifacts; reports are run-managed scratch", () => {
 		const text = skill();
 		expect(text).toMatch(/parent (alone )?(writes|owns)[^.\n]*(official|artifact|spec)/i);

@@ -82,7 +82,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
    The parent alone writes the official spec files. Reports stay run-managed scratch artifacts. Inspect each report for missing evidence, ask for a redo of an incomplete one, then write only the missing `specs/<capability>/spec.md` files from the evidence, SHALL-first with `Evidence:` and `Confidence:` lines in the step 6 format. Never let a scout or child write official artifacts.
 
-   After writing, check that every expected file exists, then review the new drafts: when the integration is available dispatch `superspec.spec-reviewer` with the drafts and the proposal context, otherwise review them inline. Resolve substantive findings. This adds no new human gate.
+   After writing, check that every expected file exists, then review the new drafts: when the integration is available dispatch `superspec.spec-reviewer` with the drafts, the confirmed capability list and map result, the scout evidence reports, and `brainstorm.md` if it already exists, otherwise review them inline. Resolve all findings before strict validation. This adds no new human gate.
 
 9. **Write the other artifacts**
 
