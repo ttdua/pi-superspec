@@ -759,6 +759,22 @@ apply:
        `openspec` calls) runs with the worktree as the working
        directory.
 
+    **Contracts rule (both executors)**: plan.md has a `## Contracts`
+    section. Both the subagent-driven path (2a) and the
+    executing-plans fallback (2b) follow it, one task at a time. Work
+    for each task in this order: first the declarations or stubs
+    that match the plan's Contracts, then the typecheck when the
+    language has one, then the failing test, then the implementation.
+    The order repeats per task; it is not a project-wide phase.
+
+    If the work needs a contract shape that differs from the plan,
+    STOP before going on. For a contract marked `public`, ask the user
+    for a decision and wait for the answer. For an internal contract,
+    update the entry in plan.md with the reason, then record it in
+    apply.md under "Contract deviations" (step 3). That list is
+    cumulative across iterations: keep earlier entries when apply is
+    re-run.
+
     2. **Executor** — when subagents are available, you should
        **always use 2a**. 2b exists only as a fallback for platforms
        without subagent support; see the 2b section for details.
@@ -819,7 +835,8 @@ apply:
        file with current state: worktree path, worktree branch
        (<change-name>), feature branch (the branch checked out before
        step 0), base branch (the integration branch), commit range,
-       tasks completed X of Y, remaining tasks, executor identity, and
+       tasks completed X of Y, remaining tasks, executor identity,
+       "Contract deviations" (every entry so far, or `none`), and
        an ISO timestamp. Commit it in the worktree. The receipt is the
        artifact that satisfies the DAG so `verify` becomes reachable.
 

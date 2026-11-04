@@ -159,6 +159,44 @@ run("bundled schema", () => {
 				expect(tpl, field).toContain(field);
 			}
 		});
+
+		it("apply instruction orders each task around the Contracts", () => {
+			const text = applyInstruction().replace(/\s+/g, " ");
+			const start = text.indexOf("Contracts rule");
+			expect(start).toBeGreaterThan(-1);
+			let at = start;
+			for (const word of ["Contracts", "for each task", "typecheck", "failing test"]) {
+				const i = text.indexOf(word, at);
+				expect(i, word).toBeGreaterThan(-1);
+				at = i;
+			}
+			expect(text).not.toContain("all contracts first");
+		});
+
+		it("apply instruction stops on a contract change", () => {
+			const text = applyInstruction();
+			const rule = text.indexOf("Contracts rule");
+			expect(rule).toBeGreaterThan(-1);
+			expect(rule).toBeLessThan(text.indexOf("2a."));
+			expect(rule).toBeLessThan(text.indexOf("2b."));
+			const flat = text.slice(rule, text.indexOf("2. **Executor**")).replace(/\s+/g, " ");
+			expect(flat).toMatch(/public[^.]*ask the user/);
+			expect(flat).toContain("Contract deviations");
+			expect(text.slice(text.indexOf("3. **Receipt"))).toContain(
+				"Contract deviations",
+			);
+		});
+
+		it("apply.md template has Contract deviations before Next step", () => {
+			const tpl = readFileSync(
+				join(SCHEMA_DIR, "templates", "apply.md"),
+				"utf8",
+			);
+			const dev = tpl.indexOf("## Contract deviations");
+			expect(dev).toBeGreaterThan(-1);
+			expect(dev).toBeLessThan(tpl.indexOf("## Next step"));
+			expect(tpl).toContain("none");
+		});
 	});
 
 	describe("verify artifact", () => {
