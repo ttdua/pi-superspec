@@ -25,4 +25,4 @@
 
 ## 5. Final check
 
-- [ ] 5.1 Run `npm test` and `npm run typecheck`, then `openspec validate --all --json`, and confirm the schema version is still 6 and `openspec/schemas/superspec/` is untouched
+- [x] 5.1 Run `npm test` and `npm run typecheck`, then `openspec validate --all --json`, and confirm the schema version is still 6 and `openspec/schemas/superspec/` is untouched
