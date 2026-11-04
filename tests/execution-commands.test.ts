@@ -341,3 +341,101 @@ describe("execution commands", () => {
 		expect(text).toContain("systematic-debugging");
 	});
 });
+
+describe("execution specialist routing", () => {
+	const REF = "../references/subagent-routing.md";
+	const noCopy = (t: string) => {
+		expect(t).not.toContain("## Availability");
+		expect(t).not.toContain("Helper-only");
+	};
+
+	it("SA-E01 apply maps SDD seats to canonical implementer and task-reviewer", () => {
+		const t = skill("apply");
+		expect(t).toContain(REF);
+		expect(t).toMatch(/shared (routing )?(policy|reference)[^.\n]*before (choosing|selecting) the executor/i);
+		expect(t).toContain("superspec.implementer");
+		expect(t).toContain("superspec.task-reviewer");
+		expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*superspec\.task-reviewer/i);
+		expect(t).toMatch(/final whole-branch[^.\n]*superspec\.task-reviewer|superspec\.task-reviewer[^.\n]*final whole-branch/i);
+		expect(t).toMatch(/no duplicate generic reviewer|never[^.\n]*generic (Superpowers )?reviewer/i);
+		expect(t).toMatch(/one implementation writer per worktree/i);
+		expect(t).toMatch(/configured model/i);
+		expect(t).toMatch(/overrides?[^.\n]*(model|generic)[^.\n]*(advice|pinning|guidance)/i);
+		expect(t).toMatch(/parent[^.\n]*(todo|progress|tick)/i);
+		expect(t).toMatch(/BASE\.\.HEAD/);
+		noCopy(t);
+	});
+
+	it("SA-E01 apply applies the same policy to fix-iteration and post-PR delegation", () => {
+		const t = skill("apply");
+		expect(t).toMatch(/fix-iteration[^.\n]*post-PR[^.\n]*(same|shared)[^.\n]*(policy|seats)|(same|shared)[^.\n]*(policy|seats)[^.\n]*fix-iteration/i);
+	});
+
+	it("SA-E02 apply uses inline execution with whole-branch review when integration is absent", () => {
+		const t = skill("apply");
+		expect(t).toMatch(/neither[^.\n]*subagent[^.\n]*(activation )?helper[^.\n]*executing-plans|executing-plans[^.\n]*neither/i);
+		expect(t).toContain("whole-branch review");
+		expect(t).toMatch(/never invent subagent calls/i);
+	});
+
+	it("SA-E03 apply stops on a missing, disabled or failed canonical role without a replacement", () => {
+		const t = skill("apply");
+		expect(t).toMatch(/(role|agent)[^\n]*(disabled|missing)[^\n]*fail[^\n]*STOP/i);
+		expect(t).toMatch(/no (generic )?(replacement|substitute)/i);
+		expect(t).toMatch(/not (silently )?(go|fall)[^.\n]*inline|never[^.\n]*silently[^.\n]*inline/i);
+	});
+
+	it("SA-E04 verify loads shared policy and delegates collection to the verifier in the authoritative cwd", () => {
+		const t = skill("verify");
+		expect(t).toContain(REF);
+		expect(t).toContain("superspec.verifier");
+		expect(t).toMatch(/authoritative (worktree|cwd)/i);
+		expect(t).toMatch(/six checks/i);
+		expect(t).toMatch(/only the parent writes[^\n]*receipt/i);
+		noCopy(t);
+	});
+
+	it("SA-E05 verify accepts only current-invocation evidence and rejects old results", () => {
+		const t = skill("verify");
+		expect(t).toMatch(/command[^.\n]*cwd[^.\n]*exit[^.\n]*count/i);
+		expect(t).toMatch(/this (verify )?invocation/i);
+		expect(t).toMatch(/(reject|never accept|not accept)[^.\n]*(apply|earlier|old)[^.\n]*(result|output|verify)/i);
+		expect(t).toMatch(/inspects?[^.\n]*report[^.\n]*files|report-only success/i);
+	});
+
+	it("SA-E06 verify pins failure, not-verified and no-fix rules", () => {
+		const t = skill("verify");
+		expect(t).toMatch(/failing (fresh )?tests?[^.\n]*FAIL/i);
+		expect(t).toMatch(/unavailable[^.\n]*not verified[^.\n]*PASS_WITH_WARNINGS|not verified[^.\n]*at most `?PASS_WITH_WARNINGS/i);
+		expect(t).toMatch(/verifier[^.\n]*(never|must not)[^.\n]*(fix|modify)[^.\n]*code/i);
+		expect(t).toMatch(/mismatch[^.\n]*(is )?a warning[^.\n]*never FAIL/i);
+	});
+
+	it("SA-E07 verify runs the same checks inline when integration is absent", () => {
+		const t = skill("verify");
+		expect(t).toMatch(/absent[^.\n]*(inline|same)[^.\n]*(verify|checks)/i);
+		expect(t).toMatch(/never fabricate/i);
+	});
+
+	it("keeps order, worktree reuse, iteration cap and receipts unchanged", () => {
+		const a = skill("apply");
+		expect(a).toContain("Re-runs reuse the existing `<change-name>` worktree");
+		expect(a).toContain("Stop at 5 fix iterations");
+		expect(a).toContain("a `public` contract stops the executor");
+		const v = skill("verify");
+		expect(v).toContain("Stop after 5 iterations");
+		expect(v).toContain("`PASS_WITH_WARNINGS`");
+	});
+
+	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
+		const g = read("docs/usage-guide.md");
+		for (const a of ["superspec.implementer", "superspec.task-reviewer", "superspec.verifier"]) {
+			expect(g).toContain(a);
+		}
+		expect(g).toMatch(/absent[^.\n]*inline/i);
+		expect(g).toMatch(/(disabled|incompatible)[^.\n]*stop/i);
+		expect(g).toMatch(/command[^.\n]*cwd[^.\n]*exit[^.\n]*count/i);
+		expect(g).toMatch(/parent[^.\n]*(writes|owns)[^.\n]*(apply\.md|receipt)/i);
+		expect(g).toMatch(/no (merge|push)|never (merge|push)/i);
+	});
+});

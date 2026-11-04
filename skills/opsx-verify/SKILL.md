@@ -51,6 +51,8 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
 
    If `instruction` names `superpowers:<x>`, follow the **Superpowers rule** below.
 
+   **Delegated evidence:** read [subagent routing](../references/subagent-routing.md) and follow that shared policy first. When the integration and `superspec.verifier` are available, the verifier may collect independent evidence for the six checks. Hand it the authoritative worktree as cwd, the change root and context paths, and the checks; it returns the Checks and Validation report. The verifier must never fix or modify code and never writes `verify.md`; only the parent writes and commits the receipt. Accept only evidence with command, cwd, exit status, counts and file evidence collected in this invocation. Reject old apply or verify results and any earlier output. The parent inspects the report and the files it cites, runs the missing checks it can, and never trusts report-only success or a successful child exit. When the integration is absent (neither tool nor helper), the parent runs the same checks inline and never fabricates child evidence. A disabled or missing role, an incompatible integration or a failed launch stops verification with the named cause, with no generic substitute.
+
    Beyond the instruction, always do all of these:
    - **Fresh test run:** run the project's test command in the worktree now, as a new run. Do not reuse earlier output or the result stated in `apply.md`. Record the exact command, exit status, and pass/fail counts.
    - **Evidence:** read the `verification-before-completion` skill and follow it. Every claim in `verify.md` (check passed, tests green, task done) must rest on command output or file evidence you collected in this run.
@@ -73,7 +75,7 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    - `PASS_WITH_WARNINGS`: no CRITICAL issues, fresh tests green, warnings or suggestions remain.
    - `FAIL`: any CRITICAL issue (incomplete task, missing requirement, failing fresh tests, and so on).
 
-   A check you could not run is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`. Keep the outcome names `PASS`, `PASS_WITH_WARNINGS` and `FAIL`.
+   Failing fresh tests are FAIL. A check you could not run, or whose evidence is unavailable, is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`. Keep the outcome names `PASS`, `PASS_WITH_WARNINGS` and `FAIL`.
 
    When uncertain, prefer SUGGESTION over WARNING and WARNING over CRITICAL, but never report `PASS` with failing tests.
 
