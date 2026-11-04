@@ -95,6 +95,45 @@ Setup: remove `pi-subagents`, reinstall pi-superspec (Run A ends by removing it)
 - [ ] On the feature branch, run `/opsx-ff e2e-b-ff`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked. Expected: after the `brainstorm.md` gate is approved, `proposal.md`, `design.md`, `specs/`, `tasks.md` and `plan.md` exist under `openspec/changes/e2e-b-ff/`, one final review gate runs over those five, and once it is approved the command ends with `All artifacts created!` and `Run /opsx-apply to start implementing.`
 - [ ] Check the change directory after `/opsx-ff` finished. Expected: `openspec/changes/e2e-b-ff/apply.md` does not exist and no product code was written.
 
+## Runtime smoke: Superspec package agents
+
+These procedures check the optional `pi-subagents` integration (six `superspec.*` agents) in a real pi session. They describe what to do and what to observe; they record no results. Unit tests and prompt-string tests do not replace them. Run them only in disposable fixture projects outside this repository, and configure the candidate package through the fixture's local project package settings, never by editing global settings. Use `pi-subagents` and Superpowers as installed; do not install packages mid-run. If setup, auth, a required skill or an optional package is unavailable, stop and record a blocker instead of substituting another tool.
+
+Never synthesize a human approval. A required human gate that cannot be answered is a blocker.
+
+### Common setup
+
+- Two disposable git projects: a marked one (initialised with `/opsx-init`, so `openspec/schemas/superspec/.pi-superspec.json` exists) and an unmarked one.
+- Candidate package configured via each fixture's project-local package settings. Expected: the `subagent` tool's detail for a `superspec.*` agent reports the candidate worktree/package source, not an older globally installed copy.
+- Read the installed `pi-subagents` management help before using list, inspect or disable calls; do not guess action shapes.
+- Before each case, snapshot (hash or copy) user and project settings, the user and project agent directories, and any canary files the case names.
+
+### Evidence fields
+
+Record these for every case, in the run-managed or scratch report (not a checked-in file, and not a root `context.md` or `progress.md`):
+
+- Run id (or transcript id) and date.
+- Command or UI/tool flow used, exactly.
+- Working directory (cwd) of the parent and of each child.
+- Output: tool detail, returned artifact references, report paths.
+- Canary snapshots: before and after hashes or diffs.
+- Versions and source commits of pi, Superpowers, `pi-subagents` and the candidate package.
+- Result: pass, fail or not run.
+- Blocker: what prevented the case, or `none`.
+
+### Cases
+
+- [ ] **SM-01 Discovery and no copies.** In the unmarked and the marked fixture, list agents. Expected: all six canonical agents (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) are listed with the candidate package as source; generic agent identities still coexist; in the unmarked fixture the workflow commands other than `/opsx-init` remain hidden. After discovery, and again after removing the package, the settings and agent-directory snapshots show no Superspec-generated copies or settings.
+- [ ] **SM-02 Configuration and models.** Add a disposable project agent override and model setting using models that are configured in the fixture. Expected: inspect shows the effective canonical role and model; a launch with no per-call model uses the configured one; user versus project precedence matches the `pi-subagents` documentation; disabling a role works through the documented mechanism without modifying global settings.
+- [ ] **SM-03 Availability routing.** (a) With only the activation helper visible, a stage activates the tool, then resolves roles on the next turn. (b) In a fixture without `pi-subagents`, a stage announces the inline fallback once and follows the inline path with no child calls. Expected: gates and ordering are unchanged in both.
+- [ ] **SM-04 Failure without bypass.** Separately: a disabled or missing role, a missing required skill or tool, and a controlled failing launch. Expected: each is reported and the stage stops; no generic-agent, CLI or inline bypass occurs; child failure and partial state are retained in the report.
+- [ ] **SM-05 Role contracts.** Run read-only scout and reviewer calls against scratch canary files. Expected: product, spec and canary bytes are unchanged afterwards. Launch all six roles once. Expected: each has its documented tools, skills, fresh context and report sections; reports land at the explicitly bound `output` paths; returned artifact references are inspectable; no root `progress.md` or `context.md` appears and no nested subagent call is made.
+- [ ] **SM-06 Apply workflow.** Run `/opsx-apply` on a disposable small change. Expected: the namespaced implementer runs each task in the authoritative cwd, one combined task reviewer per task, one final whole-branch review; no parallel writers; no duplicate generic reviewer; no push, merge or PR unless the workflow itself authorizes it; the parent, not a child, ticks tasks and writes the receipt.
+- [ ] **SM-07 Incomplete report.** Make a child return a report missing required evidence or sections (for example an instruction-limited scratch task). Expected: the parent treats it as incomplete and does not accept the task as done; a successful process exit does not change that.
+- [ ] **SM-08 Verify.** Run `/opsx-verify` three ways: tests passing, a deliberately failing scratch test, and an unavailable check. Expected: fresh tests run in this invocation; the failing test gives `FAIL`; the unavailable check is reported as not verified, never as pass; only the parent writes `verify.md`; no fixes are made by the verifier.
+- [ ] **SM-09 Generate specs.** Run `/opsx-generate-specs` on a scratch codebase. Expected: a map stage returns a bounded candidate list, you confirm or trim it, capability scouts run only for the confirmed list, and the parent alone writes the delta files. Cancel at the list: no change directory and no capability scouts. Interrupt and resume: existing spec bytes are preserved. Every requirement carries evidence naming source, test or doc locations; source-only requirements are labelled inferred; the language setting is honoured; `openspec validate <change> --strict` passes.
+- [ ] **SM-10 Planning commands.** Run `/opsx-continue` and `/opsx-ff` with the integration available. Expected: the internal spec and plan reviews add no human stop beyond the existing gates (one per `/opsx-continue` artifact; for `/opsx-ff`, the `brainstorm.md` gate and the final gate). A small `/opsx-explore` question stays inline; a repository-scale one may use scouts that only gather evidence and write nothing official.
+
 ## Recording results
 
 Copy this table into your release notes or issue and fill one row per run.
@@ -103,3 +142,4 @@ Copy this table into your release notes or issue and fill one row per run.
 |---|---|---|---|---|---|
 |  |  |  | A (with pi-subagents) |  |  |
 |  |  |  | B (without pi-subagents) |  |  |
+|  |  |  | SM-01 to SM-10 (runtime smoke, one row each) |  |  |
