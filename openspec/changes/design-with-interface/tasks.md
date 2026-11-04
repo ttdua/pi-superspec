@@ -19,9 +19,9 @@
 
 ## 4. Docs
 
-- [ ] 4.1 Update `docs/workflow.md` (plan row and step rules for plan, apply.md contents, verify check 5) and `docs/domain-model.md` (`ApplyReceipt` field, plan content, `VerifyReport` check 5)
-- [ ] 4.2 Update `docs/usage-guide.md` (verify check list wording) and add a `docs/glossary.md` entry for "Contracts" if the glossary lists artifact terms
-- [ ] 4.3 Add a `CHANGELOG.md` entry
+- [x] 4.1 Update `docs/workflow.md` (plan row and step rules for plan, apply.md contents, verify check 5) and `docs/domain-model.md` (`ApplyReceipt` field, plan content, `VerifyReport` check 5)
+- [x] 4.2 Update `docs/usage-guide.md` (verify check list wording) and add a `docs/glossary.md` entry for "Contracts" if the glossary lists artifact terms
+- [x] 4.3 Add a `CHANGELOG.md` entry
 
 ## 5. Final check
 
