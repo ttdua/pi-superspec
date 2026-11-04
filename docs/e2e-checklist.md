@@ -143,3 +143,15 @@ Copy this table into your release notes or issue and fill one row per run.
 |  |  |  | A (with pi-subagents) |  |  |
 |  |  |  | B (without pi-subagents) |  |  |
 |  |  |  | SM-01 to SM-10 (runtime smoke, one row each) |  |  |
+
+### Known limitations of the initial agent-integration smoke
+
+The first runtime smoke of the bundled agents (Pi 1.5.0, `pi-subagents` 0.84.0 at `d9f8f8c9a709a23adf5f323bb046f3fa91517d4c`, Superpowers 7.0.2 at `22f0b463e7a5e579904dd6211a520321035526f7`) passed SM-01, SM-02, SM-04, SM-06, SM-07 and SM-08, with these accepted gaps:
+
+- **SM-03 (a) helper-only:** partial. The Pi CLI cannot start a session that exposes only `subagents_enable`; the enable-then-next-turn path was observed in an interactive parent session only.
+- **SM-05:** only `superspec.scout` and `superspec.spec-reviewer` were launched; the other four roles were exercised through SM-06 and SM-08 rather than a standalone launch.
+- **SM-08:** the unavailable-check path (reported as not verified) was not exercised separately.
+- **SM-09 and SM-10:** not run, because they need interactive human gates. Generate-specs and continue/ff routing are covered by contract tests only.
+- `pi-subagents` adds ambient tools to children beyond the frontmatter `tools` list; read-only roles still lack edit and write tools. This is not a sandbox.
+
+Treat the Superspec agent integration as verified only for the cases that passed. Run the open cases before claiming full integration coverage.

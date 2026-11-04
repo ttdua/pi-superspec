@@ -20,4 +20,4 @@
 
 ## 6. Validate packaged integration and hand over
 
-- [ ] 6.1 Update `README.md`, `README.vi.md`, and `docs/e2e-checklist.md`; run the complete test/typecheck and package checks plus real Pi/pi-subagents discovery/delegation smoke cases, recording exact build identities, run evidence and any blockers before claiming integration verified.
+- [x] 6.1 Update `README.md`, `README.vi.md`, and `docs/e2e-checklist.md`; run the complete test/typecheck and package checks plus real Pi/pi-subagents discovery/delegation smoke cases, recording exact build identities, run evidence and any blockers before claiming integration verified.
