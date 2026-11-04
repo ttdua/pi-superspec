@@ -164,8 +164,13 @@ run("bundled schema", () => {
 			const text = applyInstruction().replace(/\s+/g, " ");
 			const start = text.indexOf("Contracts rule");
 			expect(start).toBeGreaterThan(-1);
-			let at = start;
-			for (const word of ["Contracts", "for each task", "typecheck", "failing test"]) {
+			let at = start + "Contracts rule".length;
+			for (const word of [
+				"declarations or stubs",
+				"typecheck",
+				"failing test",
+				"implementation",
+			]) {
 				const i = text.indexOf(word, at);
 				expect(i, word).toBeGreaterThan(-1);
 				at = i;
@@ -181,6 +186,8 @@ run("bundled schema", () => {
 			expect(rule).toBeLessThan(text.indexOf("2b."));
 			const flat = text.slice(rule, text.indexOf("2. **Executor**")).replace(/\s+/g, " ");
 			expect(flat).toMatch(/public[^.]*ask the user/);
+			expect(flat).toMatch(/internal[^.]*plan\.md[^.]*reason/);
+			expect(flat).toMatch(/only after the user decides[^.]*plan\.md[^.]*reason/);
 			expect(flat).toContain("Contract deviations");
 			expect(text.slice(text.indexOf("3. **Receipt"))).toContain(
 				"Contract deviations",
@@ -194,8 +201,10 @@ run("bundled schema", () => {
 			);
 			const dev = tpl.indexOf("## Contract deviations");
 			expect(dev).toBeGreaterThan(-1);
-			expect(dev).toBeLessThan(tpl.indexOf("## Next step"));
-			expect(tpl).toContain("none");
+			const next = tpl.indexOf("## Next step");
+			expect(next).toBeGreaterThanOrEqual(0);
+			expect(dev).toBeLessThan(next);
+			expect(tpl.slice(dev, next)).toContain("none");
 		});
 	});
 
@@ -247,16 +256,19 @@ run("bundled schema", () => {
 			const flat = verifyInstruction().replace(/\s+/g, " ");
 			for (const text of [
 				"5. **Design and contract coherence**",
-				"Contracts",
 				"Contract deviations",
-				"warning",
+				"never a FAIL by itself",
+				"not verified with its reason",
 				"no Contracts section",
 			]) {
 				expect(flat, text).toContain(text);
 			}
-			expect(verifyTemplate()).toContain(
+			const template = verifyTemplate();
+			expect(template).toContain(
 				"## 5. Design and Contract Coherence (warning only)",
 			);
+			expect(template).toContain("Contracts in plan.md");
+			expect(template).toContain("Not verified");
 		});
 
 		it("verify handles REMOVED/RENAMED and skipped checks", () => {
@@ -527,6 +539,8 @@ run("bundled schema", () => {
 			expect(t).toContain("## Contracts");
 			expect(t.indexOf("## Contracts")).toBeLessThan(t.indexOf("## Task 1"));
 			expect(t).toContain("| Name | new / modified | Shape | public |");
+			expect(t).toContain("None – <reason>");
+			expect(t).not.toContain("TypeScript");
 		});
 
 		it("plan instruction requires Contracts, a reason after None and name references", () => {
@@ -535,6 +549,16 @@ run("bundled schema", () => {
 			expect(text).toMatch(/None – <reason>/);
 			expect(text).toContain("refer to contract names");
 			expect(text).not.toMatch(/TypeScript/);
+			for (const kind of [
+				"type",
+				"schema",
+				"signature",
+				"CLI argument",
+				"config key",
+				"file format",
+			]) {
+				expect(text, kind).toContain(kind);
+			}
 		});
 
 		it("design instruction and template point contract shapes to the plan", () => {

@@ -148,12 +148,19 @@ describe("execution commands", () => {
 
 	it("apply briefs the executor on Contracts and keeps deviations", () => {
 		const text = skill("apply");
-		const section = (from: string, to: string) =>
-			text.slice(text.indexOf(from), text.indexOf(to));
+		const section = (from: string, to: string) => {
+			const start = text.indexOf(from);
+			const end = text.indexOf(to, start + from.length);
+			expect(start, from).toBeGreaterThanOrEqual(0);
+			expect(end, to).toBeGreaterThan(start);
+			return text.slice(start, end);
+		};
 		const step5 = section("5. **Choose the executor**", "6. **Write the receipt");
 		expect(step5).toContain("Contracts");
 		expect(step5).toContain("public");
-		expect(text).toContain("Contract deviations");
+		expect(step5).toContain("plan.md");
+		expect(step5).toContain("per-task contract order");
+		expect(step5.replace(/\s+/g, " ")).toContain("in `plan.md` with the reason");
 		const step6 = section("6. **Write the receipt", "7. **Post-PR mode**");
 		expect(step6).toContain("Contract deviations");
 		const postPr = section("7. **Post-PR mode**", "8. **Fix-iteration mode**");
@@ -196,8 +203,11 @@ describe("execution commands", () => {
 		expect(step5).toContain("Contract deviations");
 		expect(step5).toContain("A mismatch is a warning");
 		expect(step5).toContain("not verified");
+		expect(step5).toContain("never FAIL by itself");
+		expect(step5).toContain("read-only");
 		const step6 = section("6. **Write `verify.md`", "7. **Handle the outcome**");
 		expect(step6).toContain("Contracts");
+		expect(step6).toContain("files compared");
 	});
 
 	it("sync merges deltas and does not archive", () => {
