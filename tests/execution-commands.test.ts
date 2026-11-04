@@ -146,6 +146,22 @@ describe("execution commands", () => {
 		expect(text).toContain("iteration");
 	});
 
+	it("apply briefs the executor on Contracts and keeps deviations", () => {
+		const text = skill("apply");
+		const section = (from: string, to: string) =>
+			text.slice(text.indexOf(from), text.indexOf(to));
+		const step5 = section("5. **Choose the executor**", "6. **Write the receipt");
+		expect(step5).toContain("Contracts");
+		expect(step5).toContain("public");
+		expect(text).toContain("Contract deviations");
+		const step6 = section("6. **Write the receipt", "7. **Post-PR mode**");
+		expect(step6).toContain("Contract deviations");
+		const postPr = section("7. **Post-PR mode**", "8. **Fix-iteration mode**");
+		expect(postPr).toContain("Contract deviations");
+		const fix = section("8. **Fix-iteration mode**", "\n**Superpowers rule**\n");
+		expect(fix).toContain("Contract deviations");
+	});
+
 	it("verify runs in the worktree and requires apply.md", () => {
 		const text = skill("verify");
 		expect(text).toContain("openspec instructions verify");

@@ -54,6 +54,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    - If the `subagent` tool from `pi-subagents` exists in this session, use the subagent executor (schema step 2a): read the `subagent-driven-development` skill and execute `plan.md` through it.
    - If it does not exist, use the inline executor (schema step 2b): read the `executing-plans` skill, tell the user that TDD and review are not enforced for you, follow TDD manually, and request a whole-branch review (`requesting-code-review`) over the full commit range before writing `apply.md`.
    - Never invent subagent calls.
+   - Whichever executor runs, brief it to read the Contracts section of `plan.md` and to follow the apply instruction's per-task contract order and stop rule. A contract change stops the executor: a `public` contract goes to the user for a decision; an internal one is recorded in `plan.md` and in `apply.md` under "Contract deviations".
 
    **Change-directory authority:** step 0 commits the change directory on the feature branch and creates the worktree on branch `<change-name>`. From then until finalize the worktree copy of the change directory is authoritative: `tasks.md` ticks, `apply.md`, and `verify.md` are written and committed there, and every `openspec` call runs with the worktree as working directory.
 
@@ -63,7 +64,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
 
 6. **Write the receipt and STOP**
 
-   After the final whole-branch review, write `apply.md` as the schema's receipt directs (worktree path, branch facts, commit range, iteration, executor, tasks X of Y) and commit it in the worktree. Then STOP. Do NOT invoke `finishing-a-development-branch`; finishing belongs to the later finalize step. Tell the user to run `/opsx-verify`.
+   After the final whole-branch review, write `apply.md` as the schema's receipt directs (worktree path, branch facts, commit range, iteration, executor, tasks X of Y) and commit it in the worktree. Carry the "Contract deviations" list over from the existing `apply.md` (it is cumulative; do not reset it) and add this run's entries. Then STOP. Do NOT invoke `finishing-a-development-branch`; finishing belongs to the later finalize step. Tell the user to run `/opsx-verify`.
 
 7. **Post-PR mode**
 
@@ -71,7 +72,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    - Read the `receiving-code-review` skill and follow it.
    - Which copy is current: finalize removes the worktree, so the change directory (including `apply.md`, `verify.md`, `finalize.md`) now lives on the feature branch in the main checkout; work and run `openspec` calls there. If step 2 found a worktree anyway, it is still authoritative; use it instead.
    - Fix on the feature branch, using TDD for each fix.
-   - Append a `post-PR iteration N+1` entry with the new commit range to `apply.md`.
+   - Append a `post-PR iteration N+1` entry with the new commit range to `apply.md`. Keep the existing "Contract deviations" and add any new ones.
    - Tell the user to run `/opsx-verify`, then update `finalize.md`.
    - Push and reviewer-comment follow the policy in `finalize.md`; a policy in the project `AGENTS.md` overrides it.
 
@@ -81,7 +82,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    - Read `Iteration:` in `apply.md`. If it is already 5, do not continue: report the remaining CRITICAL items from `verify.md` and what was tried, then wait for the user.
    - Read the `systematic-debugging` skill and find the root cause of each CRITICAL item in `verify.md`. For artifact-level items (spec, design, or tasks are wrong), fix the artifact first.
    - Fix the cause with TDD, keeping changes scoped to the CRITICAL items.
-   - Raise `Iteration:` by one, rewrite `apply.md` (new commit range, executor, tasks X of Y), and commit it in the worktree.
+   - Raise `Iteration:` by one, rewrite `apply.md` (new commit range, executor, tasks X of Y), keeping the existing "Contract deviations" and adding new ones, and commit it in the worktree.
    - STOP. Do NOT invoke `finishing-a-development-branch`. Tell the user to run `/opsx-verify`.
 
 **Superpowers rule**
