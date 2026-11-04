@@ -4,7 +4,7 @@
 
 ## 2. Define shared integration policy
 
-- [ ] 2.1 Add `skills/references/subagent-routing.md` with availability, output binding, handoff, authority and failure rules; verify it in `tests/subagent-routing.test.ts`; document capabilities and compatibility limits in `docs/architecture.md`.
+- [x] 2.1 Add `skills/references/subagent-routing.md` with availability, output binding, handoff, authority and failure rules; verify it in `tests/subagent-routing.test.ts`; document capabilities and compatibility limits in `docs/architecture.md`.
 
 ## 3. Route exploration and planning
 
