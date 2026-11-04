@@ -251,8 +251,13 @@ artifacts:
          project test command was run fresh in this step with the
          result recorded. Scenarios under a REMOVED requirement are
          skipped.
-      5. **Design coherence**: the decisions in design.md match the
-         code. Drift is a warning only.
+      5. **Design and contract coherence**: the decisions in design.md
+         and the Contracts in plan.md, together with the "Contract
+         deviations" recorded in apply.md, match the code. A mismatch
+         is a warning only, never a FAIL by itself. A Contracts entry
+         that cannot be compared with the code is recorded as not
+         verified with its reason; so is a plan.md that has no
+         Contracts section ("plan.md has no Contracts section").
       6. **Clean tree**: the working tree is clean and the commit range
          is recorded.
 

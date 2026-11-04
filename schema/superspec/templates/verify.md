@@ -67,13 +67,17 @@ Scenarios under a REMOVED requirement are skipped. Mark any check as `Not verifi
 
 ---
 
-## 5. Design Coherence (warning only)
+## 5. Design and Contract Coherence (warning only)
 
 - [ ] Decisions in design.md match the code
+- [ ] Contracts in plan.md, with the Contract deviations recorded in apply.md, match the code
 
 **Drift warnings** (non-blocking):
 
 - <list if any; otherwise write "None">
+
+A Contracts entry that cannot be compared with the code, or a plan.md with no
+Contracts section, is recorded as `Not verified` with the reason.
 
 ---
 

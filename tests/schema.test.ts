@@ -243,6 +243,22 @@ run("bundled schema", () => {
 			);
 		});
 
+		it("verify check 5 compares design decisions and plan Contracts", () => {
+			const flat = verifyInstruction().replace(/\s+/g, " ");
+			for (const text of [
+				"5. **Design and contract coherence**",
+				"Contracts",
+				"Contract deviations",
+				"warning",
+				"no Contracts section",
+			]) {
+				expect(flat, text).toContain(text);
+			}
+			expect(verifyTemplate()).toContain(
+				"## 5. Design and Contract Coherence (warning only)",
+			);
+		});
+
 		it("verify handles REMOVED/RENAMED and skipped checks", () => {
 			const flat = verifyInstruction().replace(/\s+/g, " ");
 			for (const word of [
