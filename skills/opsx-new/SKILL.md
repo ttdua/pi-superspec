@@ -3,7 +3,7 @@ name: opsx-new
 description: Start a new OpenSpec change. Creates the scaffolded change and shows the first artifact's instructions, then stops. Use when the user wants to begin a new feature, fix, or modification.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-new-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-new-change (MIT) for pi. -->
 
 Start a new change using the artifact-driven workflow.
 

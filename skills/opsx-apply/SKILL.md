@@ -3,7 +3,7 @@ name: opsx-apply
 description: Implement an OpenSpec change in an isolated worktree using the Superpowers executor, then write the apply.md receipt. Also handles PR review feedback after a PR is open. Use when the user wants to start or continue implementation.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-apply-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-apply-change (MIT) for pi. -->
 
 Implement the tasks of an OpenSpec change. The CLI returns the apply instruction at runtime; this skill wraps it and adds the executor choice, the receipt, and the post-PR loop.
 
@@ -37,8 +37,8 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    **Handle states** (check in this order):
    - **Post-PR trigger:** `apply.md` and `finalize.md` both exist and the user is addressing PR review feedback. Skip the `blocked` / `all_done` stops and go to **Post-PR mode** (a finalized change normally reports `all_done`).
    - **Fix-iteration trigger:** `apply.md` exists and `verify.md` reports `FAIL`. Skip the `all_done` stop (a code-fixable FAIL usually has every box ticked) and go to **Fix-iteration mode**.
-   - `state: "blocked"`: show the message and handle it by cause, with no code changes. If artifacts are missing, point to `/opsx-continue`. If the tracking file is missing, report it, offer to repair it, and start no implementation. Do not assume another artifact is ready. Then STOP.
-   - `state: "all_done"` (no trigger above): report that the tracked tasks are complete, suggest `/opsx-verify` and then `/opsx-archive`, and STOP.
+   - `state: "blocked"` (missing artifacts): show the message, suggest `/opsx-continue`, and STOP without any code changes.
+   - `state: "all_done"` (no trigger above): report that all tasks are complete, suggest `/opsx-verify` and then `/opsx-archive`, and STOP.
    - Otherwise proceed.
 
    **Workspace guard:** If status reports `actionContext.mode: "workspace-planning"` and `allowedEditRoots` is empty, explain that full workspace apply is not supported here, treat linked repos as read-only context, and STOP before editing files.
@@ -57,9 +57,9 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
 
    **Change-directory authority:** step 0 commits the change directory on the feature branch and creates the worktree on branch `<change-name>`. From then until finalize the worktree copy of the change directory is authoritative: `tasks.md` ticks, `apply.md`, and `verify.md` are written and committed there, and every `openspec` call runs with the worktree as working directory.
 
-   Record the executor actually used in `apply.md`. The tracking file is authoritative for progress: tick each task in the worktree copy as it completes, at the `sourcePath` and `line` the apply instruction returns, after checking that the checkbox there still matches the task. If it does not, re-read the tracking file and do not tick a different task. Mark a task `[x]` only when its behavior is fully implemented; if only part is done, leave it unticked.
+   Record the executor actually used in `apply.md`. `tasks.md` is authoritative for progress: tick each box in the worktree copy as the task completes.
 
-   **Pause if:** a task is unclear (ask), implementation reveals a design issue (suggest updating artifacts), or an error or blocker occurs (report and wait). Also pause and ask when a task adds scope no artifact specifies (add it to the artifacts, or leave it out), or would narrow or defer specified behavior. Do not guess.
+   **Pause if:** a task is unclear (ask), implementation reveals a design issue (suggest updating artifacts), or an error or blocker occurs (report and wait). Do not guess.
 
 6. **Write the receipt and STOP**
 
@@ -104,7 +104,6 @@ On pause: describe the issue, offer options (use `ask_user_question` if availabl
 - Always read the `contextFiles` before starting
 - Keep changes minimal and scoped to each task; update the task checkbox right after finishing it
 - Pause on errors, blockers, or unclear requirements; do not guess
-- Pause and ask before adding scope the change does not specify, or narrowing or deferring behavior it does
 - Never invoke `finishing-a-development-branch`
 - Use `contextFiles` from the CLI output; do not assume file names
 - If implementation reveals issues, suggest artifact updates rather than working around them

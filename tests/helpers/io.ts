@@ -10,7 +10,7 @@ export function fakeIO(
 		cwd: "/tmp/fake-project",
 		hasUI: true,
 		async exec(_command: string, _args: string[], _cwd?: string): Promise<ExecResult> {
-			return { code: 0, stdout: "1.16.0\n", stderr: "" };
+			return { code: 0, stdout: "1.4.1\n", stderr: "" };
 		},
 		async confirm(_title: string, _message: string): Promise<boolean> {
 			return true;

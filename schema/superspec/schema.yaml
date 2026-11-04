@@ -1,11 +1,11 @@
-# Superspec schema v6 for pi-superspec.
+# Superspec schema v5 for pi-superspec.
 #
 # Forked from Superspec v4 by Daniel Hanold (MIT License, see LICENSE),
 # upstream commit e1c8f417ee3601208416d988ba3b37d83ddb63f2.
 name: superspec
-version: 6
+version: 5
 x-pi-superspec:
-  version: 6
+  version: 5
 description: >
   Spec-driven workflow integrated with Superpowers skills.
   brainstorm → proposal → specs → tasks → plan → apply → verify → finalize.
@@ -232,28 +232,18 @@ artifacts:
          for this change only, not the whole repository.
       2. **Task completion**: every box in tasks.md is ticked, or each
          open box has a recorded reason.
-      3. **Requirement evidence**: every ADDED or MODIFIED requirement
-         in the delta specs has implementation evidence (file and
-         line); a REMOVED requirement has evidence that its baseline
-         behavior is gone (read the baseline from the main spec, fall
-         back to git history, otherwise record not verified; if code
-         for the baseline behavior remains, the check fails); a
-         RENAMED requirement keeps its behavior under the new name.
+      3. **Requirement evidence**: every requirement in the delta specs
+         has implementation evidence (file and line).
       4. **Scenario coverage**: every scenario maps to a test, and the
          project test command was run fresh in this step with the
-         result recorded. Scenarios under a REMOVED requirement are
-         skipped.
+         result recorded.
       5. **Design coherence**: the decisions in design.md match the
          code. Drift is a warning only.
       6. **Clean tree**: the working tree is clean and the commit range
          is recorded.
 
       Outcome is one of PASS, PASS_WITH_WARNINGS or FAIL. Record it
-      under Overall Decision. A check that could not run is recorded
-      as not verified with its reason and never counts as passing; the
-      outcome is then at most PASS_WITH_WARNINGS. A check that does not
-      apply is recorded as not applicable and does not lower the
-      outcome.
+      under Overall Decision.
 
       `/opsx-archive` syncs delta specs if needed and warns when they differ.
 

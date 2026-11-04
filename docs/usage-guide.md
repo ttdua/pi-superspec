@@ -6,7 +6,7 @@ Commands are typed into pi. Arguments are free text; there are no flags.
 
 ## Before you start
 
-- Install OpenSpec 1.16 or newer and the Superpowers package for pi, then install pi-superspec itself (see the [README](../README.md#install)).
+- Install OpenSpec 1.4 or newer and the Superpowers package for pi, then install pi-superspec itself (see the [README](../README.md#install)).
 - Only `/opsx-init` exists in a fresh repository. Run it once per repository:
 
   ```text
@@ -132,7 +132,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 ### 10. Archive
 
 - You type: `/opsx-archive` (optionally with the change name), in a pi session reopened in the main checkout (not the worktree, which finalize may have removed), after finalize and before the PR (if any) merges.
-- The agent does: warns about incomplete artifacts and open `- [ ]` tasks and asks you to confirm; runs the delta-sync check and, if the living specs are behind, offers "Sync now (recommended)", "Archive without syncing" or "Cancel"; when a sync is blocked only "Archive without syncing" or "Cancel" are offered, and after a sync it re-compares every delta before archiving; then archives with `openspec archive "<name>" --skip-specs -y`. If the CLI fails, it reports the error and stops; it never moves directories by hand.
+- The agent does: warns about incomplete artifacts and open `- [ ]` tasks and asks you to confirm; runs the delta-sync check and, if the living specs are behind, offers "Sync now (recommended)", "Archive without syncing" or "Cancel"; then archives with `openspec archive "<name>" --skip-specs -y`. If the CLI fails, it reports the error and stops; it never moves directories by hand.
 - Output: the change directory moves to `openspec/changes/archive/YYYY-MM-DD-<name>/`, and `openspec/specs/` is updated if you chose to sync.
 - `/opsx-archive` never commits. It only moves the change directory and, if you chose to sync, edits `openspec/specs/`. After it finishes, commit the archive move and the spec sync yourself on the feature branch (stage and commit them), then push.
 - Where: after finalize the main checkout is already on the feature branch, so "archive on the feature branch" and "archive in the main checkout" are the same place.
@@ -233,7 +233,7 @@ In the last row, `foreign` is a schema without the `x-pi-superspec` marker and v
 
 The warning reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked.
 
-Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again. Upgrading from v5 to v6: schema version 6 ships with this release, so a project with v5 installed is classified `older`, `/opsx-init` warns, and the schema must be reinstalled by hand as described here.
+Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again.
 
 ## Troubleshooting
 
@@ -241,7 +241,7 @@ Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes 
 The project is not activated. A project is activated when `openspec/schemas/superspec/schema.yaml` contains the `x-pi-superspec` marker. Run `/opsx-init`, which installs the schema and reloads pi. If it ended with a validation error, the installed files are kept and the project activates on the next session start, so reload pi or start a new session. If it stopped on an existing schema, see [Existing schemas](#existing-schemas). A `foreign` schema without the marker does not activate the project. Also check that pi's current directory is inside the project: the root is the nearest parent directory that contains `openspec/`.
 
 **`openspec was not found`, `Could not parse the openspec version`, or `openspec <major>.<minor> is too old`.**
-`/opsx-init` stops and writes nothing. The message ends with `Install or upgrade OpenSpec (>= 1.16): brew install openspec`. Install or upgrade OpenSpec to 1.16 or newer (the npm package of OpenSpec 1.16 needs Node 22.12 or newer; the Homebrew formula installs its own Node), make sure `openspec --version` works in the shell pi uses, and run `/opsx-init` again.
+`/opsx-init` stops and writes nothing. The message ends with `Install or upgrade OpenSpec (>= 1.4): brew install openspec`. Install or upgrade OpenSpec to 1.4 or newer, make sure `openspec --version` works in the shell pi uses, and run `/opsx-init` again.
 
 **Superpowers not found.**
 `/opsx-init` warns `Superpowers skills were not found; install Superpowers for the full workflow.` In an activated project, each session start (including reload) also shows `pi-superspec needs Superpowers, which is not installed. Install it with: pi install git:github.com/obra/superpowers`. Run that command and reload pi. Without Superpowers the skills stop and tell you to install it.

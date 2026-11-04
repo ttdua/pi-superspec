@@ -109,18 +109,6 @@ describe("execution commands", () => {
 		expect(text).toContain("all_done");
 	});
 
-	it("apply uses task locations and scope pauses", () => {
-		const text = skill("apply");
-		expect(text).toContain("sourcePath");
-		expect(text).toContain("fully implemented");
-		expect(text).toContain("adds scope");
-		expect(text).toContain("tracking file");
-		expect(text).toContain("tracked tasks are complete");
-		expect(text.replace(/\s+/g, " ")).toContain(
-			"after checking that the checkbox there still matches the task",
-		);
-	});
-
 	it("apply stops after the receipt without finishing the branch", () => {
 		const text = skill("apply");
 		expect(text).toContain("finishing-a-development-branch");
@@ -156,16 +144,6 @@ describe("execution commands", () => {
 		expect(text).not.toContain("delta-sync");
 	});
 
-	it("verify stays read-only, reads progress from apply and reports skipped checks as not verified", () => {
-		const flat = skill("verify").replace(/\s+/g, " ");
-		expect(flat).toContain("Do NOT implement or archive anything during verify; the apply state is context only.");
-		expect(flat).toContain("Read task progress from the apply instruction (`progress`)");
-		expect(flat).toContain("if a tracking file is unavailable, record the tasks check as not verified");
-		expect(flat).toContain(
-			"is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`",
-		);
-	});
-
 	it("sync merges deltas and does not archive", () => {
 		const text = skill("sync");
 		for (const op of ["RENAMED", "REMOVED", "MODIFIED", "ADDED"]) {
@@ -175,95 +153,12 @@ describe("execution commands", () => {
 		expect(text).toContain("Do NOT archive");
 	});
 
-	it("sync reads the specs instructions once and applies rules without copying them", () => {
-		const flat = skill("sync").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"Read `openspec instructions specs --change <name> --json` once and apply its `rules` as constraints on the text you write; never copy the `rules` into any spec.",
-		);
-		expect(flat).toContain(
-			"If reading the instructions fails, STOP and report the error without writing any spec.",
-		);
-		expect(flat).not.toContain("or list `specs/<capability>/spec.md`");
-	});
-
-	it("sync keeps the delta Purpose for new capabilities", () => {
-		const flat = skill("sync").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"copy the delta's `## Purpose` text verbatim and title the spec `# <capability> Specification`",
-		);
-		expect(flat).toContain(
-			"If the delta has no `## Purpose`, write `TBD` as the Purpose and flag it in the report.",
-		);
-		expect(flat).toContain("Never overwrite the Purpose of an existing main spec.");
-		expect(flat).toContain("Never write delta section headers into a main spec.");
-	});
-
-	it("sync blocks unsafe merges", () => {
-		const flat = skill("sync").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"If the delta has MODIFIED or RENAMED operations, or only REMOVED ones, and the main spec does not exist, report the capability as blocked and write nothing.",
-		);
-		expect(flat).toContain(
-			"If applying the delta would leave `## Requirements` empty, STOP, write no empty section, and report it.",
-		);
-		expect(flat).toContain(
-			"delete the spec only when the change's `.openspec.yaml` sets `retire_capabilities: true`, then report its Purpose and say it can be restored with git",
-		);
-	});
-
 	it("archive performs the delta-sync check", () => {
 		const text = skill("archive");
 		expect(text).toContain("delta-sync");
 		expect(text).toContain("openspec archive");
 		expect(text).toContain("sync");
 		expect(text).toContain("confirm");
-	});
-
-	it("archive handles retirement and the fallback re-compare", () => {
-		const flat = skill("archive").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"a missing main spec with only REMOVED requirements and `retire_capabilities: true` in the change's `.openspec.yaml` counts as synced (retired)",
-		);
-		expect(flat).toContain(
-			"after the user chooses \"Archive without syncing\", still run item 2 (the re-compare) for the capabilities that were not blocked",
-		);
-		expect(flat).toContain(
-			"On this predicted (pre-sync) path, other capabilities that are not synced are not synced either.",
-		);
-	});
-
-	it("archive verifies the sync and reads counts from the CLI", () => {
-		const flat = skill("archive").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"Compare every delta again with its main spec. Report \"Synced\" only if all match; if any differs, stop and do not archive.",
-		);
-		expect(flat).toContain(
-			"take `completedTasks` and `totalTasks` from `openspec list --json`; if that output is invalid, stop with an error",
-		);
-		expect(flat).toContain("An artifact with status `skipped` counts as complete.");
-		expect(flat).toContain(
-			"A missing main spec is not unsynced by itself; decide by the delta operations as `opsx-sync` defines",
-		);
-		expect(flat).toContain(
-			"report the blocked capabilities and offer only \"Archive without syncing\" or \"Cancel\" (ask as in step 1); never offer \"Sync now\" for a blocked capability. If the answer is none of the offered choices, ask again and do not archive.",
-		);
-		expect(flat).toContain(
-			"**Sync blocked** (checked before \"Not synced\"): if the sync is blocked for any capability, either predicted from the delta operations above",
-		);
-		expect(flat).toContain(
-			"(no capability blocked): report the differences per capability (what would be added, modified, removed, renamed), then ask the user how to proceed with options \"Sync now (recommended)\", \"Archive without syncing\", \"Cancel\" (ask as in step 1, recommended first). If the answer is none of the offered choices, ask again and do not archive.",
-		);
-		expect(flat).toContain(
-			"Capabilities reported Blocked are excluded from this re-compare",
-		);
-		expect(flat).toContain("If `totalTasks` is 0 (no tasks), skip this check.");
-		expect(flat).toContain("(if it is not listed, stop and report)");
-		expect(flat).toContain(
-			"\"Sync blocked: <capabilities>, archived without syncing\"",
-		);
-		expect(flat).toContain(
-			"Offer \"Sync now\" first, except when a capability is blocked (then only \"Archive without syncing\" or \"Cancel\")",
-		);
 	});
 
 	it("apply and verify carry the Superpowers rule", () => {

@@ -37,7 +37,7 @@ interface Call {
 
 function recording(
 	cwd: string,
-	respond: (call: Call) => ExecResult = () => ({ code: 0, stdout: "1.16.0\n", stderr: "" }),
+	respond: (call: Call) => ExecResult = () => ({ code: 0, stdout: "1.4.1\n", stderr: "" }),
 	overrides: Partial<InitIO> = {},
 ) {
 	const calls: Call[] = [];
@@ -93,7 +93,7 @@ describe("runInit", () => {
 		const errors: string[] = [];
 		const { io } = recording(
 			root,
-			(c) => (isInit(c) ? { code: 1, stdout: "", stderr: "boom" } : { code: 0, stdout: "1.16.0\n", stderr: "" }),
+			(c) => (isInit(c) ? { code: 1, stdout: "", stderr: "boom" } : { code: 0, stdout: "1.4.1\n", stderr: "" }),
 			{
 				notify(message, level) {
 					if (level === "error") errors.push(message);
@@ -107,7 +107,7 @@ describe("runInit", () => {
 	it("returns validation-failed without reloading when validation fails", async () => {
 		const root = tmp();
 		const { io, calls } = recording(root, (c) =>
-			isValidate(c) ? { code: 1, stdout: "bad schema", stderr: "" } : { code: 0, stdout: "1.16.0\n", stderr: "" },
+			isValidate(c) ? { code: 1, stdout: "bad schema", stderr: "" } : { code: 0, stdout: "1.4.1\n", stderr: "" },
 		);
 		expect(await runInit(io, packageRoot)).toBe("validation-failed");
 		expect(calls.filter(isValidate)).toHaveLength(1);
@@ -163,7 +163,7 @@ describe("runInit", () => {
 		const warnings: string[] = [];
 		const { io } = recording(
 			root,
-			(c) => (c.command === "git" ? { code: 128, stdout: "", stderr: "" } : { code: 0, stdout: "1.16.0\n", stderr: "" }),
+			(c) => (c.command === "git" ? { code: 128, stdout: "", stderr: "" } : { code: 0, stdout: "1.4.1\n", stderr: "" }),
 			{
 				superpowersAvailable: () => false,
 				notify(message, level) {
@@ -436,7 +436,7 @@ describe("runInit", () => {
 		it("prints no hint when validation fails", async () => {
 			const root = tmp();
 			const { io } = recording(root, (c) =>
-				isValidate(c) ? { code: 1, stdout: "", stderr: "bad" } : { code: 0, stdout: "1.16.0\n", stderr: "" },
+				isValidate(c) ? { code: 1, stdout: "", stderr: "bad" } : { code: 0, stdout: "1.4.1\n", stderr: "" },
 			);
 			expect(await runInit(io, packageRoot, "--generate")).toBe("validation-failed");
 			expect(io.reports).toEqual([]);

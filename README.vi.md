@@ -12,7 +12,7 @@ Trong một repository mới chỉ có `/opsx-init`. Khi project đã được k
 
 Bạn tự cài các dependency; package không cài chúng.
 
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.16 trở lên.
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.4 trở lên.
 - [Superpowers](https://github.com/obra/superpowers) cho pi.
 - pi, coding agent mà package này mở rộng.
 - Chạy `/opsx-init` không cần Git (ngoài git repository nó chỉ cảnh báo), nhưng workflow phía sau có dùng git: `/opsx-apply` tạo worktree và branch, còn finalize đóng branch lại.
@@ -47,7 +47,7 @@ pi install https://github.com/ttdua/pi-superspec
 
 Chạy lần lượt các bước sau trong repository của bạn. Các lệnh của change sẽ dừng lại để bạn review trước bước kế tiếp.
 
-1. `/opsx-init`: cài schema đi kèm vào `openspec/schemas/superspec/`, đặt `schema: superspec` trong `openspec/config.yaml`, validate và tự reload pi. Nó chạy `openspec init --tools none` nếu `openspec/` chưa tồn tại. Cần OpenSpec 1.16 trở lên, và chỉ cảnh báo nếu thư mục không phải git repository hoặc thiếu Superpowers.
+1. `/opsx-init`: cài schema đi kèm vào `openspec/schemas/superspec/`, đặt `schema: superspec` trong `openspec/config.yaml`, validate và tự reload pi. Nó chạy `openspec init --tools none` nếu `openspec/` chưa tồn tại. Cần OpenSpec 1.4 trở lên, và chỉ cảnh báo nếu thư mục không phải git repository hoặc thiếu Superpowers.
 2. `/opsx-new <name>`: tạo change và hiển thị hướng dẫn của artifact đầu tiên. Nó không tạo artifact nào.
 3. `/opsx-continue`: tạo artifact kế tiếp, mỗi lần chạy một artifact, chạy một review gate cho artifact đó, rồi dừng. Lặp lại cho đến khi có đủ các artifact tới plan; khi apply là artifact sẵn sàng kế tiếp, nó dừng và chỉ bạn sang `/opsx-apply`. (`/opsx-ff` tạo tất cả trong một lần; nó chạy review gate cho `brainstorm.md`, tạo phần còn lại không dừng, rồi chạy một review gate cuối.)
 4. Tạo và chuyển sang một feature branch (ví dụ `feat/<name>`) nếu bạn chưa ở trên branch nào như vậy. Hãy commit output của `/opsx-init` (`openspec/config.yaml` và `openspec/schemas/superspec/`) lên branch đó, vì `/opsx-apply` chỉ commit thư mục của change và worktree được tạo từ feature branch. Hãy push branch một lần bằng `git push -u origin feat/<name>`, vì finalize chạy `git pull` thường trên branch đó và lệnh này lỗi nếu branch chưa có upstream. Sau đó chạy `/opsx-apply`. Nó tạo một worktree trên branch đặt theo tên change, triển khai các task và ghi `apply.md`.

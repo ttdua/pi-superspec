@@ -3,7 +3,7 @@ name: opsx-verify
 description: Verify an applied OpenSpec change in its worktree against the change artifacts, run the project tests fresh, and write the verify.md receipt with a PASS, PASS_WITH_WARNINGS or FAIL outcome. Use after /opsx-apply and before finalize and archive.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-verify-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-verify-change (MIT) for pi. -->
 
 Verify that an implementation matches the change artifacts. The CLI returns the verify instruction (the six checks) at runtime; this skill wraps it and adds the worktree, the fresh test run, the `verify.md` receipt, and the fix loop.
 
@@ -39,15 +39,12 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    ```bash
    openspec status --change "<name>" --json
    openspec instructions verify --change "<name>" --json
-   openspec instructions apply --change "<name>" --json
    ```
-   Run all three from the worktree. From status, read `schemaName`, `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`. If status reports `actionContext.mode: "workspace-planning"`, explain that full workspace verification is not supported here and STOP; do not edit linked repos. The verify instructions return `contextFiles` and the instruction text.
+   Run both from the worktree. From status, read `schemaName`, `planningHome`, `changeRoot`, `artifactPaths`, and `actionContext`. If status reports `actionContext.mode: "workspace-planning"`, explain that full workspace verification is not supported here and STOP; do not edit linked repos. The verify instructions return `contextFiles` and the instruction text.
 
 5. **Read context and follow the verify instruction**
 
    Read every file path listed under `contextFiles`. Then follow the instruction returned by `openspec instructions verify`: run its six checks against the implementation in the worktree. Do not copy the schema's check text into your own plan; the CLI output is the source of truth. Use `contextFiles` from the output; do not assume file names.
-
-   Read task progress from the apply instruction (`progress`); if a tracking file is unavailable, record the tasks check as not verified.
 
    If `instruction` names `superpowers:<x>`, follow the **Superpowers rule** below.
 
@@ -70,8 +67,6 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    - `PASS`: all checks pass, fresh tests green, no issues.
    - `PASS_WITH_WARNINGS`: no CRITICAL issues, fresh tests green, warnings or suggestions remain.
    - `FAIL`: any CRITICAL issue (incomplete task, missing requirement, failing fresh tests, and so on).
-
-   A check you could not run is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`. Keep the outcome names `PASS`, `PASS_WITH_WARNINGS` and `FAIL`.
 
    When uncertain, prefer SUGGESTION over WARNING and WARNING over CRITICAL, but never report `PASS` with failing tests.
 
@@ -98,7 +93,6 @@ On pause: describe the issue, offer options (use `ask_user_question` if availabl
 
 **Guardrails**
 - Run every `openspec` call and check in the worktree (the main checkout only after finalize)
-- Do NOT implement or archive anything during verify; the apply state is context only.
 - Never verify without `apply.md`; point to `/opsx-apply`
 - Always run the project tests fresh; never trust recorded results
 - Every issue gets a specific, actionable recommendation, not vague advice

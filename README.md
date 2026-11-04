@@ -12,7 +12,7 @@ Only `/opsx-init` exists in a fresh repository. Once a project is initialised, t
 
 You install the dependencies yourself; the package does not install them.
 
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.16 or newer.
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.4 or newer.
 - [Superpowers](https://github.com/obra/superpowers) for pi.
 - pi, the coding agent this package extends.
 - Git is not required to run `/opsx-init` (outside a git repository it only warns), but the later workflow uses git: `/opsx-apply` creates a worktree and branch, and finalize closes out the branch.
@@ -47,7 +47,7 @@ pi install https://github.com/ttdua/pi-superspec
 
 Run these in your repository, in order. The change commands stop for your review before the next step.
 
-1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It runs `openspec init --tools none` if `openspec/` does not exist yet. It needs OpenSpec 1.16 or newer, and only warns if the directory is not a git repository or Superpowers is missing.
+1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It runs `openspec init --tools none` if `openspec/` does not exist yet. It needs OpenSpec 1.4 or newer, and only warns if the directory is not a git repository or Superpowers is missing.
 2. `/opsx-new <name>`: creates the change and shows the first artifact instructions. It creates no artifact.
 3. `/opsx-continue`: creates the next artifact, one per run, runs a review gate on it, then stops. Repeat until all artifacts up to the plan exist; when apply is the next ready artifact it stops and points you to `/opsx-apply`. (`/opsx-ff` creates them all in one go; it gates `brainstorm.md`, runs the rest unattended, then runs one final review gate.)
 4. Create and switch to a feature branch (for example `feat/<name>`) if you are not on one yet. Commit the `/opsx-init` output (`openspec/config.yaml` and `openspec/schemas/superspec/`) on it, because `/opsx-apply` commits only the change directory and the worktree is created from the feature branch. Push the branch once with `git push -u origin feat/<name>`, because finalize runs a plain `git pull` on it and that fails on a branch with no upstream. Then run `/opsx-apply`. It creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.

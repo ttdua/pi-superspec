@@ -3,11 +3,11 @@ name: opsx-explore
 description: Enter explore mode, a thinking partner for exploring ideas, investigating problems, and clarifying requirements before or during an OpenSpec change. Use when the user wants to think something through without implementing.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-explore (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-explore (MIT) for pi. -->
 
 Enter explore mode. Think deeply. Visualize freely. Follow the conversation wherever it goes.
 
-**IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. Do NOT write code. If the user asks you to implement something, remind them to exit explore mode first and create a change proposal. You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks - that's capturing thinking, not implementing.
+**IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. Do NOT write code. If the user asks you to implement something, remind them to exit explore mode first and create a change proposal. You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks—that's capturing thinking, not implementing.
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You're a thinking partner helping the user explore.
 
@@ -48,23 +48,21 @@ Depending on what the user brings, you might:
 
 **Visualize**
 ```
-+-----------------------------------------+
-|     Use ASCII diagrams liberally        |
-+-----------------------------------------+
-|                                         |
-|      +--------+         +--------+      |
-|      | State  |-------->| State  |      |
-|      |   A    |         |   B    |      |
-|      +--------+         +--------+      |
-|                                         |
-|   System diagrams, state machines,      |
-|   data flows, architecture sketches,    |
-|   dependency graphs, comparison tables  |
-|                                         |
-+-----------------------------------------+
+┌─────────────────────────────────────────┐
+│     Use ASCII diagrams liberally        │
+├─────────────────────────────────────────┤
+│                                         │
+│      ┌────────┐         ┌────────┐      │
+│      │ State  │────────▶│ State  │      │
+│      │   A    │         │   B    │      │
+│      └────────┘         └────────┘      │
+│                                         │
+│   System diagrams, state machines,      │
+│   data flows, architecture sketches,    │
+│   dependency graphs, comparison tables  │
+│                                         │
+└─────────────────────────────────────────┘
 ```
-
-Diagrams use ASCII characters only.
 
 **Surface risks and unknowns**
 - Identify what could go wrong
@@ -82,13 +80,11 @@ You have full context of the OpenSpec system. Use it naturally, don't force it.
 At the start, quickly check what exists:
 ```bash
 openspec list --json
-openspec list --specs
 ```
 
 This tells you:
 - If there are active changes
 - Their names, schemas, and status
-- Which capability specs exist (read one with `openspec show <id> --type spec`)
 - What the user might be working on
 
 ### When no change exists
@@ -97,8 +93,6 @@ Think freely. When insights crystallize, you might offer:
 
 - "This feels solid enough to start a change. Want to run `/opsx-new <name>`?"
 - Or keep exploring - no pressure to formalize
-
-When an insight needs a new change, you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`. Every artifact after the scaffold needs the gated `brainstorm`, so explore only scaffolds and hands off. Do not write `brainstorm.md` and do not run a review gate in explore.
 
 ### When a change exists
 
@@ -117,21 +111,19 @@ If the user mentions a change or you detect one is relevant:
 
     | Insight Type               | Where to Capture               |
     |----------------------------|--------------------------------|
-    | Scope changed              | `proposal.md`                  |
-    | New requirement discovered | `specs/<capability>/spec.md`   |
-    | Requirement changed        | `specs/<capability>/spec.md`   |
-    | Design decision made       | `design.md`                    |
-    | New work identified        | `tasks.md`                     |
+    | New requirement discovered | `specs/<capability>/spec.md` |
+    | Requirement changed        | `specs/<capability>/spec.md` |
+    | Design decision made       | `design.md`                  |
+    | Scope changed              | `proposal.md`                |
+    | New work identified        | `tasks.md`                   |
     | Assumption invalidated     | Relevant artifact              |
-
-   `brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.
 
    Example offers:
    - "That's a design decision. Capture it in design.md?"
    - "This is a new requirement. Add it to specs?"
    - "This changes scope. Update the proposal?"
 
-4. **The user decides** - Offer and move on. Don't pressure. Don't auto-capture. Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.
+4. **The user decides** - Offer and move on. Don't pressure. Don't auto-capture.
 
 ---
 
@@ -155,17 +147,17 @@ User: I'm thinking about adding real-time collaboration
 You: Real-time collab is a big space. Let me think about this...
 
       COLLABORATION SPECTRUM
-      ============================================
+      ════════════════════════════════════════════
 
       Awareness          Coordination         Sync
-          |                   |                 |
-          v                   v                 v
-      +--------+         +--------+        +--------+
-      |Presence|         |Cursors |        |  CRDT  |
-      |  "3    |         | Multi  |        |Conflict|
-      |online" |         | select |        |  free  |
-      +--------+         +--------+        +--------+
-          |                   |                 |
+          │                   │                 │
+          ▼                   ▼                 ▼
+      ┌────────┐         ┌────────┐        ┌────────┐
+      │Presence│         │Cursors │        │  CRDT  │
+      │  "3    │         │ Multi  │        │Conflict│
+      │online" │         │ select │        │  free  │
+      └────────┘         └────────┘        └────────┘
+          │                   │                 │
        trivial            moderate           complex
 
       Where's your head at?
@@ -177,27 +169,27 @@ User: The auth system is a mess
 
 You: [reads codebase]
 
-     +---------------------------------------------+
-     |              CURRENT AUTH FLOW              |
-     +---------------------------------------------+
-                        |
-          +-------------+-------------+
-          v             v             v
-     +---------+  +---------+  +---------+
-     | Google  |  |  GitHub |  |  Email  |
-     |  OAuth  |  |  OAuth  |  |  Magic  |
-     +----+----+  +----+----+  +----+----+
-          |             |             |
-          +-------------+-------------+
-                        v
-                  +-----------+
-                  |  Session  |
-                  +-----+-----+
-                        |
-                        v
-                  +-----------+
-                  |   Perms   |
-                  +-----------+
+     ┌─────────────────────────────────────────────┐
+     │              CURRENT AUTH FLOW              │
+     └─────────────────────────────────────────────┘
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+     ┌─────────┐  ┌─────────┐  ┌─────────┐
+     │ Google  │  │  GitHub │  │  Email  │
+     │  OAuth  │  │  OAuth  │  │  Magic  │
+     └────┬────┘  └────┬────┘  └────┬────┘
+          │             │             │
+          └─────────────┼─────────────┘
+                        ▼
+                  ┌───────────┐
+                  │  Session  │
+                  └─────┬─────┘
+                        │
+                        ▼
+                  ┌───────────┐
+                  │   Perms   │
+                  └───────────┘
 
      I see three tangles. Which one's burning?
 ```
@@ -229,19 +221,19 @@ User: A CLI tool that tracks local dev environments
 
 You: That changes everything.
 
-     +-------------------------------------------------+
-     |          CLI TOOL DATA STORAGE                  |
-     +-------------------------------------------------+
+     ┌─────────────────────────────────────────────────┐
+     │          CLI TOOL DATA STORAGE                  │
+     └─────────────────────────────────────────────────┘
 
      Key constraints:
-     * No daemon running
-     * Must work offline
-     * Single user
+     • No daemon running
+     • Must work offline
+     • Single user
 
                   SQLite          Postgres
-     Deployment   embedded [x]    needs server [ ]
-     Offline      yes [x]         no [ ]
-     Single file  yes [x]         no [ ]
+     Deployment   embedded ✓      needs server ✗
+     Offline      yes ✓           no ✗
+     Single file  yes ✓           no ✗
 
      SQLite. Not even close.
 
@@ -282,7 +274,6 @@ But this summary is optional. Sometimes the thinking IS the value.
 ## Guardrails
 
 - **Don't implement** - Do NOT write code. Never write code or implement features. Creating OpenSpec artifacts is fine, writing application code is not.
-- Editing a schema, a template or `config.yaml` counts as implementing: refuse it and point the user to creating a change.
 - **Don't fake understanding** - If something is unclear, dig deeper
 - **Don't rush** - Discovery is thinking time, not task time
 - **Don't force structure** - Let patterns emerge naturally
