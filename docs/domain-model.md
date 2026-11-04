@@ -98,8 +98,9 @@ A file the DAG tracks. `done` when its file exists.
 | `verify` | `verify.md` | apply | Overwritten each run; carries the iteration. |
 | `finalize` | `finalize.md` | verify | Git closeout receipt. |
 
-`plan.md` opens with a required `## Contracts` section (name, new / modified, exact
-shape, public flag), the reviewed source of truth for contract shapes.
+`plan.md` has a required `## Contracts` section before the tasks (name,
+new / modified, exact shape, public flag), the reviewed source of truth for
+contract shapes.
 
 ## ApplyReceipt (`apply.md`)
 
@@ -116,9 +117,10 @@ shape, public flag), the reviewed source of truth for contract shapes.
 
 ## VerifyReport (`verify.md`)
 
-Outcome `PASS` | `PASS_WITH_WARNINGS` | `FAIL`, the six checks with evidence (check 5 is design and contract coherence: `design.md`
-decisions, `plan.md` Contracts and recorded deviations against the code), and the
-`iteration` copied from `apply.md`. FAIL items are classified *code-fixable* or
+Outcome `PASS` | `PASS_WITH_WARNINGS` | `FAIL`, the six checks with evidence (check 5 is design and contract coherence:
+`design.md` decisions, `plan.md` Contracts and recorded deviations against the
+code), and the `iteration` copied from `apply.md`. FAIL items are classified
+*code-fixable* or
 *artifact-level*.
 
 ## FinalizeReceipt (`finalize.md`)

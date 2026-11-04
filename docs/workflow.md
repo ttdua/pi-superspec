@@ -44,7 +44,7 @@ comment under the same policy as finalize.
   `design.md`. The two must not repeat each other.
 - **specs → tests**: `plan.md` lists, for every `#### Scenario:`, the test that
   covers it. Verify checks this list.
-- **plan Contracts**: `plan.md` opens with a required `## Contracts` section (name,
+- **plan Contracts**: `plan.md` has a required `## Contracts` section before the tasks (name,
   new / modified, exact shape, public flag; `None – <reason>` when there are none).
   It is the reviewed source of truth for contract shapes; `design.md` records only
   the decision and reason for a public contract.
@@ -65,9 +65,11 @@ comment under the same policy as finalize.
   a cumulative `## Contract deviations` list (`none` when empty).
 - **apply, per task**: write declarations or stubs matching the plan's Contracts,
   typecheck where the project has one, write the failing test, then implement. If a
-  contract has to change, the executor stops: for a `public` contract it asks the
-  user; for an internal one it updates `plan.md` with the reason and records the
-  deviation in `apply.md`.
+  contract has to change, it is never changed silently: for a `public` contract the
+  executor stops and asks the user, and after the decision it updates `plan.md` with
+  the reason and records the deviation in `apply.md`; for an internal one it does the
+  same straight away and continues. Until the receipt is written, the change is noted
+  in the `plan.md` entry.
 - **apply stops after the final whole-branch review**, writes `apply.md`, and does
   **not** invoke `finishing-a-development-branch`.
 - **verify** is one check list:
@@ -78,7 +80,8 @@ comment under the same policy as finalize.
      this step, with the result recorded.
   5. Design and contract coherence: `design.md` decisions, `plan.md` Contracts and
      the recorded Contract deviations match the code (warning only; entries that
-     cannot be compared are `not verified`).
+     cannot be compared are `not verified`, and so is a `plan.md` with no Contracts
+     section).
   6. Working tree clean; commit range recorded.
 
   Outcome `PASS` / `PASS_WITH_WARNINGS` / `FAIL`. Code-fixable FAIL → load

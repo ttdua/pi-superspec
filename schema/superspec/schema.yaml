@@ -773,12 +773,17 @@ apply:
     The order repeats per task; it is not a project-wide phase.
 
     If the work needs a contract shape that differs from the plan,
-    STOP before going on. For a contract marked `public`, ask the user
-    for a decision and wait for the answer. For an internal contract,
-    update the entry in plan.md with the reason, then record it in
-    apply.md under "Contract deviations" (step 3). That list is
-    cumulative across iterations: keep earlier entries when apply is
-    re-run.
+    never change it silently. For a contract marked `public`, stop,
+    ask the user for a decision and wait for the answer; only after
+    the user decides, update the entry in plan.md with the reason and
+    record the change under "Contract deviations" in apply.md (step
+    3), noting the user's decision. For an internal contract, update
+    the entry in plan.md with the reason, record the change under
+    "Contract deviations", then continue without waiting. Until the
+    receipt is written, the change stays noted in that plan.md entry,
+    so the receipt step can collect it into apply.md. The deviations
+    list is cumulative across iterations: keep earlier entries when
+    apply is re-run.
 
     2. **Executor** — when subagents are available, you should
        **always use 2a**. 2b exists only as a fallback for platforms

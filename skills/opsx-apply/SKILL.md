@@ -54,7 +54,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
    - If the `subagent` tool from `pi-subagents` exists in this session, use the subagent executor (schema step 2a): read the `subagent-driven-development` skill and execute `plan.md` through it.
    - If it does not exist, use the inline executor (schema step 2b): read the `executing-plans` skill, tell the user that TDD and review are not enforced for you, follow TDD manually, and request a whole-branch review (`requesting-code-review`) over the full commit range before writing `apply.md`.
    - Never invent subagent calls.
-   - Whichever executor runs, brief it to read the Contracts section of `plan.md` and to follow the apply instruction's per-task contract order and stop rule. A contract change stops the executor: a `public` contract goes to the user for a decision; an internal one is recorded in `plan.md` and in `apply.md` under "Contract deviations".
+   - Whichever executor runs, brief it to read the Contracts section of `plan.md` and to follow the apply instruction's per-task contract order and stop rule. A contract change is never silent: a `public` contract stops the executor and goes to the user for a decision; after that decision, and for an internal contract straight away, the entry is updated in `plan.md` with the reason and recorded in `apply.md` under "Contract deviations".
 
    **Change-directory authority:** step 0 commits the change directory on the feature branch and creates the worktree on branch `<change-name>`. From then until finalize the worktree copy of the change directory is authoritative: `tasks.md` ticks, `apply.md`, and `verify.md` are written and committed there, and every `openspec` call runs with the worktree as working directory.
 
