@@ -35,7 +35,7 @@ The skill SHALL run only in an activated project. When the project has no source
 - **THEN** it reports that there is no code to scan and creates no change
 
 ### Requirement: Map stage
-The skill SHALL first map the codebase with one agent running a fast model when the `subagent` tool allows choosing a model, otherwise the default model. The map MUST read the directory tree, package manifests, README and entry points, skip `node_modules`, `dist`, `build`, `vendor`, `.git` and generated files, and return a list of at most 12 capability candidates, each with a kebab-case name of at least two words, a one-line purpose and the directories it covers.
+The skill SHALL first map the codebase with one `superspec.scout` through the shared integration policy, or map it inline when the optional integration is absent. It MUST use configured model settings rather than selecting a fast model per dispatch. The map MUST read the directory tree, package manifests, README and entry points, skip `node_modules`, `dist`, `build`, `vendor`, `.git` and generated files, and return a list of at most 12 capability candidates, each with a kebab-case name of at least two words, a one-line purpose and the directories it covers.
 
 #### Scenario: Candidate list shape
 - **WHEN** the map stage finishes
@@ -45,6 +45,10 @@ The skill SHALL first map the codebase with one agent running a fast model when 
 - **WHEN** the project contains a `node_modules` directory
 - **THEN** no candidate covers it
 
+#### Scenario: Map respects configured model
+- **WHEN** the map is delegated
+- **THEN** it uses `superspec.scout` without a per-call model/thinking override or artifact-edit authority
+
 ### Requirement: Existing specs untouched
 A candidate whose name matches an existing directory under `openspec/specs/` SHALL be dropped from the list and reported to the user. The skill MUST NOT modify or replace any file under `openspec/specs/`.
 
@@ -53,15 +57,15 @@ A candidate whose name matches an existing directory under `openspec/specs/` SHA
 - **THEN** the candidate is dropped, the user is told, and the existing spec is unchanged
 
 ### Requirement: Confirm before scouting
-After the map stage and before any scout runs, the skill SHALL ask the user once to confirm the candidate list, showing each candidate with its purpose and an estimate of the work (candidate count and directories covered), and allowing the user to keep, drop or rename candidates. No scout MUST run before the user confirms. If the user cancels, no change is created.
+After the map stage and before any capability scout runs, the skill SHALL ask the user once to confirm the candidate list, showing each candidate with its purpose and an estimate of the work (candidate count and directories covered), and allowing the user to keep, drop or rename candidates. No capability scout MUST run before the user confirms; the initial map scout is not a capability scout. If the user cancels, no change is created.
 
 #### Scenario: User trims the list
 - **WHEN** the user drops two of five candidates
 - **THEN** only the remaining three are scouted
 
 #### Scenario: User cancels
-- **WHEN** the user cancels the confirmation
-- **THEN** no change directory is created and no scout runs
+- **WHEN** the user cancels the confirmation after the map
+- **THEN** no change directory is created and no capability scout runs
 
 ### Requirement: Bootstrap change
 After confirmation the skill SHALL create the change `bootstrap-specs` with `openspec new change "bootstrap-specs"`. When a change with that name already exists, the skill MUST ask whether to continue it, MUST skip artifacts that are `done`, and MUST NOT overwrite them.
@@ -75,18 +79,22 @@ After confirmation the skill SHALL create the change `bootstrap-specs` with `ope
 - **THEN** the user is asked whether to continue and the `proposal` file is not rewritten
 
 ### Requirement: Scout dispatch
-The skill SHALL run one scout per confirmed capability. When the `subagent` tool from `pi-subagents` exists in the session, scouts MUST be dispatched as subagents, in parallel where the tool allows, on a fast model when the tool allows choosing one. Otherwise the skill MUST scout the capabilities one after another in the current session, writing each spec file before starting the next. The skill MUST NOT invent subagent calls when the tool is absent.
+The skill SHALL run one evidence-only scout per confirmed capability whose spec file is still missing, reapplying existing-name filtering after user edits. When the compatible integration is available it SHALL dispatch `superspec.scout`, using configured models and parallel independent reads where useful. Otherwise it SHALL scout capabilities sequentially inline, writing each parent-authored spec before the next. Scouts MUST NOT write official specs; the parent SHALL consume their reports and write only the missing files, never overwrite existing specs or completed artifacts, and never fabricate child calls.
 
 #### Scenario: With pi-subagents
-- **WHEN** the `subagent` tool exists and three capabilities are confirmed
-- **THEN** three scouts are dispatched as subagents
+- **WHEN** the compatible integration exists and three confirmed capabilities have missing specs
+- **THEN** three evidence-only namespaced scouts are dispatched and the parent writes the three official delta specs
 
 #### Scenario: Without pi-subagents
-- **WHEN** the `subagent` tool does not exist
-- **THEN** the capabilities are scouted sequentially in the current session and no subagent call is made
+- **WHEN** the optional integration is absent
+- **THEN** the parent investigates capabilities sequentially and writes each spec before starting the next without child calls
+
+#### Scenario: Interrupted generation
+- **WHEN** an existing bootstrap-specs change already contains one of the confirmed capability specs
+- **THEN** that file is not rewritten or re-scouted and only the still-missing confirmed capabilities are processed
 
 ### Requirement: Spec output format
-Each scout SHALL write `specs/<capability>/spec.md` inside the `bootstrap-specs` change, containing only a `## ADDED Requirements` section. Every requirement MUST contain `SHALL` or `MUST`, have at least one `#### Scenario:` with `WHEN` and `THEN` lines, and carry an `Evidence:` line. The scout MUST read tests and documentation as well as source.
+The parent SHALL write `specs/<capability>/spec.md` inside the `bootstrap-specs` change from scout evidence, containing only a `## ADDED Requirements` section. Every requirement MUST contain `SHALL` or `MUST` on its first body line, have at least one `#### Scenario:` with `WHEN` and `THEN` lines, and carry an `Evidence:` line after its normative statement. Scouts MUST read tests and documentation as well as source. A `superspec.spec-reviewer` SHALL check the completed drafts before final strict validation when available; otherwise the parent SHALL check them inline, without a new human gate.
 
 #### Scenario: Evidence on every requirement
 - **WHEN** a generated spec file is read
@@ -109,8 +117,12 @@ Each scout SHALL write `specs/<capability>/spec.md` inside the `bootstrap-specs`
 - **THEN** it reads tests and documentation as well as source
 
 #### Scenario: Format validates
-- **WHEN** `openspec validate bootstrap-specs --strict` runs after the scouts finish
-- **THEN** the generated delta specs pass, and the skill fixes the files and reruns when they do not
+- **WHEN** the parent has drafted and internally reviewed the generated delta specs
+- **THEN** it runs `openspec validate bootstrap-specs --strict`, fixes invalid files and reruns until validation passes
+
+#### Scenario: Parent authors official specs
+- **WHEN** capability scout reports finish
+- **THEN** reports remain run/scratch artifacts and the parent alone writes and validates the official spec files
 
 ### Requirement: Generated document language
 The skill SHALL write all generated prose in the document language from `openspec/config.yaml`, and MUST keep the keywords `SHALL`, `MUST`, `WHEN`, `THEN`, `Requirement` and `Scenario` in English.

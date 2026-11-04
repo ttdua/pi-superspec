@@ -47,15 +47,19 @@ The `opsx-apply` skill SHALL read the change's apply instruction with `openspec 
 - **THEN** `apply.md` is written and committed in the worktree and the agent points to `/opsx-verify` without merging, pushing or finishing the branch
 
 ### Requirement: Executor depends on subagent availability
-The `opsx-apply` skill SHALL use the `pi-subagents` `subagent` tool with Superpowers `subagent-driven-development` when that tool is present in the session, and SHALL otherwise use Superpowers `executing-plans` in-session and request a whole-branch review over the full commit range before writing `apply.md`. It MUST NOT fabricate subagent calls when the tool is absent and MUST record the executor actually used in `apply.md`.
+The `opsx-apply` skill SHALL use the compatible `pi-subagents` integration with Superpowers `subagent-driven-development`, resolving lazy tool activation and canonical role availability through the shared integration reference. It SHALL use `superspec.implementer` for each task and `superspec.task-reviewer` for the existing task and final whole-branch review seats, with no duplicate generic reviewer pipeline. It MUST preserve one implementation writer per worktree and configured model selection. If the optional tool and activation helper are absent it SHALL use Superpowers `executing-plans` in-session and request a whole-branch review over the full commit range before writing `apply.md`. It MUST NOT fabricate calls, bypass disabled/missing roles or failed launches, or omit the executor actually used from `apply.md`.
 
 #### Scenario: With pi-subagents
-- **WHEN** the `subagent` tool is available
-- **THEN** the skill directs the agent to execute `plan.md` through `subagent-driven-development` and `apply.md` records that executor
+- **WHEN** the compatible integration and required canonical roles are available
+- **THEN** apply executes the plan through SDD with the namespaced implementer and existing namespaced task/final-review seats and records that executor
 
 #### Scenario: Without pi-subagents
-- **WHEN** the `subagent` tool is not available
-- **THEN** the skill directs the agent to use `executing-plans`, follow TDD manually, run a whole-branch review, and record `executing-plans` in `apply.md`
+- **WHEN** neither the subagent tool nor its activation helper is available
+- **THEN** apply uses `executing-plans`, follows TDD manually, requests a whole-branch review, and records `executing-plans` in `apply.md`
+
+#### Scenario: Unusable delegated executor
+- **WHEN** a canonical role is disabled/missing or a child launch fails
+- **THEN** apply reports and stops the affected lane without dispatching a generic substitute or silently going inline
 
 ### Requirement: Post-PR feedback loop
 The `opsx-apply` skill SHALL support post-PR review feedback: it MUST load `receiving-code-review`, apply fixes on the feature branch in the main checkout with TDD, append a "post-PR iteration N+1" entry with the new commit range to `apply.md`, direct the agent to re-run `/opsx-verify`, and update `finalize.md`. Pushing and the reviewer comment MUST follow the finalize policy, which a project `AGENTS.md` policy overrides.
@@ -248,3 +252,18 @@ The `opsx-verify` skill SHALL follow check 5 of the verify instruction by compar
 #### Scenario: Contract cannot be compared
 - **WHEN** a Contracts entry has no checkable counterpart in the code, such as a documented file format
 - **THEN** `verify.md` marks it not verified with the reason
+
+### Requirement: Delegated verify evidence with parent receipt
+Verify SHALL use `superspec.verifier` through the shared policy to collect independent evidence for the existing six checks, or verify inline when the integration is absent. Only commands run in the authoritative worktree during this invocation SHALL count as fresh. The parent MUST inspect evidence, perform remaining available checks, apply existing outcome rules, and write/commit `verify.md`; the child MUST NOT fix code or write the receipt.
+
+#### Scenario: Fresh delegated evidence
+- **WHEN** the verifier runs project tests during this verify invocation in the authoritative worktree
+- **THEN** the parent records the exact command, cwd, result and evidence in its official receipt after checking the report
+
+#### Scenario: Failing or missing evidence
+- **WHEN** tests fail or evidence for a check is unavailable
+- **THEN** the parent records FAIL for failing tests or not verified for the unavailable check, never invents a passing result, and does not let the verifier fix code
+
+#### Scenario: Inline verify fallback
+- **WHEN** the optional integration is absent
+- **THEN** the parent runs the same fresh checks inline and writes the existing receipt format without fabricating child evidence
