@@ -8,7 +8,7 @@
 
 - [x] 2.1 Add the per-task order and the stop rule (public contract asks the user, internal contract updates `plan.md` and logs a deviation) to the `apply:` block in `schema.yaml`
 - [x] 2.2 Add the "Contract deviations" section to `schema/superspec/templates/apply.md`
-- [ ] 2.3 Update `skills/opsx-apply/SKILL.md` to brief the executor on Contracts and record deviations, including in fix iterations and the post-PR loop, with tests in `tests/execution-commands.test.ts`
+- [x] 2.3 Update `skills/opsx-apply/SKILL.md` to brief the executor on Contracts and record deviations, including in fix iterations and the post-PR loop, with tests in `tests/execution-commands.test.ts`
 - [x] 2.4 Cover the apply block and the template in `tests/schema.test.ts`
 
 ## 3. Verify
