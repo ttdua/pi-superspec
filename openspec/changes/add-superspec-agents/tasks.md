@@ -12,7 +12,7 @@
 
 ## 4. Route execution and verification
 
-- [ ] 4.1 Update apply and verify skills to use the namespaced SDD seats and independent verifier evidence, preserve inline fallback and parent-owned receipts, and test these rules in `tests/execution-commands.test.ts`; update `docs/usage-guide.md` execution sections.
+- [x] 4.1 Update apply and verify skills to use the namespaced SDD seats and independent verifier evidence, preserve inline fallback and parent-owned receipts, and test these rules in `tests/execution-commands.test.ts`; update `docs/usage-guide.md` execution sections.
 
 ## 5. Separate capability evidence from official specs
 
