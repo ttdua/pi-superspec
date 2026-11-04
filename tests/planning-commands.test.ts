@@ -607,3 +607,70 @@ describe("planning commands", () => {
 		expect(finalizeB).toContain("code review gate");
 	});
 });
+
+describe("planning specialist routing", () => {
+	const REF = "../references/subagent-routing.md";
+
+	it("SA-P01 explore offers an optional evidence-only scout via the shared reference", () => {
+		const t = skill("explore");
+		expect(t).toContain(REF);
+		expect(t).toContain("superspec.scout");
+		expect(t).toMatch(/evidence-only/i);
+		expect(t).toMatch(/no-write|read-only/i);
+		expect(t).toMatch(/never (write|create)[^.\n]*(code|schema|artifact)/i);
+	});
+
+	it("SA-P02 explore stays inline for small conceptual work", () => {
+		const t = skill("explore");
+		expect(t).toMatch(/small conceptual[^.\n]*inline/i);
+		expect(t).toMatch(/availability (alone )?(does not|never)[^.\n]*(trigger|justif)/i);
+		expect(t).toMatch(/user conversation[^.\n]*(parent|stays)/i);
+	});
+
+	it("SA-P03 continue reviews the completed artifact before the gate, without a second artifact", () => {
+		const t = skill("continue");
+		expect(t).toContain(REF);
+		expect(t).toContain("superspec.spec-reviewer");
+		expect(t).toContain("superspec.plan-reviewer");
+		expect(t).toMatch(/existing dependency files/i);
+		expect(t).toMatch(/re-review/i);
+		expect(t).toMatch(/before the (existing )?human (review )?gate/i);
+		expect(t).toMatch(/advisory[^.\n]*not (a )?(human )?approval/i);
+		expect(t).toContain("Create exactly one artifact per invocation");
+	});
+
+	it("SA-P04 ff runs internal reviews unattended and keeps its two stops", () => {
+		const t = skill("ff");
+		expect(t).toContain(REF);
+		expect(t).toContain("superspec.spec-reviewer");
+		expect(t).toContain("superspec.plan-reviewer");
+		expect(t).toMatch(/internal (spec|review)[^.\n]*(no|without)[^.\n]*(extra|additional|another)[^.\n]*(human )?(stop|approval)/i);
+		expect(t).toContain("The brainstorm gate and the final gate are the only planned stops");
+		expect(t).toMatch(/recon never moves the user conversation/i);
+	});
+
+	it("SA-P05 planning skills fall back to an inline self-check when integration is absent", () => {
+		for (const c of ["continue", "ff"] as const) {
+			expect(skill(c), c).toMatch(/absent[^.\n]*inline (self-)?check/i);
+		}
+	});
+
+	it("links the shared reference from the three current planning consumers without copying policy", () => {
+		for (const c of ["explore", "continue", "ff"] as const) {
+			const t = skill(c);
+			expect(t, c).toContain(REF);
+			expect(t, c).not.toContain("## Availability");
+			expect(t, c).not.toContain("Helper-only");
+		}
+		expect(exists("skills/references/subagent-routing.md")).toBe(true);
+	});
+
+	it("docs/workflow.md names specialist seats as advisory, beside unchanged gates", () => {
+		const wf = read("docs/workflow.md");
+		for (const a of ["superspec.scout", "superspec.spec-reviewer", "superspec.plan-reviewer"]) {
+			expect(wf).toContain(a);
+		}
+		expect(wf).toMatch(/advisory[^.\n]*not (a )?human approval/i);
+		expect(wf).toMatch(/two (planned )?(ff )?stops/i);
+	});
+});

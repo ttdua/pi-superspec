@@ -60,6 +60,7 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
    - Use `template` as the structure and write to `resolvedOutputPath`. If it is a glob pattern, choose the concrete file paths using the schema instruction and workspace planning context.
    - An artifact may span several files (for example the `specs` artifact: one spec per capability, as the schema instruction directs). Create all of them for that artifact.
    - Apply `context` and `rules` as constraints, but do NOT copy them into the file
+   - **Internal check**: read [subagent routing](../references/subagent-routing.md) and follow it. After `specs` is complete, run `superspec.spec-reviewer`; after `plan` is complete, run `superspec.plan-reviewer`, each with the artifact plus the dependency files it needs. Resolve substantive findings and re-review substantive revisions inside the unattended loop, before the final gate; these internal reviews add no extra human stop or approval and are advisory. When the integration is absent, do an inline self-check instead. Optional brainstorm recon with `superspec.scout`: recon never moves the user conversation into a child; the parent keeps the interactive brainstorm.
    - Verify the file(s) exist, then show brief progress: "Created <artifact-id>"
 
    **Interaction boundary**
