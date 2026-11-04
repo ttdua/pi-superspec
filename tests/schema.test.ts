@@ -16,7 +16,7 @@ import { parseArtifactTable } from "./helpers/artifact-table.js";
 
 const available = hasOpenspec();
 if (!available) {
-	console.warn("openspec >= 1.4 not found on PATH; skipping schema tests");
+	console.warn("openspec >= 1.16 not found on PATH; skipping schema tests");
 }
 const run = available ? describe : describe.skip;
 
@@ -47,8 +47,8 @@ run("bundled schema", () => {
 	it("identity: name, version and marker", () => {
 		const text = schemaYaml();
 		expect(text).toMatch(/^name: superspec$/m);
-		expect(text).toMatch(/^version: 5$/m);
-		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 5$/m);
+		expect(text).toMatch(/^version: 6$/m);
+		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 6$/m);
 	});
 
 	it("openspec schema validate superspec passes", () => {
@@ -203,6 +203,24 @@ run("bundled schema", () => {
 			expect(instruction.replace(/\s+/g, " ")).toContain(
 				"project test command",
 			);
+		});
+
+		it("verify handles REMOVED/RENAMED and skipped checks", () => {
+			const flat = verifyInstruction().replace(/\s+/g, " ");
+			for (const word of [
+				"REMOVED",
+				"RENAMED",
+				"baseline",
+				"not verified",
+				"not applicable",
+			]) {
+				expect(flat, word).toContain(word);
+			}
+			expect(flat).toContain("fall back to git history");
+			expect(flat).toContain("Scenarios under a REMOVED requirement are skipped");
+			const tpl = verifyTemplate();
+			expect(tpl).toContain("Not verified");
+			expect(tpl).toContain("Not applicable");
 		});
 
 		it("sync check is deferred to archive", () => {

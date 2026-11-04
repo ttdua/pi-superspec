@@ -3,7 +3,7 @@ name: opsx-ff
 description: Fast-forward an OpenSpec change. Run the brainstorm artifact interactively and gate it, then create all remaining artifacts needed for implementation unattended, then gate the final packet. Use when the user wants a complete plan quickly.
 ---
 
-<!-- Adapted from OpenSpec 1.4.1 openspec-ff-change (MIT) for pi. -->
+<!-- Adapted from OpenSpec 1.4.1 openspec-ff-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
 Fast-forward through artifact creation: brainstorm the design with the user, then generate everything needed to start implementation in one go.
 
@@ -56,6 +56,7 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
      - `dependencies`: Completed artifacts to read for context
    - If `instruction` names `superpowers:<x>`, follow the **Superpowers artifact rule** below.
    - Read any completed dependency files for context
+   - Inspect the relevant repository code, tests and docs before drafting (read-only, proportional to the change; reuse findings for later artifacts). Ground the artifacts in what you find: tasks reference real files or tests you found, never a generic "explore the codebase" step.
    - Use `template` as the structure and write to `resolvedOutputPath`. If it is a glob pattern, choose the concrete file paths using the schema instruction and workspace planning context.
    - An artifact may span several files (for example the `specs` artifact: one spec per capability, as the schema instruction directs). Create all of them for that artifact.
    - Apply `context` and `rules` as constraints, but do NOT copy them into the file
@@ -66,7 +67,7 @@ Fast-forward through artifact creation: brainstorm the design with the user, the
    - Review gate on `brainstorm.md`: right after `brainstorm.md` is written, run the **Review gate** on that one file. It is approved as a file at its own gate before the unattended phase. Do not generate later artifacts until the gate outcome is `approved` (or `approved_with_notes` handled per the gate).
    - After that gate is approved, create every remaining artifact in dependency order without stopping to ask for review. Continue until every artifact ID in `applyRequires` has `status: "done"` (re-run `openspec status --change "<name>" --json` after each artifact). The `plan` artifact is the last one required.
    - In this unattended phase, required input is missing only if no reasonable default can be inferred from the brainstorm, earlier artifacts and the repo. Otherwise do not ask: make the decision and record any assumption in the artifact. If it is missing, ask with the `ask_user_question` tool if available (otherwise plain text with numbered options) and wait. Do NOT ask the execution-handoff question that the writing-plans skill normally asks at its end.
-   - Create all ready artifacts in dependency order, including `design` when it is ready (it is cheap and completes the graph); `design` is written before the loop stops, and the loop stops only once `plan` is done. Do not repeat in `design` what the `brainstorm` artifact already says, as its instruction directs.
+   - Create all ready artifacts in dependency order. Always create `design`, even if its `instruction` calls it optional, and the final gate packet still lists it; `design` is written before the loop stops, and the loop stops only once `plan` is done. Otherwise skip no other artifact unless `status` already reports it `skipped` (then its files must not exist; never create it). Do not repeat in `design` what the `brainstorm` artifact already says, as its instruction directs.
    - If no artifact is ready but `applyRequires` is not satisfied, show the status, STOP, and report why.
    - The brainstorm gate and the final gate are the only planned stops; the unattended phase asks only when required input is missing.
    - Final gate: once `plan` is done, run the **Review gate** once on the final packet. The packet is exactly `proposal.md`, `design.md`, every `specs/<capability>/spec.md` (each by path), `tasks.md` and `plan.md`, passed as an explicit ordered list, never a folder. It does not repeat `brainstorm.md`, which was approved at its own gate. On `changes_requested`, revise, cascade per the gate and reopen it. If `brainstorm.md` is revised after the unattended phase, the next gate opens on `brainstorm.md` plus all five artifacts (proposal, design, specs, tasks, plan).
@@ -115,7 +116,7 @@ Only `approved` and `approved_with_notes` let the workflow continue. The `dismis
 
 After completing all artifacts and running the final gate, summarize:
 - Change name and location
-- List of artifacts created with brief descriptions
+- List of artifacts created with brief descriptions, and list each other `skipped` artifact with its reason in the final summary
 - What is ready: "All artifacts created!"
 - The final review gate outcome
 - Give the pointer only after the final gate is approved; do not point to `/opsx-apply` before then. Prompt: "Run `/opsx-apply` to start implementing."

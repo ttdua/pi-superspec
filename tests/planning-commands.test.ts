@@ -123,6 +123,25 @@ describe("planning commands", () => {
 		}
 	});
 
+	it("provenance headers record the 1.16.0 sync and what was not adopted", () => {
+		const upstream: Record<string, string> = {
+			explore: "openspec-explore",
+			new: "openspec-new-change",
+			continue: "openspec-continue-change",
+			ff: "openspec-ff-change",
+			apply: "openspec-apply-change",
+			verify: "openspec-verify-change",
+			sync: "openspec-sync-specs",
+			archive: "openspec-archive-change",
+		};
+		for (const [c, name] of Object.entries(upstream)) {
+			const line = skill(c).split("\n")[5];
+			expect(line, c).toBe(
+				`<!-- Adapted from OpenSpec 1.4.1 ${name} (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->`,
+			);
+		}
+	});
+
 	it("continue and ff carry the Superpowers artifact rule", () => {
 		for (const c of ["continue", "ff"]) {
 			const text = skill(c);
@@ -427,8 +446,127 @@ describe("planning commands", () => {
 		});
 	});
 
+	describe("partial artifacts and skipped reporting", () => {
+		const flat = (c: string) => skill(c).replace(/\s+/g, " ");
+
+		it("continue reads isPlanningComplete and falls back to isComplete", () => {
+			expect(flat("continue")).toContain(
+				"`isPlanningComplete`: Whether all planning artifacts are complete; older CLI versions expose the same value as `isComplete`, so fall back to `isComplete` when `isPlanningComplete` is absent",
+			);
+		});
+
+		it("continue treats a skipped artifact as satisfied", () => {
+			expect(flat("continue")).toContain(
+				'An artifact with status "skipped" is satisfied: it has no files, so never create it and do not look for its files',
+			);
+		});
+
+		it("continue completes a partial glob artifact with only the missing files", () => {
+			const t = flat("continue");
+			expect(t).toContain(
+				"compare the files the proposal calls for with `artifactPaths.<id>.existingOutputPaths`",
+			);
+			expect(t).toContain(
+				"write only the missing files as that call's one artifact, then run the Review gate",
+			);
+		});
+
+		it("continue points to /opsx-apply when planning is complete", () => {
+			expect(flat("continue")).toContain(
+				"**If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**",
+			);
+		});
+
+		it("continue always re-reads dependencies from disk", () => {
+			expect(flat("continue")).toContain(
+				"always re-read them from disk, even if you saw them earlier in the conversation",
+			);
+		});
+
+		it("ff inspects the repository before drafting and avoids generic tasks", () => {
+			const t = flat("ff");
+			expect(t).toContain(
+				"Inspect the relevant repository code, tests and docs before drafting",
+			);
+			expect(t).toContain(
+				'tasks reference real files or tests you found, never a generic "explore the codebase" step',
+			);
+		});
+
+		it("ff always creates design even though its instruction calls it optional", () => {
+			expect(flat("ff")).toContain(
+				"Always create `design`, even if its `instruction` calls it optional, and the final gate packet still lists it",
+			);
+		});
+
+		it("ff lists each other skipped artifact with its reason", () => {
+			const t = flat("ff");
+			expect(t).toContain(
+				'skip no other artifact unless `status` already reports it `skipped`',
+			);
+			expect(t).toContain(
+				"list each other `skipped` artifact with its reason in the final summary",
+			);
+		});
+	});
+
 	it("explore forbids writing implementation code", () => {
 		expect(skill("explore")).toContain("Do NOT write code");
+	});
+
+	const flatExplore = () => skill("explore").replace(/\s+/g, " ");
+
+	it("explore asks consent before the first write and names file and scope", () => {
+		expect(flatExplore()).toContain(
+			"Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.",
+		);
+	});
+
+	it("explore refuses schema, template and config.yaml edits as implementing", () => {
+		expect(flatExplore()).toContain(
+			"Editing a schema, a template or `config.yaml` counts as implementing: refuse it and point the user to creating a change.",
+		);
+	});
+
+	it("explore scaffolds a change and hands off to /opsx-continue without writing brainstorm.md", () => {
+		const t = flatExplore();
+		expect(t).toContain(
+			"you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`.",
+		);
+		expect(t).toContain("Do not write `brainstorm.md` and do not run a review gate in explore.");
+	});
+
+	it("explore context checks list specs", () => {
+		const t = skill("explore");
+		expect(t).toContain("openspec list --specs");
+		expect(t).toContain("openspec show <id> --type spec");
+	});
+
+	it("explore capture table uses the superspec artifact names and omits gated artifacts", () => {
+		const rows = skill("explore")
+			.split("\n")
+			.filter((l) => l.trim().startsWith("|"))
+			.map((l) => l.replace(/\s+/g, " ").trim());
+		for (const row of [
+			"| Scope changed | `proposal.md` |",
+			"| New requirement discovered | `specs/<capability>/spec.md` |",
+			"| Requirement changed | `specs/<capability>/spec.md` |",
+			"| Design decision made | `design.md` |",
+			"| New work identified | `tasks.md` |",
+		]) {
+			expect(rows).toContain(row);
+		}
+		expect(rows.join("\n")).not.toMatch(/brainstorm\.md|plan\.md/);
+		expect(flatExplore()).toContain(
+			"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.",
+		);
+	});
+
+	it("explore diagrams use ASCII only", () => {
+		const t = skill("explore");
+		const body = t.slice(t.indexOf("---", 3) + 3);
+		expect(t).toContain("Diagrams use ASCII characters only.");
+		expect(body).not.toMatch(/[^\x00-\x7F]/);
 	});
 
 	it("new asks for a kebab-case name and continue handles several changes", () => {

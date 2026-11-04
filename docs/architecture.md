@@ -116,7 +116,7 @@ Always available, idempotent: re-running on an initialised project changes nothi
 unless you pass `--lang`, answer the language prompt, or `language:` is missing or invalid (it is then set to `en`).
 It does not repair or upgrade an existing schema (planned, see below).
 
-1. Require `openspec --version` ≥ 1.4; otherwise print the install line and stop.
+1. Require `openspec --version` ≥ 1.16; otherwise print the install line and stop.
 2. Warn (do not stop) when not in a git repo or when Superpowers skills are not
    discoverable.
 3. If `openspec/` is missing, run `openspec init --tools none` (no harness files).
@@ -146,7 +146,7 @@ the user runs in the session.
 
 ## Schema identity, version and upgrade
 
-- Schema name: `superspec`. `version:` starts at **5** (continuing upstream v4).
+- Schema name: `superspec`. `version:` is **6** (started at 5, continuing upstream v4).
 - Marker block `x-pi-superspec: { version: <n> }` identifies the package's schema.
   OpenSpec strips unknown top-level keys, so validation still passes (not verified
   against an OpenSpec release).
@@ -201,7 +201,7 @@ schema.
 
 ## Constraints
 
-- **OpenSpec ≥ 1.4.** Schemas resolve from project → `$XDG_DATA_HOME/openspec/schemas`
+- **OpenSpec ≥ 1.16.** Schemas resolve from project → `$XDG_DATA_HOME/openspec/schemas`
   → built-ins; there is no extra search path, so the schema is copied into the
   project. `version` must be a positive integer. `config.yaml` `context` and per-artifact
   `rules` are injected into `openspec instructions`; project customisation belongs
