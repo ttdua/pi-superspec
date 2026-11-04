@@ -16,7 +16,7 @@
 
 ## 5. Separate capability evidence from official specs
 
-- [ ] 5.1 Update generate-specs to use evidence-only scouts and parent-authored specs with internal spec review, retaining confirmation, resume, format, language and validation contracts; update `tests/generate-specs-command.test.ts`, `docs/usage-guide.md`, and the generate-specs component description in `docs/architecture.md`.
+- [x] 5.1 Update generate-specs to use evidence-only scouts and parent-authored specs with internal spec review, retaining confirmation, resume, format, language and validation contracts; update `tests/generate-specs-command.test.ts`, `docs/usage-guide.md`, and the generate-specs component description in `docs/architecture.md`.
 
 ## 6. Validate packaged integration and hand over
 
