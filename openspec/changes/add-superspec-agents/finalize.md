@@ -15,8 +15,8 @@
 
 - **Branch**: `explore/superspec-builtin-agents`
 - **Base branch**: `main`
-- **Final state**: `pr-updated` (worktree branch `add-superspec-agents` fast-forward merged into the feature branch, `9ac3f9b..e492300`, then pushed to `origin`; no PR existed before the push)
-- **PR URL**: `N/A` (no PR for `explore/superspec-builtin-agents` at finalize time)
+- **Final state**: `pr-updated` (worktree branch `add-superspec-agents` fast-forward merged into the feature branch, `9ac3f9b..e492300`, then pushed to `origin`; no PR existed before the push, so finalize step 11 opened one)
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/12` (opened with the `ttdua` gh account through a per-command `GH_TOKEN`, because the active account had only READ access)
 
 ---
 
@@ -37,7 +37,7 @@
 
 ## PR comment
 
-- **Comment status**: `skipped (no PR)`
+- **Comment status**: `posted` (https://github.com/ttdua/pi-superspec/pull/12#issuecomment-6645394995)
 
 ---
 
@@ -49,4 +49,4 @@
 
 ## Next step
 
-No PR exists yet. Open one for `explore/superspec-builtin-agents` against `main` when ready. Wait for PR code review (the logic review already happened through the planning gates). After approval, run `/opsx-archive` on this feature branch, push the archive commits to update the PR, then merge the PR (`gh pr merge --squash --delete-branch` or GitHub UI). That single merge lands both the implementation and the archive in `main`.
+Wait for code review on PR #12 (the logic review already happened through the planning gates). After approval, run `/opsx-archive` on this feature branch, push the archive commits to update the PR, then merge the PR (`gh pr merge --squash --delete-branch` or GitHub UI). That single merge lands both the implementation and the archive in `main`.
