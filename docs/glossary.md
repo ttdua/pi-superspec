@@ -7,6 +7,12 @@ commands and skills.
 **Apply block** — The top-level `apply:` section of the schema; the instructions
 `/opsx-apply` follows.
 
+**Package agents** — The six `superspec.*` specialist agent definitions under
+`agents/`, declared by `pi-subagents.agents` and available wherever the package is
+installed. Unlike activated project skills and prompts, they do not depend on
+activation, are not returned by `resources_discover`, and are never copied; the
+parent session owns dispatch and all official artifact writes.
+
 **Archive** — OpenSpec step that syncs a change's delta specs into
 `openspec/specs/` and moves the change into `openspec/changes/archive/`.
 

@@ -16,8 +16,10 @@ Package ──bundles──▶ BundledSchema ──copied by /opsx-init──▶
 
 ## Package
 
-The installed pi package. Owns the extension, the bundled schema, and the pi skills
-and prompts. Has a `packageVersion`.
+The installed pi package. Owns the extension, the bundled schema, the pi skills
+and prompts, and the six namespaced `superspec.*` package agents (declared by
+`pi-subagents.agents`, discovered package-wide, never copied into user or project
+agent directories). Has a `packageVersion`.
 
 ## BundledSchema
 
