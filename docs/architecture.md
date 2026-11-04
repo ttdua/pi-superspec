@@ -195,11 +195,21 @@ unless the release notes include a migration step.
 | Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`, name not verified) | plain question, numbered options |
 | Review written work (review gate) | tool `plannotator` (Plannotator agent tool) | Plannotator CLI in the background with `--result-file` (`plannotator review`, used by the code review gate, has no `--result-file`; its stdout is redirected to a file), then `ask_user_question`, then plain text |
 | Dispatch a subagent | `pi-subagents` `subagent` tool | Superpowers `executing-plans` in-session |
+| Dispatch a Superspec package agent | `pi-subagents` `subagent` tool with canonical `superspec.*` names; policy in `skills/references/subagent-routing.md` | Announced inline path only when the integration is absent; disabled/incompatible agents stop the stage |
 | Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
 Pi-specific tool names live only in the package's skills and prompts, never in the
 schema.
+
+### Subagent compatibility
+
+Package agents need these `pi-subagents` capabilities: discovery through top-level
+`pi-subagents.agents`, package namespaces, user/project overrides, selected skills, and the
+`output` parameter. The reference build is `0.84.0` at commit
+`d9f8f8c9a709a23adf5f323bb046f3fa91517d4c`: inspected, not smoke-tested, and not a proven minimum; other versions and forks are untested. Runtime smoke evidence supersedes these
+assumptions, and no dependency pin is added. Availability, handoff, authority and failure
+rules are in `skills/references/subagent-routing.md`.
 
 ## Constraints
 
