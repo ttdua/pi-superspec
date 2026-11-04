@@ -8,7 +8,7 @@
 
 ## 3. Route exploration and planning
 
-- [ ] 3.1 Update explore, continue, and ff skills to read the shared reference, use bounded reconnaissance and the existing spec/plan review seats, and preserve human gates; cover this in `tests/planning-commands.test.ts` and update `docs/workflow.md`.
+- [x] 3.1 Update explore, continue, and ff skills to read the shared reference, use bounded reconnaissance and the existing spec/plan review seats, and preserve human gates; cover this in `tests/planning-commands.test.ts` and update `docs/workflow.md`.
 
 ## 4. Route execution and verification
 
