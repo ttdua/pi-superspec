@@ -6,7 +6,7 @@
 > Failed checks must be fixed in the corresponding artifact, then re-run verify.
 
 **Change**: `add-superspec-agents`
-**Verified at**: `2026-11-04 20:55`
+**Verified at**: `2026-11-04 21:10`
 **Iteration**: `1`
 **Verifier**: parent session (`/opsx-verify`, inline). The installed `/opsx-verify` skill that ran this verification predates this change, so `superspec.verifier` was not dispatched; all checks below were run by the parent in this invocation.
 
@@ -30,11 +30,11 @@ exit 0
 
 - [x] Every box is ticked, or each open box has a recorded reason
 
-5 of 6 ticked (`openspec instructions apply` progress: total 6, complete 5, remaining 1).
+6 of 6 ticked (`openspec instructions apply` progress: total 6, complete 6, remaining 0). Task 6.1 was ticked in `f08024d` after the user accepted the open runtime smoke items as known limitations (Inbox thread `msg_01M6KDHMFXXPVNFC3PG02PSJVW`, Q1). Those limitations are recorded in `docs/e2e-checklist.md` ("Known limitations of the initial agent-integration smoke"): SM-03 helper-only partial, SM-05 partial launch, SM-08 unavailable-check path not exercised, SM-09 and SM-10 not run.
 
 | Open task | Reason | Blocks archive? |
 |---|---|---|
-| 6.1 Validate packaged integration and hand over | Docs, tests, typecheck, strict validation and packaging are done. Runtime smoke is incomplete: SM-09 (generate-specs) and SM-10 (continue/ff gates) were not run by user decision (Inbox `msg_01M6KAGZ359DESWRATK9BZSBYX`) because they need interactive human gates; SM-03 helper-only is PARTIAL because the Pi CLI cannot create a helper-only session; SM-05 launched only scout and spec-reviewer; SM-08 did not separately exercise the unavailable-check path. Source: `apply.md` Tasks section and `/tmp/superspec-smoke.nHxJdl/evidence.md`. | Yes, unless the user accepts the open smoke items as a recorded limitation and ticks 6.1, or runs them |
+| — | — | — |
 
 ---
 
@@ -74,10 +74,9 @@ exit 0
 - [x] The project test command was run fresh in this step
 
 **Test command**: `bun run test` (`vitest run`) in `/Users/naicoi/Projects/oss/pi-superspec.add-superspec-agents`
-**Result**: exit 0; Test Files 19 passed (19); Tests 410 passed (410).
-Also: `bun run typecheck` (`tsc --noEmit`) exit 0. Because the working tree is dirty (section 6), the suite was also run on a clean export of committed `HEAD` (`git archive 4c08237` into `/tmp/verify-head.o0Ii`, `bunx vitest run`): exit 0, 19 files / 410 tests passed.
+**Result**: exit 0; Test Files 19 passed (19); Tests 410 passed (410). Also `bun run typecheck` (`tsc --noEmit`) exit 0. Run fresh in this invocation at HEAD `f08024d`.
 
-Tests are static contract tests over Markdown/manifest files. The scenarios for runtime behaviour are additionally covered by SM-01…SM-08 smoke evidence recorded during apply (not re-run here); SM-09/SM-10 are not covered at runtime.
+Tests are static contract tests over Markdown/manifest files. The scenarios for runtime behaviour are additionally covered by SM-01…SM-08 smoke evidence recorded during apply (not re-run here); SM-09/SM-10 are not covered at runtime (accepted limitation, `docs/e2e-checklist.md`).
 
 | Scenario | Test |
 |---|---|
@@ -143,7 +142,7 @@ Tests are static contract tests over Markdown/manifest files. The scenarios for 
 | Common / Scout / Reviewer / Implementer / Verifier report | Matched | report headings in `agents/scout.md:41-56`, `agents/task-reviewer.md:42-54`, `agents/implementer.md:43-61`, `agents/verifier.md:55-70`; spec/plan reviewers covered by `tests/agents.test.ts` SA-A04 |
 | Generate-specs ownership | Matched | `skills/opsx-generate-specs/SKILL.md:22,78,85` |
 
-Design decisions 1–6 match: no runtime import or dependency (`tests/manifest.test.ts` "has no runtime dependencies"); the committed range `9ac3f9b..4c08237` touches no file under `openspec/schemas/`, `schema/` or `extensions/` (`git diff --stat` empty for those paths).
+Design decisions 1–6 match: no runtime import or dependency (`tests/manifest.test.ts` "has no runtime dependencies"); the committed range `9ac3f9b..f08024d` touches no file under `openspec/schemas/`, `schema/` or `extensions/` (`git diff --stat` empty for those paths).
 
 **Drift warnings** (non-blocking):
 
@@ -153,30 +152,18 @@ Design decisions 1–6 match: no runtime import or dependency (`tests/manifest.t
 
 ## 6. Clean Tree and Commit Range
 
-- [ ] Working tree is clean
+- [x] Working tree is clean
 
-`git status --porcelain` (before writing this receipt) shows changes outside this change's commits:
+`git status --porcelain` before writing this receipt shows only `?? .codegraph/` (untracked local CodeGraph index, not part of the change). No tracked file is modified. The schema reinstall from the previous run was restored on the user's decision (Inbox Q2); `openspec/schemas/superspec/`, `schema/` and `extensions/` are unchanged across the range.
 
-```text
- M openspec/config.yaml                      (+ language: en)
- D openspec/schemas/superspec/INTEGRATION.md
- D openspec/schemas/superspec/README.md
- M openspec/schemas/superspec/schema.yaml    (v4 upstream → bundled v6)
- M openspec/schemas/superspec/templates/{apply,brainstorm,design,finalize,plan,verify}.md
-?? .codegraph/
-?? openspec/schemas/superspec/.pi-superspec.json
-```
-
-These come from an `/opsx-init` reinstall of the bundled schema in the worktree during this session, not from apply. They modify `openspec/schemas/superspec/`, which project config says no change may edit. They were left untouched; the committed `HEAD` was tested separately (section 4). `.codegraph/` is a local index.
-
-**Commit range**: `9ac3f9b..4c08237` (apply recorded `9ac3f9b..dd85d6e`; `4c08237` is the apply receipt commit)
+**Commit range**: `9ac3f9b..f08024d`. `apply.md` still records `9ac3f9b..dd85d6e`; the later commits are `4c08237` (apply receipt), `b1b468d` (verify receipt iteration 1) and `f08024d` (e2e-checklist limitations + 6.1 tick).
 
 ---
 
 ## Overall Decision
 
 - [ ] PASS: proceed with `/opsx-continue` to finalize
-- [x] PASS_WITH_WARNINGS: proceed, noting: fresh tests, typecheck and strict validation are green and every requirement has evidence, but runtime integration is not fully verified (6.1 open: SM-09, SM-10 not run; SM-03 helper-only partial) and the working tree carries uncommitted schema reinstall changes outside this change.
+- [x] PASS_WITH_WARNINGS: proceed, noting: all six tasks are ticked, fresh tests (410/410), typecheck and strict validation are green, and every requirement has evidence. Runtime integration is verified only for the smoke cases that passed; the open cases are accepted, documented limitations.
 - [ ] FAIL: fix the cause, then re-apply (iteration N+1)
 
 ### Issues
@@ -185,18 +172,17 @@ These come from an `/opsx-init` reinstall of the bundled schema in the worktree 
 
 **WARNING**
 
-1. Task 6.1 open (`tasks.md:23`). Runtime smoke SM-09/SM-10 not run; SM-03 helper-only partial. Recommendation: either run SM-09 and SM-10 interactively per `docs/e2e-checklist.md:134-135`, then `/opsx-apply` to tick 6.1; or explicitly accept them as a known limitation, record that in `docs/e2e-checklist.md` and tick 6.1 before `/opsx-archive`.
-2. Dirty working tree: `openspec/schemas/superspec/**` and `openspec/config.yaml` are modified by an `/opsx-init` reinstall. Recommendation: before finalize, restore them with `git restore openspec/config.yaml openspec/schemas/superspec && rm openspec/schemas/superspec/.pi-superspec.json` (protected upstream v4 schema), or move the reinstall into its own change if v6 dogfooding is intended. Do not merge it as part of this change.
+1. Runtime smoke gaps accepted as known limitations (`docs/e2e-checklist.md`, "Known limitations of the initial agent-integration smoke"). Generate-specs (4 requirements) and the continue/ff review seats (1 requirement) have contract-test evidence only. Recommendation: run SM-09 and SM-10 before any release note claims full integration coverage.
+2. `apply.md` is stale: Iteration `1`, Range `9ac3f9b..dd85d6e`, Tasks `5 of 6`, while HEAD is `f08024d` with 6 of 6. Verify does not edit the apply receipt. Recommendation: re-run `/opsx-apply` to record iteration 2 (range `9ac3f9b..f08024d`, 6 of 6) and then `/opsx-verify`, or accept the drift and let finalize record the actual range.
 
 **SUGGESTION**
 
-1. SM-05 launched only scout and spec-reviewer; SM-08 did not exercise the unavailable-check path. Launch the remaining four roles once and an unavailable-check verify when 6.1 is closed.
-2. Add `.codegraph/` to `.gitignore` if not already ignored by the main checkout.
-3. Document in `README.md` "Optional subagent integration" that `pi-subagents` may add ambient tools to children beyond the frontmatter list.
+1. Add `.codegraph/` to `.gitignore` so local indexes never appear as untracked.
+2. Document in `README.md` "Optional subagent integration" that `pi-subagents` may add ambient tools to children beyond the frontmatter list (currently only in `docs/e2e-checklist.md`).
 
 **Next step**:
 
-Resolve warnings 1 and 2 (user decision), then run `/opsx-continue` in this worktree to create `finalize.md`, then `/opsx-archive`.
+Optionally re-run `/opsx-apply` to refresh `apply.md` (warning 2). Then run `/opsx-continue` in this worktree to create `finalize.md`, then `/opsx-archive`. Finalize pushes the feature branch, so it needs the user's explicit push approval in chat.
 
 > **Convergence loop reminder**:
 > - PASS / PASS_WITH_WARNINGS: `/opsx-continue` advances to the finalize artifact.
