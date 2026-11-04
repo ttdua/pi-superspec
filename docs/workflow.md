@@ -25,7 +25,7 @@ completes and archive does not warn.
 | 3 | design *(optional)* | `design.md` | OpenSpec template | Technical *how* only: decisions, risks, migration. |
 | 4 | specs | `specs/<capability>/spec.md` | OpenSpec | SHALL/MUST requirements, `#### Scenario:` blocks, validated delta semantics. |
 | 5 | tasks | `tasks.md` | OpenSpec | Coarse, human-scannable checklist tracked by apply, verify and archive. |
-| 6 | plan | `plan.md` | Superpowers `writing-plans` (redirected) | 2–5 minute TDD micro-steps, exact files, test commands, commit points. |
+| 6 | plan | `plan.md` | Superpowers `writing-plans` (redirected) | Opens with `## Contracts`, then 2–5 minute TDD micro-steps, exact files, test commands, commit points. |
 | 7 | apply | code + `apply.md` | Superpowers `using-git-worktrees` + `subagent-driven-development` (fallback `executing-plans`) | Isolation, fresh subagent per task, TDD, per-task and whole-branch review, ledger for recovery. |
 | 8 | verify | `verify.md` | OpenSpec verify + Superpowers `verification-before-completion`; `systematic-debugging` on FAIL | Spec-level correctness backed by fresh evidence. |
 | 9 | finalize | `finalize.md` | Superspec v4 git-side closeout; `finishing-a-development-branch` as escape hatch | Deterministic merge back to the feature branch, push, PR offer, reviewer comment. |
@@ -44,6 +44,10 @@ comment under the same policy as finalize.
   `design.md`. The two must not repeat each other.
 - **specs → tests**: `plan.md` lists, for every `#### Scenario:`, the test that
   covers it. Verify checks this list.
+- **plan Contracts**: `plan.md` opens with a required `## Contracts` section (name,
+  new / modified, exact shape, public flag; `None – <reason>` when there are none).
+  It is the reviewed source of truth for contract shapes; `design.md` records only
+  the decision and reason for a public contract.
 - **tasks ↔ plan**: every plan task names the `tasks.md` ID it implements
   (`Task 3 — implements 1.2`). When a plan task's review passes, the executor ticks
   that box. `tasks.md` is the official status; the SDD ledger is only for recovery.
@@ -57,7 +61,13 @@ comment under the same policy as finalize.
   - `/opsx-verify` (and its `openspec` calls) runs with the worktree as working
     directory.
 - **apply.md** records: worktree path, worktree branch, feature branch apply started
-  from, base/integration branch, commit range, iteration, executor, tasks X of Y.
+  from, base/integration branch, commit range, iteration, executor, tasks X of Y, and
+  a cumulative `## Contract deviations` list (`none` when empty).
+- **apply, per task**: write declarations or stubs matching the plan's Contracts,
+  typecheck where the project has one, write the failing test, then implement. If a
+  contract has to change, the executor stops: for a `public` contract it asks the
+  user; for an internal one it updates `plan.md` with the reason and records the
+  deviation in `apply.md`.
 - **apply stops after the final whole-branch review**, writes `apply.md`, and does
   **not** invoke `finishing-a-development-branch`.
 - **verify** is one check list:
@@ -66,7 +76,9 @@ comment under the same policy as finalize.
   3. Every requirement has implementation evidence (file/line).
   4. Every scenario maps to a test and the project test command was run fresh in
      this step, with the result recorded.
-  5. `design.md` decisions match the code (warning only).
+  5. Design and contract coherence: `design.md` decisions, `plan.md` Contracts and
+     the recorded Contract deviations match the code (warning only; entries that
+     cannot be compared are `not verified`).
   6. Working tree clean; commit range recorded.
 
   Outcome `PASS` / `PASS_WITH_WARNINGS` / `FAIL`. Code-fixable FAIL → load

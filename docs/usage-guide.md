@@ -84,7 +84,7 @@ For free-form thinking before a change exists, use `/opsx-explore [topic]`. It n
 ### 6. Plan
 
 - You type: `/opsx-continue`.
-- The agent produces: 2 to 5 minute TDD micro-steps with exact files, test commands and commit points, using the Superpowers `writing-plans` skill redirected into the change. Every plan task names the `tasks.md` ID it implements, and the plan lists the test that covers each scenario. The skill's execution handoff is skipped; `/opsx-apply` chooses the executor.
+- The agent produces: 2 to 5 minute TDD micro-steps with exact files, test commands and commit points, using the Superpowers `writing-plans` skill redirected into the change. Every plan task names the `tasks.md` ID it implements, and the plan lists the test that covers each scenario. The plan opens with a `## Contracts` section listing the shapes the tasks introduce or change. The skill's execution handoff is skipped; `/opsx-apply` chooses the executor.
 - Output: `openspec/changes/<name>/plan.md`.
 - Stop: review the plan. This is the last artifact before code. When `apply` becomes the next ready artifact, `/opsx-continue` does not create it; it points you to `/opsx-apply`.
 
@@ -98,7 +98,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
   2. Creates a worktree on a new branch named `<name>`, from the feature branch.
   3. Runs the executor (see [Executors](#executors)), ticking `tasks.md` boxes as tasks pass review.
   4. After the final whole-branch review, writes and commits `apply.md` in the worktree.
-- Output: the implementation in the worktree and `apply.md` (worktree path, worktree branch, feature branch, base branch, commit range, iteration, executor, tasks X of Y) in `openspec/changes/<name>/` inside the worktree.
+- Output: the implementation in the worktree and `apply.md` (worktree path, worktree branch, feature branch, base branch, commit range, iteration, executor, tasks X of Y, and a cumulative list of contract deviations) in `openspec/changes/<name>/` inside the worktree. If a task needs a contract to change, the executor stops: it asks you for a public contract and records the deviation itself for an internal one.
 - Stop: apply stops after the final review. It never merges, pushes or runs `finishing-a-development-branch`. It tells you to run `/opsx-verify`.
 - Working directory: from here until finalize, the worktree copy of the change directory is authoritative. `tasks.md` ticks, `apply.md` and `verify.md` are written and committed there.
 - If `/opsx-apply` reports that artifacts are missing, run `/opsx-continue` first; it makes no code changes in that state.
@@ -106,7 +106,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 ### 8. Verify
 
 - You type: `/opsx-verify`. It finds the worktree itself, so it works from the worktree or the main checkout. It needs `apply.md`; without it the command stops and tells you to run `/opsx-apply`.
-- The agent produces: six checks (structural validation, task completion, requirement evidence, scenario coverage with a fresh run of the project test command, design coherence, clean tree), and an outcome under Overall Decision.
+- The agent produces: six checks (structural validation, task completion, requirement evidence, scenario coverage with a fresh run of the project test command, design and contract coherence, clean tree), and an outcome under Overall Decision.
 - Output: `openspec/changes/<name>/verify.md` in the worktree, with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. It is overwritten on each run.
 - On `PASS` or `PASS_WITH_WARNINGS`: warnings are recorded but do not block. Go on to finalize.
 - On `FAIL`: run `/opsx-apply` again for a fix iteration (it finds the failing `verify.md`, fixes the cause, raises `Iteration:` by one and rewrites `apply.md`), then run `/opsx-verify` again. For artifact-level failures such as spec drift, the offending artifact is fixed first. After 5 iterations apply stops and reports the remaining critical items to you.
