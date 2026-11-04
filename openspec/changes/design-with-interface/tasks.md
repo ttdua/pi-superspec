@@ -1,6 +1,6 @@
 ## 1. Plan contracts and design hint
 
-- [ ] 1.1 Add the `## Contracts` section to `schema/superspec/templates/plan.md` before `## Task 1`, and require it (with the `None` rule, name references from per-task `Interfaces`, language-neutral wording) in the `plan` instruction of `schema/superspec/schema.yaml`
+- [x] 1.1 Add the `## Contracts` section to `schema/superspec/templates/plan.md` before `## Task 1`, and require it (with the `None` rule, name references from per-task `Interfaces`, language-neutral wording) in the `plan` instruction of `schema/superspec/schema.yaml`
 - [ ] 1.2 Add the public-contract hint to the `design` instruction and to `schema/superspec/templates/design.md`, keeping the `No design needed:` stub rule
 - [ ] 1.3 Cover both in `tests/schema.test.ts` (template heading order, instruction text, hint text, no tool names)
 
