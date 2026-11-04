@@ -4,6 +4,7 @@
 Define the `/opsx-init` command: registration, OpenSpec preflight and warnings, project creation, orchestration order, validation, reload, and idempotency.
 
 ## Requirements
+
 ### Requirement: Command registration
 The extension SHALL register a `/opsx-init` command unconditionally, independent of whether the current project is activated.
 
@@ -16,14 +17,14 @@ The extension SHALL register a `/opsx-init` command unconditionally, independent
 - **THEN** the `opsx-init` command is registered
 
 ### Requirement: OpenSpec preflight
-`/opsx-init` SHALL run `openspec --version` first and require version 1.4 or higher. When `openspec` is missing or older, it MUST print the install line (`brew install openspec`), stop, and write no files.
+`/opsx-init` SHALL run `openspec --version` first and require version 1.16 or higher. When `openspec` is missing or older, it MUST print the install line (`brew install openspec`), stop, and write no files.
 
 #### Scenario: Supported version
-- **WHEN** `openspec --version` reports 1.4.0 or higher
+- **WHEN** `openspec --version` reports 1.16.0 or higher
 - **THEN** the command continues to the next step
 
 #### Scenario: Version too old
-- **WHEN** `openspec --version` reports a version below 1.4
+- **WHEN** `openspec --version` reports a version below 1.16, such as 1.4.1
 - **THEN** the command prints the install line, stops, and the project directory is unchanged
 
 #### Scenario: OpenSpec not installed
@@ -154,7 +155,7 @@ The language step SHALL run after the project schema has been installed or found
 - **THEN** the user is not asked for a language
 
 ### Requirement: Generate option
-`/opsx-init` SHALL accept `--generate` as a standalone token, alone or together with `--lang`, in either order. The token MUST be removed from the argument string before the `--lang` value is parsed, so a language value such as `Tiếng Việt` is unaffected. `--generate=<value>`, a repeated `--generate`, and any other argument that does not start with `--lang` MUST produce an error notice and stop before any file is written or any command that writes is run. The flag MUST NOT change what init writes or any other step; it only adds a hint to the final report. When init activates the project, the report MUST include `/opsx-generate-specs` as a next step in addition to `/opsx-new <name>`. When init is blocked, fails validation or fails preflight, no `/opsx-generate-specs` hint SHALL be printed. Init MUST NOT start any agent work or subagent because of the flag.
+`/opsx-init` SHALL accept `--generate` as a standalone token, alone or together with `--lang`, in either order, and MUST remove it from the argument string before the `--lang` value is parsed. The flag MUST NOT change what init writes; it only adds a `/opsx-generate-specs` hint to the report of a successful activation.
 
 #### Scenario: Flag alone
 - **WHEN** `/opsx-init --generate` runs on a fresh repository
@@ -174,15 +175,27 @@ The language step SHALL run after the project schema has been installed or found
 
 #### Scenario: Flag with a value
 - **WHEN** `/opsx-init --generate=yes` runs
-- **THEN** an error is reported and no file is created or changed
+- **THEN** an error is reported and no file is created or changed, and no command that writes is run
 
 #### Scenario: Repeated flag
 - **WHEN** `/opsx-init --generate --generate` runs
-- **THEN** an error is reported and no file is created or changed
+- **THEN** an error is reported and no file is created or changed, and no command that writes is run
+
+#### Scenario: Other arguments
+- **WHEN** `/opsx-init` runs with an argument that is neither `--generate` nor starts with `--lang`
+- **THEN** an error is reported and no file is created or changed, and no command that writes is run
 
 #### Scenario: Blocked project
 - **WHEN** the project has a foreign schema and `/opsx-init --generate` runs
 - **THEN** the run is blocked and the report does not mention `/opsx-generate-specs`
+
+#### Scenario: Failed preflight or validation
+- **WHEN** preflight or validation fails while `--generate` is given
+- **THEN** no `/opsx-generate-specs` hint is printed
+
+#### Scenario: No agent work
+- **WHEN** `/opsx-init --generate` runs
+- **THEN** init starts no agent work or subagent because of the flag
 
 #### Scenario: Idempotent
 - **WHEN** `/opsx-init --generate` runs a second time on an initialised project
