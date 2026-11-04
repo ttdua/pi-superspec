@@ -182,6 +182,24 @@ describe("execution commands", () => {
 		);
 	});
 
+	it("verify compares Contracts as a warning and marks uncomparable ones not verified", () => {
+		const text = skill("verify").replace(/\s+/g, " ");
+		const section = (from: string, to: string) => {
+			const start = text.indexOf(from);
+			const end = text.indexOf(to, start + from.length);
+			expect(start).toBeGreaterThanOrEqual(0);
+			expect(end).toBeGreaterThan(start);
+			return text.slice(start, end);
+		};
+		const step5 = section("5. **Read context and follow the verify instruction**", "6. **Write `verify.md`");
+		expect(step5).toContain("Contracts");
+		expect(step5).toContain("Contract deviations");
+		expect(step5).toContain("A mismatch is a warning");
+		expect(step5).toContain("not verified");
+		const step6 = section("6. **Write `verify.md`", "7. **Handle the outcome**");
+		expect(step6).toContain("Contracts");
+	});
+
 	it("sync merges deltas and does not archive", () => {
 		const text = skill("sync");
 		for (const op of ["RENAMED", "REMOVED", "MODIFIED", "ADDED"]) {

@@ -54,6 +54,7 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    Beyond the instruction, always do both of these:
    - **Fresh test run:** run the project's test command in the worktree now, as a new run. Do not reuse earlier output or the result stated in `apply.md`. Record the exact command, exit status, and pass/fail counts.
    - **Evidence:** read the `verification-before-completion` skill and follow it. Every claim in `verify.md` (check passed, tests green, task done) must rest on command output or file evidence you collected in this run.
+   - **Contracts (check 5):** compare the `plan.md` Contracts and the `apply.md` "Contract deviations" with the code, read-only. A deviation that records a change is the expected state, so compare against it. A mismatch is a warning and never FAIL by itself. An entry you cannot compare (no checkable counterpart in the code, such as a documented file format) is recorded as not verified with its reason; so is a `plan.md` without a Contracts section.
 
    The check for unsynced delta specs is not part of verify; it belongs to `/opsx-archive`. Do not perform it here and do not edit main specs.
 
@@ -63,6 +64,7 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    - `Iteration:` copied from `apply.md`
    - The outcome: exactly one of `PASS`, `PASS_WITH_WARNINGS`, `FAIL`
    - Result of each of the six checks, with file or line evidence
+   - For check 5, the result for each `plan.md` Contracts entry and the `apply.md` "Contract deviations" (matched with the files compared, a warning naming the entry, or not verified with the reason)
    - The fresh test command and its recorded result
    - Issues grouped CRITICAL / WARNING / SUGGESTION, each with a specific recommendation
 
