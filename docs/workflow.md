@@ -31,6 +31,14 @@ completes and archive does not warn.
 | 9 | finalize | `finalize.md` | Superspec v4 git-side closeout; `finishing-a-development-branch` as escape hatch | Deterministic merge back to the feature branch, push, PR offer, reviewer comment. |
 | 10 | archive | change moved to `archive/` | OpenSpec `/opsx-archive` | Sync deltas into living specs; runs before the PR merges so the PR holds the full history. |
 
+Optional specialist seats (bundled agents, invoked through
+`skills/references/subagent-routing.md`; parent keeps artifact writes and human gates):
+`superspec.scout` gives evidence-only recon for explore and brainstorm;
+`superspec.spec-reviewer` checks completed specs and `superspec.plan-reviewer` checks the
+completed plan, both inside `/opsx-continue` and `/opsx-ff` before the existing human gate. These
+internal reviews are advisory, not human approval, and add no stop: ff keeps its two planned stops
+(brainstorm and final). Without the integration the parent does the same check inline.
+
 After a PR is open, review feedback is handled with Superpowers
 `receiving-code-review` on the feature branch in the main checkout (TDD per fix);
 then update `apply.md` as post-PR iteration N+1 (raise `Iteration:`, extend the

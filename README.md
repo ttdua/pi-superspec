@@ -33,7 +33,7 @@ Optional pi packages, each with the fallback used when it is absent:
 
 | Package | Adds | Fallback when absent |
 |---|---|---|
-| `pi-subagents` | a `subagent` tool, so `/opsx-apply` runs tasks with subagent-driven development | Superpowers `executing-plans` in the current session |
+| `pi-subagents` | a `subagent` tool, so `/opsx-apply` runs tasks with subagent-driven development and stages can use the bundled `superspec.*` agents (see [Optional subagent integration](#optional-subagent-integration)) | Superpowers `executing-plans` in the current session |
 | `rpiv-ask-user-question` | an `ask_user_question` tool for choosing between options | a plain question with numbered options |
 | `rpiv-todo` | a `todo` tool for tracking progress | a checklist stated in the agent's reply |
 
@@ -42,6 +42,20 @@ Install them with `pi install` using each package's own instructions. Then insta
 ```sh
 pi install https://github.com/ttdua/pi-superspec
 ```
+
+## Optional subagent integration
+
+The package bundles six agent definitions in `agents/`, declared for `pi-subagents` through the `pi-subagents.agents` manifest key. The integration is optional and compatible-only: without `pi-subagents` every workflow keeps its inline path.
+
+Canonical roles: `superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer` and `superspec.verifier`. They coexist with generic agent identities and are never copies of them.
+
+- **Visibility versus routing.** Once the package is installed, the six roles are visible package-wide to `pi-subagents`. Workflows only route to them while a Superspec stage is active (for example `/opsx-apply`, `/opsx-verify`, `/opsx-generate-specs`); visibility alone delegates nothing.
+- **Configuration ownership.** You own agent overrides (user or project agent files) and the models they use, taken from your pi and pi-subagents settings. The package sets no per-call model, writes no settings and generates no agent copies.
+- **After a package update.** Reload or restart pi so the new definitions are discovered. No schema reinstall is needed: agents are not part of the copied schema, and `/opsx-init` is not rerun.
+- **Absent versus incompatible.** If neither the `subagent` tool nor its activation helper is available, the stage announces the inline fallback once and continues inline. If the integration is present but incompatible, or a role is disabled, missing or fails to launch, the stage reports it and stops. It never silently falls back to a generic agent, the CLI or inline work.
+- **Removal.** Removing the package removes the six roles from discovery. There are no copies in your user or project directories to clean up.
+- **Tested builds.** The integration was inspected against `pi-subagents` 0.84.0 at commit `d9f8f8c9a709a23adf5f323bb046f3fa91517d4c`. Inspection is not a smoke test, and this is not a tested minimum version. Runtime smoke procedures are in [docs/e2e-checklist.md](docs/e2e-checklist.md); no run result is recorded here.
+- **Shell allowlists.** Where a role limits shell commands to an allowlist, that is a guardrail on what the agent is told and permitted to run, not a sandbox. Do not rely on it to contain untrusted code.
 
 ## Quick start
 

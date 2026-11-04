@@ -43,7 +43,7 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 
 ```text
 pi-superspec/
-├── package.json            # keywords: pi-package; pi.extensions only; `files` lists the published entries
+├── package.json            # keywords: pi-package; pi.extensions only; pi-subagents.agents; `files` lists the published entries
 ├── package-lock.json       # repository only
 ├── tsconfig.json           # repository only
 ├── vitest.config.ts        # repository only
@@ -56,6 +56,7 @@ pi-superspec/
 │   ├── routing-note.ts     # routing note and Superpowers detection
 │   └── init/               # /opsx-init steps: init.ts, preflight.ts, config.ts,
 │                           #   schema-install.ts, legacy.ts, io.ts
+├── agents/                 # published; six namespaced superspec.* specialist agents (discovered by pi-subagents)
 ├── schema/superspec/       # published; bundled OpenSpec schema: schema.yaml + templates/ + LICENSE
 ├── skills/                 # published; pi-adapted openspec skills (loaded dynamically)
 │   └── opsx-generate-specs/  # SKILL.md: draft specs for an existing codebase
@@ -72,8 +73,8 @@ pi-superspec/
 └── CONTRIBUTING.md
 ```
 
-Published package: `package.json` `files` ships only `extensions`, `skills`, `prompts`
-and `schema` (npm adds `package.json`, README and LICENSE itself); every other entry
+Published package: `package.json` `files` ships only `extensions`, `skills`, `prompts`,
+`schema` and `agents` (npm adds `package.json`, README and LICENSE itself); every other entry
 is repository-only. The tree omits untracked or generated entries (`.git`,
 `node_modules`, `.superpowers`).
 
@@ -85,8 +86,9 @@ only to develop pi-superspec itself and is never edited by a change.
 |---|---|
 | Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid. It does not check or upgrade the project schema at `session_start` (planned, see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
+| Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) declared by top-level `pi-subagents.agents: ["./agents"]`. A compatible `pi-subagents` discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
-| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then scouts each capability (as `pi-subagents` subagents when available, else sequentially) into delta specs in a `bootstrap-specs` change, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
+| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then gathers evidence per capability with evidence-only `superspec.scout` agents (one map scout before confirmation on configured models, then one per confirmed capability; sequentially inline when the integration is absent). The parent alone writes the delta specs in a `bootstrap-specs` change, has them reviewed by `superspec.spec-reviewer` and strict-validates them, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
 
 ## Runtime flow
 
@@ -193,11 +195,21 @@ unless the release notes include a migration step.
 | Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`, name not verified) | plain question, numbered options |
 | Review written work (review gate) | tool `plannotator` (Plannotator agent tool) | Plannotator CLI in the background with `--result-file` (`plannotator review`, used by the code review gate, has no `--result-file`; its stdout is redirected to a file), then `ask_user_question`, then plain text |
 | Dispatch a subagent | `pi-subagents` `subagent` tool | Superpowers `executing-plans` in-session |
+| Dispatch a Superspec package agent | `pi-subagents` `subagent` tool with canonical `superspec.*` names; policy in `skills/references/subagent-routing.md` | Announced inline path only when the integration is absent; disabled/incompatible agents stop the stage |
 | Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
 Pi-specific tool names live only in the package's skills and prompts, never in the
 schema.
+
+### Subagent compatibility
+
+Package agents need these `pi-subagents` capabilities: discovery through top-level
+`pi-subagents.agents`, package namespaces, user/project overrides, selected skills, and the
+`output` parameter. The reference build is `0.84.0` at commit
+`d9f8f8c9a709a23adf5f323bb046f3fa91517d4c`: inspected, not smoke-tested, and not a proven minimum; other versions and forks are untested. Runtime smoke evidence supersedes these
+assumptions, and no dependency pin is added. Availability, handoff, authority and failure
+rules are in `skills/references/subagent-routing.md`.
 
 ## Constraints
 

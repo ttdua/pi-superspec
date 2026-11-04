@@ -107,6 +107,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 
 - You type: `/opsx-verify`. It finds the worktree itself, so it works from the worktree or the main checkout. It needs `apply.md`; without it the command stops and tells you to run `/opsx-apply`.
 - The agent produces: six checks (structural validation, task completion, requirement evidence, scenario coverage with a fresh run of the project test command, design and contract coherence, clean tree), and an outcome under Overall Decision.
+- With `pi-subagents`, the parent may have `superspec.verifier` collect evidence for the six checks in the worktree. Only a report with command, cwd, exit status and counts from this invocation counts; old `apply.md` or `verify.md` results are rejected. The parent inspects the files, runs the missing checks, and alone writes `verify.md`; the verifier never fixes code. Failing tests mean `FAIL`; a check that cannot run is "not verified" and the outcome is at most `PASS_WITH_WARNINGS`. A contract mismatch alone stays a warning. Without the integration the parent runs the same checks inline.
 - Output: `openspec/changes/<name>/verify.md` in the worktree, with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. It is overwritten on each run.
 - On `PASS` or `PASS_WITH_WARNINGS`: warnings are recorded but do not block. Go on to finalize.
 - On `FAIL`: run `/opsx-apply` again for a fix iteration (it finds the failing `verify.md`, fixes the cause, raises `Iteration:` by one and rewrites `apply.md`), then run `/opsx-verify` again. For artifact-level failures such as spec drift, the offending artifact is fixed first. After 5 iterations apply stops and reports the remaining critical items to you.
@@ -199,7 +200,7 @@ For a project that already has code but no specs, draft a first set from the cod
 
 - `/opsx-init --generate` initialises the project as usual and then only prints the next step. It does no agent work.
 - `/opsx-generate-specs` maps the code into at most 12 capability candidates, drops any whose name already exists in `openspec/specs/`, and asks one confirmation question: keep, drop or rename candidates. No scout runs before you answer, and cancelling creates nothing.
-- Scouts, one per confirmed capability, use `pi-subagents` when the session has the `subagent` tool, in parallel where it allows. Without it they run one after another in the current session, which is slower and fills context.
+- One map scout (`superspec.scout`, on your configured model settings) runs before the confirmation; it is not a capability scout. After you confirm, one evidence-only `superspec.scout` per confirmed capability whose spec is still missing returns a report, in parallel where useful. Scouts never write specs: the parent writes every `specs/<capability>/spec.md` from the evidence, `superspec.spec-reviewer` checks the drafts, and then `openspec validate bootstrap-specs --strict` runs. Without the optional integration (neither the `subagent` tool nor its activation helper) the parent maps and scouts one capability after another in the current session, writing each spec before the next, which is slower and fills context. A disabled or missing role stops with the named cause.
 - The drafts are written to `openspec/changes/bootstrap-specs/` (`specs/<capability>/spec.md`, plus `brainstorm.md`, `proposal.md` and a `design.md` stub). The command stops there and does not write `tasks.md` or `plan.md`.
 - Every requirement has an `Evidence:` line. `Confidence: inferred` means only the code backs the requirement: no test or document states that behaviour. Treat it as a guess about intent. The review gate in `/opsx-ff bootstrap-specs` is where you confirm each one or remove it.
 - Existing specs are never overwritten: `openspec/specs/` is not touched, and the delta specs are merged only by `/opsx-archive` (or `/opsx-sync`).
@@ -209,8 +210,11 @@ For a project that already has code but no specs, draft a first set from the cod
 
 `/opsx-apply` picks the executor for the plan:
 
-- With `pi-subagents` installed (the session has the `subagent` tool): subagent-driven development. A fresh subagent runs each task with TDD, a reviewer checks each task, and a final review covers the whole implementation before `apply.md` is written.
-- Without it: Superpowers `executing-plans`, in the current session. The agent tells you that TDD and review are not enforced for it, follows TDD manually, and still requests a whole-branch review over the full commit range with `requesting-code-review` before writing `apply.md`. It never invents subagent calls.
+- With compatible `pi-subagents` and the canonical roles available: subagent-driven development. `superspec.implementer` runs each task with TDD as the single writer per worktree, `superspec.task-reviewer` gives one combined spec and quality review per task and again for the final whole-branch review, and there is no extra generic reviewer. The parent keeps progress, ticks `tasks.md`, and hands reviewers the exact BASE..HEAD range. Models come from your configuration. Fix-iteration and post-PR work use the same seats.
+- Without it (neither the `subagent` tool nor its activation helper): Superpowers `executing-plans`, in the current session. The agent tells you that TDD and review are not enforced for it, follows TDD manually, and still requests a whole-branch review over the full commit range with `requesting-code-review` before writing `apply.md`. It never invents subagent calls.
+- Absent integration selects inline execution. A disabled or missing role, an incompatible integration, a failed child launch, or a child runtime failure mid-run is different: the affected lane stops with the named cause and any partial state, and there is no generic substitute or silent inline run.
+
+The parent writes `apply.md` and `verify.md` receipts; the next commands (`/opsx-verify`, `/opsx-continue`) are unchanged, and no seat has authority to merge or push.
 
 Either way, `apply.md` records the executor actually used.
 

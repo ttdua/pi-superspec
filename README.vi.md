@@ -33,7 +33,7 @@ Các pi package tùy chọn, kèm phương án thay thế khi chúng không có:
 
 | Package | Bổ sung | Phương án thay thế khi không có |
 |---|---|---|
-| `pi-subagents` | tool `subagent`, giúp `/opsx-apply` chạy các task bằng subagent-driven development | Superpowers `executing-plans` trong session hiện tại |
+| `pi-subagents` | tool `subagent`, giúp `/opsx-apply` chạy các task bằng subagent-driven development và các stage dùng được agent `superspec.*` đi kèm (xem [Tích hợp subagent tùy chọn](#tích-hợp-subagent-tùy-chọn)) | Superpowers `executing-plans` trong session hiện tại |
 | `rpiv-ask-user-question` | tool `ask_user_question` để chọn giữa các lựa chọn | một câu hỏi thường với các lựa chọn đánh số |
 | `rpiv-todo` | tool `todo` để theo dõi tiến độ | một checklist được nêu trong câu trả lời của agent |
 
@@ -42,6 +42,20 @@ Cài chúng bằng `pi install` theo hướng dẫn riêng của từng package.
 ```sh
 pi install https://github.com/ttdua/pi-superspec
 ```
+
+## Tích hợp subagent tùy chọn
+
+Package đi kèm sáu agent definition trong `agents/`, được khai báo cho `pi-subagents` qua khóa manifest `pi-subagents.agents`. Tích hợp này là tùy chọn và chỉ dành cho bản tương thích: không có `pi-subagents`, mọi workflow vẫn giữ đường chạy inline.
+
+Sáu role chuẩn: `superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer` và `superspec.verifier`. Chúng cùng tồn tại với các agent generic và không phải bản sao của chúng.
+
+- **Hiển thị so với routing.** Khi package đã cài, sáu role hiển thị trên toàn package với `pi-subagents`. Workflow chỉ route tới chúng khi một stage Superspec đang hoạt động (ví dụ `/opsx-apply`, `/opsx-verify`, `/opsx-generate-specs`); chỉ hiển thị thì không ủy quyền gì.
+- **Quyền sở hữu cấu hình.** Bạn sở hữu các override của agent (file agent ở user hoặc project) và model mà chúng dùng, lấy từ settings của pi và pi-subagents. Package không đặt model theo từng lần gọi, không ghi settings và không tạo bản sao agent.
+- **Sau khi cập nhật package.** Reload hoặc restart pi để definition mới được phát hiện. Không cần cài lại schema: agent không thuộc schema đã copy, và không chạy lại `/opsx-init`.
+- **Vắng mặt so với không tương thích.** Nếu cả tool `subagent` lẫn helper kích hoạt của nó đều không có, stage thông báo phương án inline một lần rồi chạy tiếp inline. Nếu tích hợp có mặt nhưng không tương thích, hoặc một role bị vô hiệu hóa, thiếu hay chạy lỗi, stage báo lại và dừng. Nó không bao giờ lặng lẽ chuyển sang agent generic, CLI hay làm inline.
+- **Gỡ bỏ.** Gỡ package sẽ gỡ sáu role khỏi việc phát hiện. Không có bản sao nào trong thư mục user hay project của bạn cần dọn.
+- **Bản đã kiểm thử.** Tích hợp được xem xét (inspect) trên `pi-subagents` 0.84.0 tại commit `d9f8f8c9a709a23adf5f323bb046f3fa91517d4c`. Inspect không phải smoke test, và đây không phải phiên bản tối thiểu đã được kiểm thử. Quy trình smoke runtime nằm trong [docs/e2e-checklist.md](docs/e2e-checklist.md) (chỉ có tiếng Anh); kết quả chạy không được ghi ở đây.
+- **Shell allowlist.** Khi một role giới hạn lệnh shell bằng allowlist, đó là rào chắn về những gì agent được chỉ dẫn và cho phép chạy, không phải sandbox. Đừng dựa vào nó để cô lập code không tin cậy.
 
 ## Bắt đầu nhanh
 

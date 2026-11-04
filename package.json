@@ -20,11 +20,17 @@
 			"./extensions/superspec.ts"
 		]
 	},
+	"pi-subagents": {
+		"agents": [
+			"./agents"
+		]
+	},
 	"files": [
 		"extensions",
 		"skills",
 		"prompts",
-		"schema"
+		"schema",
+		"agents"
 	],
 	"scripts": {
 		"test": "vitest run",

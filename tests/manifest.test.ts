@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const pkg = JSON.parse(
@@ -30,5 +30,28 @@ describe("package manifest", () => {
 			expect.arrayContaining(["extensions", "skills", "prompts", "schema"]),
 		);
 		expect(pkg.files).not.toContain("tests");
+	});
+
+	it("SA-M01 declares optional package-agent discovery without changing pi resources", () => {
+		expect(pkg["pi-subagents"]).toEqual({ agents: ["./agents"] });
+		expect(pkg.pi.extensions).toEqual(["./extensions/superspec.ts"]);
+		expect(pkg.pi.skills).toBeUndefined();
+		expect(pkg.pi.prompts).toBeUndefined();
+		expect(pkg.pi.themes).toBeUndefined();
+	});
+
+	it("SA-M02 publishes the agents directory and keeps zero runtime dependencies", () => {
+		expect(pkg.files).toEqual(
+			expect.arrayContaining([
+				"extensions",
+				"skills",
+				"prompts",
+				"schema",
+				"agents",
+			]),
+		);
+		expect(pkg.files).not.toContain("tests");
+		expect(existsSync(new URL("../agents", import.meta.url))).toBe(true);
+		expect(Object.keys(pkg.dependencies ?? {})).toEqual([]);
 	});
 });
