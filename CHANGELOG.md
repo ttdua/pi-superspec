@@ -16,11 +16,13 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 - Package activation: the workflow commands and skills are offered only in a project whose installed schema carries the `x-pi-superspec` marker.
 - Planning commands: `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`.
 - Execution commands: `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive`.
-- Review gates: `/opsx-continue` runs a review gate on the artifact it creates and then stops; `/opsx-ff` gates `brainstorm.md`, runs the remaining artifacts unattended, then runs one final gate over proposal, design, specs, tasks and plan. The reviewer is the `plannotator` tool, then the Plannotator CLI in the background, then `ask_user_question`, then plain text; a closed review is not an approval.
+- Review gates: `/opsx-continue` runs a review gate on the artifact it creates and, once approved, continues to the next artifact, stopping before `apply`; `/opsx-ff` gates `brainstorm.md`, runs the remaining artifacts unattended, then runs one final gate over proposal, design, specs, tasks and plan. A closed review is not an approval.
+- Interaction channel: the extension detects how the agent asks and reviews (`inbox` via `plannotator_inbox`, `plannotator-tool`, `plannotator-cli` probed once per session start, `ask-tool`, `plain`; only active tools count) and injects an Interaction channel paragraph on every turn. Skills no longer name review or ask tools.
+- Routing note with four paths: no spec change works directly with TDD; clear spec change uses `/opsx-ff`; spec change needing close review uses `/opsx-new` then `/opsx-continue`; questions, research and reviews are answered directly.
 - Code review gate in finalize (step 2b): the worktree diff is reviewed before the feature branch is checked out, merged or pushed.
 - `/opsx-init --generate` (prints a hint only) and `/opsx-generate-specs`, which drafts specs for an existing codebase into a `bootstrap-specs` change using `pi-subagents` scouts when installed, or sequentially otherwise; requirements backed only by code are labelled `Confidence: inferred`.
 - Plan Contracts: `plan.md` has a required `## Contracts` section before the tasks that is the reviewed source of truth for contract shapes. Apply writes matching declarations or stubs per task and stops when a contract must change (asking the user for a public one), recording each change in a cumulative `## Contract deviations` section of `apply.md`. Verify check 5 checks design and contract coherence; verify still runs six checks.
-- Routing note injected into the session context that directs behaviour-changing work through `/opsx-new` before brainstorming.
+- Routing note injected into the session context that directs the agent to the path that fits the work.
 - Warning at session start when Superpowers is not installed.
 - Optional `language` key in `openspec/config.yaml` for the language of OpenSpec document prose.
   - `/opsx-init --lang <value>` writes it.

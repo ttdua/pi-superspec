@@ -109,7 +109,10 @@ A review gate asks the reviewer to decide on written work before the workflow mo
 It ends in one outcome: `approved`, `approved with notes` or `changes requested`. A
 closed or dismissed review is not an approval: the agent asks in chat how to proceed.
 
-- `/opsx-continue` creates one artifact, runs a review gate on it, then stops.
+- `/opsx-continue` creates one artifact, runs a review gate on it and, once the gate is
+  approved, goes on to the next artifact in the same run. It stops before `apply` and
+  points you to `/opsx-apply`. A gate that ends in `changes requested` or `dismissed`
+  stops it.
 - `/opsx-ff` runs a gate on `brainstorm.md`, creates proposal, design, specs, tasks and
   plan unattended, then runs one final gate over those five files. `brainstorm.md` is not
   repeated in the final gate.
@@ -119,13 +122,22 @@ closed or dismissed review is not an approval: the agent asks in chat how to pro
   (raise `Iteration:`, extend the commit range), run `/opsx-verify` again and re-enter
   finalize. The escape hatch runs the same gate before merging locally or opening a PR;
   `skipped` is recorded only for keep-as-is, discard, or a gate you waive in chat.
-- Reviewer, chosen each time a gate opens, in this order:
-  1. the `plannotator` agent tool;
-  2. the Plannotator CLI, run in the background, with its JSON result read from a file;
-  3. `ask_user_question`;
-  4. plain text with numbered options.
+- Interaction channel, detected by the extension and injected as an "Interaction channel"
+  paragraph on every turn (skills no longer name review or ask tools). The first available
+  channel is used, in this order:
+  1. `inbox`: the `plannotator_inbox` tool; the gate is a message with a question and the
+     files attached, and the agent ends its turn until you answer;
+  2. `plannotator-tool`: the `plannotator` agent tool;
+  3. `plannotator-cli`: the Plannotator CLI in the background (found by a probe at session
+     start), with its JSON result read from a file;
+  4. `ask-tool`: `ask_user_question`;
+  5. `plain`: plain text with numbered options.
 
-  A tier that fails to open falls to the next one.
+  `finalize.md` records the channel name (`inbox`, `plannotator-tool`, ...) in its
+  "Reviewer tier" field.
+
+  Only active tools count. A channel that fails to open falls to the next one; the same
+  channel carries the gate, the questions and the code review.
 - Wording-only notes after `approved with notes` are applied and the work continues;
   anything that changes a requirement, scope, decision or scenario reopens the gate. A
   revision cascades to dependent artifacts, and the next gate opens on the changed files.
@@ -143,7 +155,7 @@ closed or dismissed review is not an approval: the agent asks in chat how to pro
 | 7 | OpenSpec-generated skills name Claude tools (`AskUserQuestion`, `Task`). | Package skills use pi tools with fallbacks ([architecture.md](architecture.md#pi-tool-mapping)). |
 | 8 | Upstream says `executing-plans` lacks TDD/review; Superpowers 7 requires TDD there. | `executing-plans` is the fallback without `pi-subagents`; it must still request a whole-branch review before `apply.md`. |
 | 9 | `/opsx-ff` runs unattended but brainstorming is interactive. | ff gates `brainstorm.md`, runs proposal, design, specs, tasks and plan unattended, then runs one final review gate over those five, stopping before apply. |
-| 10 | The Superpowers bootstrap pushes brainstorming before any creative work, writing outside OpenSpec. | Routing note by kind of work (below). |
+| 10 | The Superpowers bootstrap pushes brainstorming before any creative work, writing outside OpenSpec. | Routing note: four paths by kind of work (below). |
 
 ## Routing note (activated projects)
 
@@ -152,11 +164,15 @@ present, otherwise at the head after compaction summaries (Superpowers no longer
 its bootstrap from the second agent run). If Superpowers is not installed, `session_start`
 warns once per session start (including reload) with `pi install git:github.com/obra/superpowers`:
 
-- Work that adds or changes behaviour → propose creating a change with `/opsx-new`
-  before brainstorming.
-- Small work that changes no spec (bug fix restoring specified behaviour, typo,
-  refactor) → do it directly with TDD, no change directory.
+- No spec change (small mistake, typo, fix restoring specified behaviour, refactor) →
+  work directly with TDD, no change directory.
+- Spec change with clear requirements → `/opsx-ff`.
+- Spec change that needs careful step-by-step review → `/opsx-new`, then `/opsx-continue`.
+- Questions, research and reviews → answer directly, without proposing a change.
+- The agent states the path it chose and a one-line reason before starting.
 - Never write design docs or plans to `docs/superpowers/`.
+
+The same context carries the Interaction channel paragraph (see Review gates).
 
 ## Commands
 
@@ -165,7 +181,7 @@ warns once per session start (including reload) with `pi install git:github.com/
 | `/opsx-init` | Always available. Set up the project; an existing non-identical schema is left unchanged with a warning (automatic upgrade and repair are planned, not shipped). |
 | `/opsx-explore [topic]` | Free-form thinking, no code. |
 | `/opsx-new <name>` | Create a change with the `superspec` schema. |
-| `/opsx-continue [name]` | Create the next ready artifact, run a review gate on it, then stop. **Default path.** |
+| `/opsx-continue [name]` | Create the next ready artifact, run a review gate on it and, once approved, continue to the next; stops before `apply`. **Default path for changes needing close review.** |
 | `/opsx-ff <name or description>` | Brainstorm interactively and gate `brainstorm.md`, generate proposal → plan unattended, then run one final gate; stop before apply. |
 | `/opsx-apply [name]` | Run the schema's apply block. |
 | `/opsx-verify [name]` | Produce `verify.md`. |
