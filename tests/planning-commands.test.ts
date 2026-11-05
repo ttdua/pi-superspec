@@ -164,9 +164,9 @@ describe("planning commands", () => {
 		}
 	});
 
-	it("continue creates one artifact then stops", () => {
+	it("continue creates one artifact per gate", () => {
 		const text = skill("continue");
-		expect(text).toContain("exactly one");
+		expect(text).toContain("exactly one artifact per gate");
 		expect(text).toContain("STOP");
 	});
 
@@ -254,7 +254,7 @@ describe("planning commands", () => {
 			expect(gate).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
 		});
 
-		it("continue runs the gate before it stops", () => {
+		it("continue runs the gate before advancing", () => {
 			const start = text.indexOf("**Act based on status**");
 			const end = text.indexOf("\n**Review gate**");
 			expect(start).toBeGreaterThan(-1);
@@ -263,13 +263,24 @@ describe("planning commands", () => {
 			inOrder(step3, [
 				"Create the artifact file",
 				"Review gate",
-				"STOP after creating that one artifact",
+				"On `approved`",
+				"next ready artifact",
 			]);
 		});
 
-		it("continue does not advance after approval", () => {
+		it("continue stops before apply", () => {
 			const guard = text.slice(text.indexOf("**Guardrails**"));
-			expect(guard).toContain("Approval does not create the next artifact");
+			expect(guard).toContain("Only a human gate approval advances");
+			expect(guard).toContain(
+				"STOP when planning is complete or the next ready artifact is `apply`",
+			);
+			expect(guard).toContain("Do NOT create an `apply` artifact");
+			const sentence = guard
+				.split(/(?<=\.)\s/)
+				.find((s) => s.includes("Only a human gate approval advances"));
+			expect(sentence).toBeDefined();
+			expect(sentence).toContain("changes_requested");
+			expect(sentence).toContain("dismissed");
 		});
 
 		it("continue runs the code review gate for finalize", () => {
@@ -313,7 +324,10 @@ describe("planning commands", () => {
 
 		it("continue frontmatter mentions the review gate", () => {
 			const fm = text.split("---")[1];
-			expect(fm).toContain("run a review gate on it, then stop");
+			expect(fm).toContain(
+				"run a review gate on it, and after approval continue until apply",
+			);
+			expect(fm).not.toContain("then stop");
 			expect(fm).not.toContain("then stop for review");
 		});
 	});
@@ -422,11 +436,15 @@ describe("planning commands", () => {
 			expect(t).toContain(
 				"write only the missing files as that call's one artifact, then run the Review gate",
 			);
+			expect(t).toContain("after approval, continue");
 		});
 
 		it("continue points to /opsx-apply when planning is complete", () => {
 			expect(flat("continue")).toContain(
 				"**If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**",
+			);
+			expect(flat("continue")).toContain(
+				"create a ready `finalize`",
 			);
 		});
 
@@ -589,7 +607,8 @@ describe("planning specialist routing", () => {
 		expect(t).toMatch(/re-review/i);
 		expect(t).toMatch(/before the (existing )?human (review )?gate/i);
 		expect(t).toMatch(/advisory[^.\n]*not (a )?(human )?approval/i);
-		expect(t).toContain("Create exactly one artifact per invocation");
+		expect(t).toContain("Create exactly one artifact per gate");
+		expect(t).toMatch(/(verdict|internal review)[^.\n]*(does not|never) advance/i);
 	});
 
 	it("SA-P04 ff runs internal reviews unattended and keeps its two stops", () => {

@@ -1,11 +1,11 @@
 ---
 name: opsx-continue
-description: Continue an OpenSpec change by creating the next ready artifact, run a review gate on it, then stop. Use when the user wants to progress their change or create the next artifact.
+description: Continue an OpenSpec change by creating the next ready artifact, run a review gate on it, and after approval continue until apply. Use when the user wants to progress their change or create the next artifact.
 ---
 
 <!-- Adapted from OpenSpec 1.4.1 openspec-continue-change (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->
 
-Continue working on a change by creating the next artifact.
+Continue working on a change by creating the next artifact, gating it, and advancing after approval.
 
 **Input**: Optionally a change name. A change name that is unambiguous from the conversation counts as provided. If none is given or inferable, or it is vague or ambiguous, you MUST prompt for the available changes.
 
@@ -43,10 +43,9 @@ Continue working on a change by creating the next artifact.
 
    **If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**:
    - Show the final status including the schema used
-   - Suggest: "All artifacts created! You can now run `/opsx-apply` or archive this change."
-   - STOP
+   - If `finalize` is ready, create a ready `finalize` as the one artifact and gate it, as below; otherwise suggest: "All artifacts created! You can now run `/opsx-apply` or archive this change." and STOP
 
-   **If the next ready artifact is `apply`** (all of the schema's `applyRequires` are done):
+   **If `apply` is the next artifact to become ready** (all of the schema's `applyRequires` are done):
    - Do NOT create it. STOP and point the user to `/opsx-apply`
 
    **If artifacts are ready to create** (`status: "ready"`):
@@ -68,12 +67,12 @@ Continue working on a change by creating the next artifact.
      - Apply `context` and `rules` as constraints, but do NOT copy them into the file
      - Write to `resolvedOutputPath`. If it is a glob pattern, choose the concrete file path using the schema instruction and workspace planning context
    - An artifact may span several files (for example the `specs` artifact: one spec per capability, as the schema instruction directs). Create all files for that one artifact; it still counts as one artifact
-   - For a partial glob artifact (see the check above), write only the missing files as that call's one artifact, then run the Review gate on the files you wrote and STOP (never overwrite existing files)
-   - Create exactly one artifact, then show what was created and what is now unlocked
+   - For a partial glob artifact (see the check above), write only the missing files as that call's one artifact, then run the Review gate on the files you wrote; after approval, continue (never overwrite existing files)
+   - Create exactly one artifact per gate, then show what was created and what is now unlocked
    - If the artifact is `finalize`, run the code review gate during creation, at its step 2b, before the git-side closeout, using the Review gate section
-   - **Internal check before the gate**: read [subagent routing](../references/subagent-routing.md) and follow it. When the artifact just completed is `specs` (all files, or the missing files of a partial artifact), dispatch `superspec.spec-reviewer`; when it is `plan`, dispatch `superspec.plan-reviewer`. Give it the completed artifact and the existing dependency files needed to assess it, including existing specs when only partial specs were added. Resolve substantive findings and re-review substantive revisions before the human gate; preserve existing files unless a finding requires an explicitly reviewed revision. The verdict is advisory, not a human approval, and adds no stop or second artifact. When the integration is absent, run an inline self-check of the same quality with the same order. A disabled or missing role stops per the shared reference.
-   - Run the **Review gate** on the written file(s). On `approved`, or on `approved_with_notes` handled per the gate, go on to STOP. On `changes_requested`, revise and reopen the gate. On `dismissed`, ask the user in chat. For `finalize`, the written `finalize.md` is already committed and pushed, so a `changes_requested` on it is handled as a follow-up commit and push on the feature branch
-   - STOP after creating that one artifact (and its gate), so the user can run the next step
+   - **Internal check before the gate**: read [subagent routing](../references/subagent-routing.md) and follow it. When the artifact just completed is `specs` (all files, or the missing files of a partial artifact), dispatch `superspec.spec-reviewer`; when it is `plan`, dispatch `superspec.plan-reviewer`. Give it the completed artifact and the existing dependency files needed to assess it, including existing specs when only partial specs were added. Resolve substantive findings and re-review substantive revisions before the human gate; preserve existing files unless a finding requires an explicitly reviewed revision. The verdict is advisory, not a human approval, and adds no stop or second artifact, and an internal review verdict does not advance. When the integration is absent, run an inline self-check of the same quality with the same order. A disabled or missing role stops per the shared reference.
+   - Run the **Review gate** on the written file(s). On `approved`, or on `approved_with_notes` handled per the gate, go back to step 2 and create the next ready artifact, then gate it. When planning is complete or the next ready artifact is `apply`, STOP and point to `/opsx-apply`. On `changes_requested`, revise and reopen the gate. On `dismissed`, ask the user in chat. For `finalize`, the written `finalize.md` is already committed and pushed, so a `changes_requested` on it is handled as a follow-up commit and push on the feature branch
+   - Repeat this loop for each next ready artifact until planning is complete or the next ready artifact is `apply`
 
    **If no artifacts are ready (all blocked)**:
    - This should not happen with a valid schema
@@ -87,7 +86,7 @@ Continue working on a change by creating the next artifact.
 
 **Superpowers artifact rule**
 
-If an artifact `instruction` says to use `superpowers:<x>` (for example `superpowers:brainstorming` for the brainstorm artifact or `superpowers:writing-plans` for the plan artifact), drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the instruction says (never under `docs/superpowers/`) and ignore that skill's own closing step (invoking another skill or an execution handoff). That skill's own approval gates, self-review, or commit steps must not produce a second artifact or run past the STOP after this artifact. The review gate on `brainstorm.md` is the brainstorming skill's design-doc approval; do not ask for it separately. If skill `<x>` is not available, STOP and tell the user to install Superpowers.
+If an artifact `instruction` says to use `superpowers:<x>` (for example `superpowers:brainstorming` for the brainstorm artifact or `superpowers:writing-plans` for the plan artifact), drop the prefix and read the `SKILL.md` of skill `<x>` from the available skills list. Follow it, but write output only where the instruction says (never under `docs/superpowers/`) and ignore that skill's own closing step (invoking another skill or an execution handoff). That skill's own approval gates, self-review, or commit steps must not produce a second artifact or run past the gate for this artifact. The review gate on `brainstorm.md` is the brainstorming skill's design-doc approval; do not ask for it separately. If skill `<x>` is not available, STOP and tell the user to install Superpowers.
 
 **Review gate**
 
@@ -119,15 +118,16 @@ After each invocation, show:
 - Schema workflow in use
 - Current progress (N/M complete)
 - What artifacts are now unlocked
-- Prompt: "Want to continue? Run `/opsx-continue` again, or tell me what to change."
+- Prompt: when stopped before `apply`, "Planning is complete. Run `/opsx-apply`, or tell me what to change."; when stopped at a gate, "Run `/opsx-continue` again, or tell me what to change."
 
 **Artifact Creation Guidelines**
 
 The artifact types depend on the schema. Use the `instruction` field from the instructions output to decide what to create. Do not assume specific artifact names; use the schema's sequence.
 
 **Guardrails**
-- Create exactly one artifact per invocation
-- Approval does not create the next artifact; the next artifact needs the next `/opsx-continue`
+- Create exactly one artifact per gate
+- Only a human gate approval advances; `changes_requested` and `dismissed` do not advance, and neither does an internal review verdict
+- STOP when planning is complete or the next ready artifact is `apply`. Do NOT create an `apply` artifact; point to `/opsx-apply`
 - Always read dependency artifacts before creating a new one, and re-read them from disk rather than from conversation memory
 - Never skip artifacts or create them out of order
 - If context is unclear, ask the user before creating
