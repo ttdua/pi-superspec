@@ -14,7 +14,7 @@
 ## 3. Skills
 
 - [x] 3.1 Rewrite the identical "Review gate" section of `skills/opsx-continue/SKILL.md` and `skills/opsx-ff/SKILL.md`: keep outcomes, notes, cascade and code review position/loop; replace tier lists, CLI paragraphs and tool names with "open the gate on the channel in the routing note's Interaction channel paragraph"; rename the result column; keep the sections byte-identical
-- [ ] 3.2 Change `skills/opsx-continue/SKILL.md` to advance after approval: loop to the next ready planning artifact with its gate, stop when planning is complete or the next artifact is `apply`, handle partial specs, `changes_requested`, `dismissed` and the already-complete case; keep internal spec/plan reviews before each human gate
+- [x] 3.2 Change `skills/opsx-continue/SKILL.md` to advance after approval: loop to the next ready planning artifact with its gate, stop when planning is complete or the next artifact is `apply`, handle partial specs, `changes_requested`, `dismissed` and the already-complete case; keep internal spec/plan reviews before each human gate
 - [ ] 3.3 Replace `ask_user_question` wording in `opsx-new`, `opsx-apply`, `opsx-verify`, `opsx-sync`, `opsx-archive`, `opsx-generate-specs` and `opsx-ff` with "ask the user as the routing note's Interaction channel paragraph describes"; add that sentence to `opsx-explore` for its questions
 - [ ] 3.4 Update `tests/planning-commands.test.ts`, `tests/execution-commands.test.ts` and `tests/generate-specs-command.test.ts`: forbid `ask_user_question` and `plannotator` (case-insensitive in gate sections) in the named skills, assert the channel deferral wording, continue's advance-and-stop wording and gate-section identity
 
