@@ -36,6 +36,7 @@ Các pi package tùy chọn, kèm phương án thay thế khi chúng không có:
 | `pi-subagents` | tool `subagent`, giúp `/opsx-apply` chạy các task bằng subagent-driven development và các stage dùng được agent `superspec.*` đi kèm (xem [Tích hợp subagent tùy chọn](#tích-hợp-subagent-tùy-chọn)) | Superpowers `executing-plans` trong session hiện tại |
 | `rpiv-ask-user-question` | tool `ask_user_question` để chọn giữa các lựa chọn | một câu hỏi thường với các lựa chọn đánh số |
 | `rpiv-todo` | tool `todo` để theo dõi tiến độ | một checklist được nêu trong câu trả lời của agent |
+| Plannotator (tool Inbox `plannotator_inbox`, tool `plannotator` hoặc CLI) | review gate và câu hỏi qua Plannotator Inbox hoặc giao diện review; extension chọn kênh khả dụng đầu tiên (xem [hướng dẫn sử dụng](docs/usage-guide.md)) | `ask_user_question`, rồi văn bản thường với các lựa chọn đánh số |
 
 Cài chúng bằng `pi install` theo hướng dẫn riêng của từng package. Sau đó cài package này:
 
@@ -63,7 +64,7 @@ Chạy lần lượt các bước sau trong repository của bạn. Các lệnh 
 
 1. `/opsx-init`: cài schema đi kèm vào `openspec/schemas/superspec/`, đặt `schema: superspec` trong `openspec/config.yaml`, validate và tự reload pi. Nó chạy `openspec init --tools none` nếu `openspec/` chưa tồn tại. Cần OpenSpec 1.16 trở lên, và chỉ cảnh báo nếu thư mục không phải git repository hoặc thiếu Superpowers.
 2. `/opsx-new <name>`: tạo change và hiển thị hướng dẫn của artifact đầu tiên. Nó không tạo artifact nào.
-3. `/opsx-continue`: tạo artifact kế tiếp, mỗi lần chạy một artifact, chạy một review gate cho artifact đó, rồi dừng. Lặp lại cho đến khi có đủ các artifact tới plan; khi apply là artifact sẵn sàng kế tiếp, nó dừng và chỉ bạn sang `/opsx-apply`. (`/opsx-ff` tạo tất cả trong một lần; nó chạy review gate cho `brainstorm.md`, tạo phần còn lại không dừng, rồi chạy một review gate cuối.)
+3. `/opsx-continue`: tạo artifact kế tiếp, mỗi lần chạy một artifact, chạy một review gate cho artifact đó và, khi gate được approve, tiếp tục sang artifact kế tiếp trong cùng lần chạy. Nó dừng trước `apply` và chỉ bạn sang `/opsx-apply`; gate không được approve thì dừng. (`/opsx-ff` tạo tất cả trong một lần; nó chạy review gate cho `brainstorm.md`, tạo phần còn lại không dừng, rồi chạy một review gate cuối.)
 4. Tạo và chuyển sang một feature branch (ví dụ `feat/<name>`) nếu bạn chưa ở trên branch nào như vậy. Hãy commit output của `/opsx-init` (`openspec/config.yaml` và `openspec/schemas/superspec/`) lên branch đó, vì `/opsx-apply` chỉ commit thư mục của change và worktree được tạo từ feature branch. Hãy push branch một lần bằng `git push -u origin feat/<name>`, vì finalize chạy `git pull` thường trên branch đó và lệnh này lỗi nếu branch chưa có upstream. Sau đó chạy `/opsx-apply`. Nó tạo một worktree trên branch đặt theo tên change, triển khai các task và ghi `apply.md`.
 5. `/opsx-verify`: tự tìm worktree (`git worktree list`), nên chạy từ checkout nào cũng được; đường dẫn do `/opsx-apply` in ra và được ghi trong `apply.md`. Nó ghi `verify.md` với `PASS`, `PASS_WITH_WARNINGS` hoặc `FAIL`. Nếu `FAIL`, chạy lại `/opsx-apply` cho một vòng sửa lỗi.
 6. Finalize: không phải một lệnh. Sau khi verify đạt, khởi động (hoặc khởi động lại) pi với đường dẫn worktree làm thư mục làm việc, rồi chạy `/opsx-continue` để tạo artifact `finalize`. `/opsx-continue` không tự tìm worktree: chạy từ main checkout, nó đọc bản của change trong main checkout (không có `apply.md`) nên sẽ chỉ bạn quay lại `/opsx-apply`. Phần closeout phía git merge branch của worktree trở lại feature branch, xóa worktree (khi nó nằm dưới `.worktrees/`, `worktrees/` hoặc `~/.config/superpowers/worktrees/`) và push feature branch.
@@ -78,7 +79,7 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 | `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. Tùy chọn `--lang <language>` đặt ngôn ngữ của các tài liệu OpenSpec. Tùy chọn `--generate` chỉ in gợi ý chạy `/opsx-generate-specs` tiếp theo, không làm việc nào của agent. |
 | `/opsx-explore` | Khám phá ý tưởng và làm rõ yêu cầu trước hoặc trong một change. Không viết application code. |
 | `/opsx-new` | Bắt đầu một change và hiển thị hướng dẫn của artifact đầu tiên. |
-| `/opsx-continue` | Tạo artifact kế tiếp, chạy review gate cho nó, rồi dừng. |
+| `/opsx-continue` | Tạo artifact kế tiếp, chạy review gate cho nó và, khi được approve, tiếp tục sang artifact kế tiếp. Dừng trước apply. |
 | `/opsx-ff` | Brainstorm tương tác và chạy review gate cho `brainstorm.md`, tạo mọi artifact cần để triển khai, rồi chạy một review gate cuối. Dừng trước apply. |
 | `/opsx-apply` | Triển khai change trong một worktree và ghi `apply.md`. |
 | `/opsx-verify` | Verify change đã apply và ghi `verify.md`. |

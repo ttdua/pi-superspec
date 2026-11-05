@@ -562,12 +562,21 @@ describe("planning commands", () => {
 		expect(wf).toContain("code review gate");
 		expect(wf).not.toContain("ff runs unattended but brainstorming is interactive");
 		const arch = read("docs/architecture.md");
-		const row = arch.split("\n").find((l) => l.startsWith("|") && l.includes("`plannotator`"));
-		expect(row).toBeDefined();
-		expect(row).toContain("--result-file");
-		expect(row).toContain("plannotator review");
-		expect(row).toContain("stdout is redirected");
-		expect(row).toContain("ask_user_question");
+		const rows = arch.split("\n").filter((l) => l.startsWith("|") && l.includes("`plannotator_inbox`"));
+		expect(rows).toHaveLength(1);
+		expect(rows[0]).toContain("detected");
+		expect(rows[0]).toContain("Interaction channel");
+		const order = ["inbox", "plannotator-tool", "plannotator-cli", "ask-tool", "plain"].map((c) =>
+			wf.indexOf(`\`${c}\``),
+		);
+		expect(order[0]).toBeGreaterThanOrEqual(0);
+		expect([...order].sort((a, b) => a - b)).toEqual(order);
+		expect(wf).toContain("stops before `apply`");
+		const readmeRow = read("README.md")
+			.split("\n")
+			.find((l) => l.startsWith("|") && l.includes("`/opsx-continue`"));
+		expect(readmeRow).toBeDefined();
+		expect(readmeRow).not.toContain("then stops");
 	});
 
 	it("docs describe apply.md iterations and the brainstorm approval consistently", () => {

@@ -69,8 +69,17 @@ tasks, archive).
 
 **Plan** — `plan.md`, the Superpowers micro-step TDD plan for a change.
 
+**Interaction channel** — How the agent asks questions and runs review gates: the first
+available of `inbox`, `plannotator-tool`, `plannotator-cli`, `ask-tool`, `plain`. The
+extension detects it and injects it as a paragraph; skills do not name the tools.
+
+**Review gate** — A point where the reviewer decides on written work (`approved`,
+`approved with notes`, `changes requested`) before the workflow moves on, held on the
+Interaction channel. A closed or dismissed review is not an approval.
+
 **Routing note** — Context the extension injects in activated projects telling the
-agent when to start a change and when to fix directly.
+agent which of four paths fits the work: fix directly, `/opsx-ff`, `/opsx-new` then
+`/opsx-continue`, or answer directly.
 
 **Scenario** — A `#### Scenario:` block (WHEN/THEN) under a requirement; each maps
 to at least one test.

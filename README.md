@@ -36,6 +36,7 @@ Optional pi packages, each with the fallback used when it is absent:
 | `pi-subagents` | a `subagent` tool, so `/opsx-apply` runs tasks with subagent-driven development and stages can use the bundled `superspec.*` agents (see [Optional subagent integration](#optional-subagent-integration)) | Superpowers `executing-plans` in the current session |
 | `rpiv-ask-user-question` | an `ask_user_question` tool for choosing between options | a plain question with numbered options |
 | `rpiv-todo` | a `todo` tool for tracking progress | a checklist stated in the agent's reply |
+| Plannotator (Inbox tool `plannotator_inbox`, `plannotator` tool or CLI) | review gates and questions through the Plannotator Inbox or a review UI; the extension picks the first available channel (see [usage guide](docs/usage-guide.md)) | `ask_user_question`, then plain text with numbered options |
 
 Install them with `pi install` using each package's own instructions. Then install this package:
 
@@ -63,7 +64,7 @@ Run these in your repository, in order. The change commands stop for your review
 
 1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It runs `openspec init --tools none` if `openspec/` does not exist yet. It needs OpenSpec 1.16 or newer, and only warns if the directory is not a git repository or Superpowers is missing.
 2. `/opsx-new <name>`: creates the change and shows the first artifact instructions. It creates no artifact.
-3. `/opsx-continue`: creates the next artifact, one per run, runs a review gate on it, then stops. Repeat until all artifacts up to the plan exist; when apply is the next ready artifact it stops and points you to `/opsx-apply`. (`/opsx-ff` creates them all in one go; it gates `brainstorm.md`, runs the rest unattended, then runs one final review gate.)
+3. `/opsx-continue`: creates the next artifact, one per run, runs a review gate on it and, once the gate is approved, goes on to the next artifact in the same run. It stops before `apply` and points you to `/opsx-apply`; a gate that is not approved stops it. (`/opsx-ff` creates them all in one go; it gates `brainstorm.md`, runs the rest unattended, then runs one final review gate.)
 4. Create and switch to a feature branch (for example `feat/<name>`) if you are not on one yet. Commit the `/opsx-init` output (`openspec/config.yaml` and `openspec/schemas/superspec/`) on it, because `/opsx-apply` commits only the change directory and the worktree is created from the feature branch. Push the branch once with `git push -u origin feat/<name>`, because finalize runs a plain `git pull` on it and that fails on a branch with no upstream. Then run `/opsx-apply`. It creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.
 5. `/opsx-verify`: it finds the worktree itself (`git worktree list`), so it works from either checkout; the path is printed by `/opsx-apply` and recorded in `apply.md`. It writes `verify.md` with `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. On `FAIL`, run `/opsx-apply` again for a fix iteration.
 6. Finalize: not a command. After a passing verify, start (or restart) pi with the worktree path as its working directory, then run `/opsx-continue` to create the `finalize` artifact. `/opsx-continue` does not look for the worktree: from the main checkout it reads the main checkout's copy of the change, which has no `apply.md`, so it would point you back to `/opsx-apply`. The git-side closeout merges the worktree branch back into the feature branch, removes the worktree (when it sits under `.worktrees/`, `worktrees/` or `~/.config/superpowers/worktrees/`) and pushes the feature branch.
@@ -78,7 +79,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 | `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. Optional `--lang <language>` sets the language of OpenSpec documents (default `en`). Optional `--generate` only prints a hint to run `/opsx-generate-specs` next; it does no agent work. |
 | `/opsx-explore` | Explores ideas and clarifies requirements before or during a change. Writes no application code. |
 | `/opsx-new` | Starts a change and shows the first artifact instructions. |
-| `/opsx-continue` | Creates the next artifact, runs a review gate on it, then stops. |
+| `/opsx-continue` | Creates the next artifact, runs a review gate on it and, once approved, continues to the next. Stops before apply. |
 | `/opsx-ff` | Brainstorms interactively and gates `brainstorm.md`, creates every artifact needed to implement, then runs one final review gate. Stops before apply. |
 | `/opsx-apply` | Implements the change in a worktree and writes `apply.md`. |
 | `/opsx-verify` | Verifies the applied change and writes `verify.md`. |
