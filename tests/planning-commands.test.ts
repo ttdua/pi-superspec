@@ -194,38 +194,19 @@ describe("planning commands", () => {
 			expect(sentence).toContain("ask");
 		});
 
-		it("gate picks the reviewer in order", () => {
-			inOrder(gate, [
-				"`plannotator` tool",
-				"command -v plannotator",
-				"ask_user_question",
-				"plain text",
-			]);
+		it("gate defers to the Interaction channel", () => {
+			expect(gate).toContain("Interaction channel");
+			expect(gate).toContain("Result on the channel");
 		});
 
-		it("gate falls through when a tier fails", () => {
-			expect(gate).toMatch(/falls? to the next tier/);
-			expect(gate).toContain("cannot run a background command");
+		it("gate falls back when the channel fails", () => {
+			expect(gate).toContain("fails to open");
+			expect(gate).toContain("fallback");
 		});
 
-		it("gate runs the CLI with a fresh result file", () => {
-			for (const s of [
-				"plannotator annotate",
-				"--gate",
-				"--json",
-				"--result-file",
-				"does not exist yet",
-				"fresh path for every gate",
-			]) {
-				expect(gate, s).toContain(s);
-			}
-			expect(gate).toMatch(/outside the change directory/);
-		});
-
-		it("gate classifies by decision only", () => {
-			expect(gate).toContain("`decision`");
-			expect(gate).toContain("never from message text");
-			expect(gate).toContain("unknown `decision` is `dismissed`");
+		it("gate section has no tool names", () => {
+			expect(gate).not.toMatch(/plannotator/i);
+			expect(gate).not.toContain("ask_user_question");
 		});
 
 		it("gate handles notes", () => {
@@ -239,11 +220,11 @@ describe("planning commands", () => {
 			expect(gate).toContain("only the files that changed");
 		});
 
-		it("gate covers code review", () => {
+		it("code review uses the injected channel", () => {
 			for (const s of [
-				"plannotator review",
-				"stdout",
-				"`git diff --stat`",
+				"code review",
+				"before the feature branch",
+				"Interaction channel",
 				"feature branch recorded in `apply.md`",
 				"`receiving-code-review`",
 				"`/opsx-verify`",
@@ -254,11 +235,17 @@ describe("planning commands", () => {
 			expect(gate).toMatch(/changed behaviour or a requirement/);
 		});
 
-		it("gate keeps review notes, late brainstorm cascade and resume point explicit", () => {
-			expect(gate).toContain("Decide approve-or-not from `decision` only");
-			expect(gate).toContain("use `message` as the reviewer's notes to apply");
+		it("dismissed code review does not proceed", () => {
+			expect(gate).toMatch(/code review[^\n]*`dismissed`[^\n]*not approved/);
+		});
+
+		it("receipt records the channel as reviewer tier", () => {
+			expect(gate).toContain("reviewer tier");
+			expect(gate).toContain("channel");
+		});
+
+		it("gate keeps late brainstorm cascade and resume point explicit", () => {
 			expect(gate).toContain("open the next gate on every artifact that depends on it");
-			expect(gate).toContain("missing or unreadable");
 			expect(gate).toContain("at step 3");
 			expect(gate).toContain("not at step 2b");
 		});
@@ -290,40 +277,6 @@ describe("planning commands", () => {
 			expect(text.toLowerCase()).toContain("code review");
 			expect(gate).toContain("finalize");
 			expect(gate.toLowerCase()).toContain("code review");
-		});
-
-		it("code review CLI tier pins the full branch diff mode", () => {
-			const tier2 = gate.split("\n").find((l) => l.includes("plannotator review --base"));
-			expect(tier2).toBeDefined();
-			expect(tier2).toContain("--diff-type merge-base");
-		});
-
-		it("code review tool tier asks to confirm the full branch diff", () => {
-			const tier1 = gate.split("\n").find((l) => l.includes("`review` action"));
-			expect(tier1).toBeDefined();
-			expect(tier1).toContain("full branch diff");
-			expect(tier1).toContain("fall to Tier 2");
-		});
-
-		it("code review CLI tier keeps approve with notes", () => {
-			expect(gate).not.toContain("can only produce");
-			expect(gate).toContain("When `decision` is `approved`, read `message`");
-			expect(gate).toContain("Code review completed — no changes requested.");
-			const tier2 = gate.split("\n").find((l) => l.includes("plannotator review --base"));
-			expect(tier2).toContain("`approved_with_notes`");
-		});
-
-		it("tool tier takes its decision message as the result", () => {
-			const classify = gate.split("\n").find((l) => l.includes("**Classify the result**"));
-			expect(classify).toBeDefined();
-			expect(classify).toContain("never from message text");
-			expect(classify).toContain("the decision message is the result");
-			expect(classify).toContain("ask the user in chat");
-		});
-
-		it("a non-zero exit without a result file is a tier failure", () => {
-			const fail = gate.split("\n").find((l) => l.includes("**When a tier fails to open**"));
-			expect(fail).toContain("non-zero and leaves no result file");
 		});
 
 		it("code review fixes update apply.md as a new iteration", () => {
