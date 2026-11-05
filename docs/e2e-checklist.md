@@ -75,7 +75,7 @@ Setup: remove `pi-subagents`, reinstall pi-superspec (Run A ends by removing it)
 
 - [ ] Run `/opsx-new e2e-b`. Expected: the directory `openspec/changes/e2e-b/` exists and no artifact file has been created yet.
 - [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-b/brainstorm.md` exists and a review gate runs on it.
-- [ ] Approve each gate as it opens. Expected: after an approved gate the same run goes on to the next artifact and gates it, and stops before `apply`; a gate that is not approved (`changes requested` or `dismissed`) stops it. Check the files as they appear:
+- [ ] Approve each gate as it opens. Expected: after an approved gate the same run goes on to the next artifact and gates it, and stops before `apply`; for `changes requested` it revises the artifact and reopens the gate, and for `dismissed` it stops and asks you on the Interaction channel. Check the files as they appear:
   - step 2, proposal: `openspec/changes/e2e-b/proposal.md` exists with a Capabilities list.
   - step 3, design, optional: `openspec/changes/e2e-b/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
   - step 4, specs: `openspec/changes/e2e-b/specs/<capability>/spec.md` exists for each capability, with `#### Scenario:` blocks.

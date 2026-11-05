@@ -36,7 +36,7 @@ Throughout this guide, `<name>` is the change name (kebab-case) and `openspec/ch
 
 The ten steps match [workflow.md](workflow.md). The artifact steps (1 to 6) each end with a review gate on the new artifact; once it is approved, `/opsx-continue` goes on to the next artifact by itself and stops before `apply`. Read each new file, edit it or ask for changes at the gate.
 
-A single `/opsx-continue` normally covers steps 1 to 6: it gates each artifact and goes on after approval. You type it again only on a first run or after a gate that was not approved. Each "You type" line below marks where a run starts or resumes.
+A single `/opsx-continue` normally covers steps 1 to 6: it gates each artifact and goes on after approval. You type it again only on a first run or after a `dismissed` gate. Each "You type" line below marks where a run starts or resumes.
 
 Start the change once:
 
@@ -224,7 +224,7 @@ The extension picks how the agent asks and runs review gates and tells it in an 
 
 - **Inbox gates.** With the Inbox channel a gate is a message in the Plannotator Inbox with the artifacts attached and an Approve / Approve with notes / Request changes question; the agent ends its turn and continues when you answer.
 - **Turning the Inbox tool on.** Set `{ "inboxTool": { "pi": true } }` in Plannotator's `config.json`, then start a new session or run `/reload`.
-- **Auto-continue.** `/opsx-continue` goes on to the next artifact after each approved gate in the same run, and stops before `apply`; a gate that is not approved stops it.
+- **Auto-continue.** `/opsx-continue` goes on to the next artifact after each approved gate in the same run, and stops before `apply`; `changes requested` revises the artifact and reopens its gate (nothing later is created until it is approved), and `dismissed` stops and asks you on the Interaction channel how to proceed.
 
 Two other optional pi packages change how the agent asks and tracks, and both have a fallback:
 

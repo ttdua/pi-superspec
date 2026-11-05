@@ -107,12 +107,14 @@ comment under the same policy as finalize.
 
 A review gate asks the reviewer to decide on written work before the workflow moves on.
 It ends in one outcome: `approved`, `approved with notes` or `changes requested`. A
-closed or dismissed review is not an approval: the agent asks in chat how to proceed.
+closed or dismissed review is not an approval: the agent asks on the Interaction channel how to proceed.
 
 - `/opsx-continue` creates one artifact, runs a review gate on it and, once the gate is
   approved, goes on to the next artifact in the same run. It stops before `apply` and
-  points you to `/opsx-apply`. A gate that ends in `changes requested` or `dismissed`
-  stops it.
+  points you to `/opsx-apply`. A gate that ends in `changes requested` makes it revise
+  the artifact and reopen the gate, and no later artifact is created until it is
+  approved; `dismissed` stops it and the agent asks on the Interaction channel how to
+  proceed.
 - `/opsx-ff` runs a gate on `brainstorm.md`, creates proposal, design, specs, tasks and
   plan unattended, then runs one final gate over those five files. `brainstorm.md` is not
   repeated in the final gate.
