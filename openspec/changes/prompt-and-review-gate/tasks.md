@@ -24,7 +24,7 @@
 - [x] 4.2 Update `docs/glossary.md` (routing note, review gate, interaction channel), `docs/domain-model.md` where it describes the note, and `docs/usage-guide.md` (auto-continue, Inbox gates, how to enable the Pi Inbox tool)
 - [x] 4.3 Update `README.md` and `README.vi.md` (optional packages table, `/opsx-continue` description, workflow summary) and the doc-asserting tests in `tests/planning-commands.test.ts`
 - [x] 4.4 Add a CHANGELOG entry
-- [ ] 4.5 At sync/archive, update the stale Purpose line of `openspec/specs/planning-commands/spec.md` ("one artifact per run") to describe advancing after approval
+- [x] 4.5 At sync/archive, update the stale Purpose line of `openspec/specs/planning-commands/spec.md` ("one artifact per run") to describe advancing after approval
 
 ## 5. Verification
 
