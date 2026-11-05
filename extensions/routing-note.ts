@@ -3,17 +3,23 @@ export const ROUTING_NOTE_MARKER = "pi-superspec routing note";
 
 export const ROUTING_NOTE = `${ROUTING_NOTE_MARKER}
 
-This project uses OpenSpec with the superspec schema. Route work as follows:
+This project uses OpenSpec with the superspec schema. Choose the path that fits the work:
 
-- Work that adds or changes behaviour MUST first be proposed as a change with /opsx-new, before brainstorming.
-- Small work that changes no spec (a bug fix restoring specified behaviour, a typo, a refactor) is done directly with TDD and no change directory.
-- Do NOT write design docs or plans to docs/superpowers/; they live in the change directory instead.`;
+- No spec change (a small mistake, a typo, a fix restoring specified behaviour, a refactor): work directly with TDD and no change directory.
+- Spec change with clear requirements: use /opsx-ff.
+- Spec change that needs careful step-by-step review: use /opsx-new, then /opsx-continue.
+- Questions, research and reviews: answer directly, without proposing a change.
+
+Before starting, state the path you chose and a one-line reason.
+
+Do NOT write design docs or plans to docs/superpowers/; they live in the change directory instead.`;
 
 /** The routing note, with the document language paragraph. */
-export function routingNote(language: string): string {
-	return `${ROUTING_NOTE}
+export function routingNote(language: string, channelText = ""): string {
+	const base = `${ROUTING_NOTE}
 
 Document language: write the prose of OpenSpec documents (change artifacts and main specs) in ${JSON.stringify(language)}. Keep headings, requirement and scenario names, WHEN/THEN/SHALL/MUST, checkbox syntax, delta operation headers, and file and capability names in English. Code, code comments and commit messages are not affected. If the user asks to change the document language, update \`language:\` in openspec/config.yaml.`;
+	return channelText === "" ? base : `${base}\n\n${channelText}`;
 }
 
 function role(message: unknown): unknown {
@@ -62,12 +68,15 @@ export function insertRoutingNote<T>(messages: T[], note: T): T[] | undefined {
 	return [...messages.slice(0, index), note, ...messages.slice(index)];
 }
 
-export function createRoutingNoteMessage(language: string): {
+export function createRoutingNoteMessage(
+	language: string,
+	channelText = "",
+): {
 	role: "user";
 	content: { type: "text"; text: string }[];
 	timestamp: number;
 } {
-	return { role: "user", content: [{ type: "text", text: routingNote(language) }], timestamp: Date.now() };
+	return { role: "user", content: [{ type: "text", text: routingNote(language, channelText) }], timestamp: Date.now() };
 }
 
 /** True when the Superpowers plugin is installed (it registers a `skill:brainstorming` command). */
