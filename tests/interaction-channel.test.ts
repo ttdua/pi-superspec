@@ -69,17 +69,21 @@ describe("channelParagraph", () => {
 			"--gate --json",
 			"--result-file",
 			"mktemp -d",
-			"change dir",
-			"decision",
-			"feedback",
-			"annotated",
-			"changes_requested",
-			"approved_with_notes",
-			"unknown",
-			"dismissed",
+			"outside the change dir",
+			"`decision` field and `feedback`",
+			"annotated is changes_requested",
+			"approved with feedback is approved_with_notes",
+			"an unknown decision is dismissed",
+			"dismissed is dismissed",
+			"in the background",
+			"fresh path",
+			"does not exist yet",
 		]) {
 			expect(cli).toContain(text);
 		}
+		expect(cli).toMatch(/No --require-approval/);
+		expect(cli).not.toMatch(/(?<!No )--require-approval/);
+		expect(cli).toContain("On dismissed, ask the user on this channel");
 	});
 
 	it("cli failure", () => {
@@ -92,6 +96,8 @@ describe("channelParagraph", () => {
 		expect(cli).toContain("plannotator review --base");
 		expect(cli).toContain("--diff-type merge-base");
 		expect(cli).toContain("stdout");
+		expect(cli).toMatch(/Code review: run in the background `plannotator review/);
+		expect(cli).toContain("fresh scratch file");
 		expect(cli).toContain("Decide approve-or-not from `decision` only");
 		expect(cli).toContain("use `message` as the reviewer's notes to apply");
 	});
@@ -123,8 +129,7 @@ describe("channelParagraph", () => {
 
 	it("inbox gate content", () => {
 		for (const text of [
-			"thread",
-			"change",
+			"thread named after the change",
 			"attachments",
 			"artifact order",
 			":::question",
@@ -158,12 +163,43 @@ describe("channelParagraph", () => {
 
 	it("tool gate and mapping", () => {
 		const text = channelParagraph(["plannotator-tool", "plain"]);
-		expect(text).toContain("gate");
+		expect(text).toContain("with the gate enabled on the target files");
 		expect(text).toContain("end your turn");
+		expect(text).toContain("on the worktree");
+		expect(text).toContain("worktree");
+		expect(text).toContain("On dismissed, ask the user on this channel");
 		expect(text).toMatch(/comments[^.]*approved_with_notes/);
 		expect(text).toMatch(/closed[^.]*dismissed/);
 		expect(text).toContain("full branch diff");
 		expect(text).toContain("if it does not, use the fallback");
+	});
+
+	it("plannotator channels have a questions mechanic", () => {
+		for (const channel of ["plannotator-tool", "plannotator-cli"] as const) {
+			expect(channelParagraph([channel, "plain"])).toContain(
+				"Questions: ask in plain text with numbered options, recommended first, then wait",
+			);
+		}
+	});
+
+	it("ask-tool outcome mapping and code review", () => {
+		const text = channelParagraph(["ask-tool", "plain"]);
+		expect(text).toContain("Approve is approved");
+		expect(text).toContain("Approve with notes is approved_with_notes");
+		expect(text).toContain("Request changes is changes_requested");
+		expect(text).toContain("no answer is dismissed");
+		expect(text).toContain("On dismissed, ask the user on this channel");
+	});
+
+	it("plain code review", () => {
+		const text = channelParagraph(["plain"]);
+		expect(text).toContain("git diff --stat and the commit range against the feature branch from apply.md");
+		expect(text).toContain("ask the three options");
+	});
+
+	it("footer", () => {
+		expect(inbox).toContain("without retrying the failed channel");
+		expect(channelParagraph(["plain"])).not.toContain("fails to open");
 	});
 
 	it("plain questions", () => {
