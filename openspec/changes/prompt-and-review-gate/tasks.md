@@ -2,14 +2,14 @@
 
 - [x] 1.1 Add `extensions/interaction-channel.ts` with a pure `detectChannel(activeTools, cliAvailable)` (order inbox → plannotator-tool → plannotator-cli → ask-tool → plain, exact or `__`-prefixed names only) and `availableChannels(...)`; unit tests in `tests/interaction-channel.test.ts` cover every scenario of "Channel detection" and "Prefixed tool names"
 - [x] 1.2 Add `channelGuidance(selected, fallback)` building the Interaction channel paragraph: selected channel mechanics, next available channel mechanics, plain text last resort; per-channel text for gates, outcome mapping (Inbox reply mapping, plannotator-tool mapping, CLI classification, failure and missing-result rules, code review variants) and questions; tests for content, absence of other mechanics and the 4096-byte cap over every combination
-- [ ] 1.3 Add the CLI probe at `session_start` (activated projects, once per session, cached; pending or failing probe → unavailable, no user error) in `extensions/superspec.ts`; tests in `tests/extension.test.ts`
-- [ ] 1.4 Feed `pi.getActiveTools()` and the cached probe into the `context` hook and pass the channel to the note builder; test that the channel changes between two `context` events without reload
+- [x] 1.3 Add the CLI probe at `session_start` (activated projects, once per session, cached; pending or failing probe → unavailable, no user error) in `extensions/superspec.ts`; tests in `tests/extension.test.ts`
+- [x] 1.4 Feed `pi.getActiveTools()` and the cached probe into the `context` hook and pass the channel to the note builder; test that the channel changes between two `context` events without reload
 
 ## 2. Routing note
 
 - [x] 2.1 Rewrite the routing paragraph in `extensions/routing-note.ts` as path guidance (no-spec work direct with TDD, `/opsx-ff`, `/opsx-new` for close review, questions answered directly, state path and reason, `docs/superpowers/` rule), dropping `MUST first be proposed`
-- [ ] 2.2 Change `routingNote(language)` to `routingNote(language, channelParagraph)` keeping the marker first; update `createRoutingNoteMessage` and callers
-- [ ] 2.3 Update `tests/routing-note.test.ts` and `tests/extension.test.ts` for the new note text, paragraph presence and the "No forced change" check
+- [x] 2.2 Change `routingNote(language)` to `routingNote(language, channelParagraph)` keeping the marker first; update `createRoutingNoteMessage` and callers
+- [x] 2.3 Update `tests/routing-note.test.ts` and `tests/extension.test.ts` for the new note text, paragraph presence and the "No forced change" check
 
 ## 3. Skills
 
