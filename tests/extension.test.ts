@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { channelParagraph } from "../extensions/interaction-channel.ts";
 import { ROUTING_NOTE, ROUTING_NOTE_MARKER, routingNote } from "../extensions/routing-note.ts";
 import superspec, { createInitIO } from "../extensions/superspec.ts";
 
@@ -15,7 +16,10 @@ interface Command {
 	handler: (args: string, ctx: unknown) => Promise<void>;
 }
 
-function loadAll(getCommands: () => { name: string }[] = () => []): {
+function loadAll(
+	getCommands: () => { name: string }[] = () => [],
+	extra: Record<string, unknown> = {},
+): {
 	handlers: Map<string, Handler>;
 	commands: Map<string, Command>;
 } {
@@ -25,6 +29,7 @@ function loadAll(getCommands: () => { name: string }[] = () => []): {
 		on: (name: string, h: Handler) => handlers.set(name, h),
 		registerCommand: (name: string, options: Command) => commands.set(name, options),
 		getCommands,
+		...extra,
 	} as never);
 	return { handlers, commands };
 }
@@ -144,7 +149,7 @@ describe("context handler", () => {
 		it("adds the language paragraph when config.yaml sets a language", () => {
 			const { dir } = project("schema: superspec\nlanguage: vi\n");
 			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
-			expect(message.content[0].text).toBe(routingNote("vi"));
+			expect(message.content[0].text).toBe(routingNote("vi", channelParagraph(["plain"])));
 		});
 
 		it("picks up a config edit on the next event without reload", () => {
@@ -164,25 +169,25 @@ describe("context handler", () => {
 
 		it("names en when config.yaml has no language", () => {
 			const { dir } = project("schema: superspec\n");
-			expect(injected(dir)).toBe(routingNote("en"));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
 			expect(injected(dir)).toContain('"en"');
 			expect(injected(dir)).not.toBe(ROUTING_NOTE);
 		});
 
 		it("names en when config.yaml is missing", () => {
 			const { dir } = project();
-			expect(injected(dir)).toBe(routingNote("en"));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
 		});
 
 		it("names en and does not throw when config.yaml is unreadable", () => {
 			const { dir } = project();
 			mkdirSync(join(dir, "openspec", "config.yaml"), { recursive: true });
-			expect(injected(dir)).toBe(routingNote("en"));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
 		});
 
 		it("names en for an invalid on-disk language", () => {
 			const { dir } = project(`language: ${"x".repeat(100)}\n`);
-			expect(injected(dir)).toBe(routingNote("en"));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
 		});
 	});
 });
@@ -216,6 +221,128 @@ describe("session_start handler", () => {
 
 	it("does not warn without a UI", () => {
 		expect(start(join(fixtures, "marked"), [], false)).toHaveLength(0);
+	});
+});
+
+describe("interaction channel wiring", () => {
+	const marked = join(fixtures, "marked");
+	const never = () => new Promise<never>(() => {});
+	type Exec = (command: string, args: string[], options?: unknown) => Promise<{ code: number }>;
+
+	function setup(extra: Record<string, unknown> = {}) {
+		const h = loadAll(() => [], extra).handlers;
+		const notes: [string, string | undefined][] = [];
+		const ctx = (cwd: string, hasUI = true) => ({
+			cwd,
+			hasUI,
+			ui: { notify: (m: string, l?: string) => notes.push([m, l]) },
+		});
+		const start = (cwd = marked, hasUI = true) =>
+			h.get("session_start")?.({ type: "session_start", reason: "startup" }, ctx(cwd, hasUI)) as Promise<void>;
+		const note = (messages: unknown[] = [BOOTSTRAP, PROMPT]) => {
+			const result = h.get("context")?.({ type: "context", messages }, { cwd: marked }) as
+				| { messages: unknown[] }
+				| undefined;
+			return result && JSON.stringify(result.messages[1]);
+		};
+		return { start, note, notes, h };
+	}
+
+	it("probes once per session and caches the result across context events", async () => {
+		const calls: [string, string[], unknown][] = [];
+		const exec: Exec = async (c, a, o) => (calls.push([c, a, o]), { code: 0 });
+		const { start, note } = setup({ exec, getActiveTools: () => [] });
+		await start();
+		note();
+		note();
+		note();
+		expect(calls).toHaveLength(1);
+		expect(calls[0][0]).toBe("sh");
+		expect(calls[0][1].join(" ")).toContain("command -v plannotator");
+	});
+
+	it("probes without a UI", async () => {
+		let n = 0;
+		const { start } = setup({ exec: async () => (n++, { code: 1 }) });
+		await start(marked, false);
+		expect(n).toBe(1);
+	});
+
+	it("does not probe in an unmarked project", async () => {
+		let n = 0;
+		const { start } = setup({ exec: async () => (n++, { code: 0 }) });
+		await start(join(fixtures, "unmarked"));
+		expect(n).toBe(0);
+	});
+
+	it("keeps plain while the probe is pending", () => {
+		const { start, note } = setup({ exec: never, getActiveTools: () => [] });
+		void start();
+		expect(note()).toContain("Interaction channel: plain.");
+	});
+
+	it("does not select the CLI when the probe exits non-zero", async () => {
+		const { start, note } = setup({ exec: async () => ({ code: 1 }), getActiveTools: () => [] });
+		await start();
+		expect(note()).not.toContain("plannotator-cli");
+	});
+
+	it("swallows a rejected probe without a notification", async () => {
+		const { start, note, notes } = setup({
+			exec: () => Promise.reject(new Error("no sh")),
+			getActiveTools: () => [],
+		});
+		await expect(start()).resolves.toBeUndefined();
+		expect(notes.filter(([m]) => !m.includes("Superpowers"))).toHaveLength(0);
+		expect(note()).not.toContain("plannotator-cli");
+	});
+
+	it("selects plannotator-cli when the probe finds it", async () => {
+		const { start, note } = setup({ exec: async () => ({ code: 0 }), getActiveTools: () => [] });
+		await start();
+		expect(note()).toContain("Interaction channel: plannotator-cli.");
+	});
+
+	it("ignores a stale probe result from a previous start", async () => {
+		let release: (r: { code: number }) => void = () => {};
+		const first = new Promise<{ code: number }>((r) => (release = r));
+		const results = [first, Promise.resolve({ code: 1 })];
+		const { start, note } = setup({ exec: () => results.shift(), getActiveTools: () => [] });
+		const p1 = start();
+		await start();
+		release({ code: 0 });
+		await p1;
+		expect(note()).not.toContain("plannotator-cli");
+	});
+
+	it("does not throw and uses plain when exec is unavailable", async () => {
+		const { start, note } = setup({ getActiveTools: () => [] });
+		await expect(start()).resolves.toBeUndefined();
+		expect(note()).toContain("Interaction channel: plain.");
+	});
+
+	it("uses plain when getActiveTools is missing", () => {
+		expect(setup().note()).toContain("Interaction channel: plain.");
+	});
+
+	it("does not select a channel whose tool is not active", () => {
+		expect(setup({ getActiveTools: () => ["read"] }).note()).toContain("Interaction channel: plain.");
+	});
+
+	it("follows the active tool set mid-session", () => {
+		const sets = [[], ["plannotator_inbox"]];
+		const { note } = setup({ getActiveTools: () => sets.shift() });
+		expect(note()).toContain("Interaction channel: plain.");
+		expect(note()).toContain("Interaction channel: inbox.");
+	});
+
+	it("does not add a second note after the channel changes", () => {
+		const sets = [[], ["plannotator_inbox"]];
+		const { h } = setup({ getActiveTools: () => sets.shift() });
+		const run = (messages: unknown[]) =>
+			h.get("context")?.({ type: "context", messages }, { cwd: marked }) as { messages: unknown[] } | undefined;
+		const first = run([BOOTSTRAP, PROMPT]);
+		expect(run(first?.messages ?? [])).toBeUndefined();
 	});
 });
 

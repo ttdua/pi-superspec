@@ -71,6 +71,9 @@ describe("execution commands", () => {
 			expect(readFileSync(file, "utf8"), file).not.toMatch(
 				/AskUserQuestion|TodoWrite|Task tool/,
 			);
+			expect(readFileSync(file, "utf8"), file).not.toMatch(
+				/ask_user_question|plannotator/i,
+			);
 		}
 	});
 
@@ -94,10 +97,10 @@ describe("execution commands", () => {
 		}
 	});
 
-	it("skills that ask the user state a plain-text fallback", () => {
+	it("skills ask through the Interaction channel", () => {
 		for (const c of COMMANDS) {
 			const text = skill(c);
-			expect(text, c).toContain("ask_user_question");
+			expect(text, c).toContain("Interaction channel");
 			expect(text, c).toContain("numbered options");
 		}
 	});

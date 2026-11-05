@@ -54,6 +54,7 @@ pi-superspec/
 │   ├── superspec.ts        # entry: /opsx-init registration, resources_discover, session_start warning, context hook
 │   ├── activation.ts       # project root discovery, marker detection
 │   ├── routing-note.ts     # routing note and Superpowers detection
+│   ├── interaction-channel.ts  # channel detection and the Interaction channel paragraph
 │   └── init/               # /opsx-init steps: init.ts, preflight.ts, config.ts,
 │                           #   schema-install.ts, legacy.ts, io.ts
 ├── agents/                 # published; six namespaced superspec.* specialist agents (discovered by pi-subagents)
@@ -84,7 +85,7 @@ only to develop pi-superspec itself and is never edited by a change.
 
 | Component | Responsibility |
 |---|---|
-| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid. It does not check or upgrade the project schema at `session_start` (planned, see below). |
+| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; probes once per session start whether the `plannotator` CLI exists; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid, and an Interaction channel paragraph for the channel detected from the active tools and the probe result. It does not check or upgrade the project schema at `session_start` (planned, see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) declared by top-level `pi-subagents.agents: ["./agents"]`. A compatible `pi-subagents` discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
@@ -104,10 +105,15 @@ pi start / reload
 session_start (activated project)
   └─ warn once per session start, including reload (interactive only), if Superpowers is missing:
      `pi install git:github.com/obra/superpowers`
+  └─ probe once: `command -v plannotator` (cached for the session; a probe not finished yet
+     counts as unavailable for that turn)
      (no schema version comparison or upgrade here yet: planned, see below)
 context (activated project)
   └─ (always adds a document language paragraph: `language:` from openspec/config.yaml, or `en`
       when it is missing, invalid or unreadable; read each turn, so a change takes effect without reload)
+  └─ (also adds the Interaction channel paragraph: `getActiveTools()` on every event plus the cached
+      CLI probe pick the first available of inbox, plannotator-tool, plannotator-cli, ask-tool, plain;
+      only active tools count, so a tool turned on or off changes the channel on the next turn)
   └─ append routing note after the Superpowers bootstrap message; when that message is
      absent (e.g. from the second agent run), at the head after compaction summaries
 ```
@@ -193,7 +199,7 @@ unless the release notes include a migration step.
 | Action | With optional package | Fallback |
 |---|---|---|
 | Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`, name not verified) | plain question, numbered options |
-| Review written work (review gate) | tool `plannotator` (Plannotator agent tool) | Plannotator CLI in the background with `--result-file` (`plannotator review`, used by the code review gate, has no `--result-file`; its stdout is redirected to a file), then `ask_user_question`, then plain text |
+| Review written work (review gate) | tool `plannotator_inbox` (Plannotator Inbox, enabled in Plannotator's config), then tool `plannotator` | The first available channel is detected by the extension and injected as the Interaction channel paragraph: `inbox`, `plannotator-tool`, `plannotator-cli`, `ask-tool`, `plain` |
 | Dispatch a subagent | `pi-subagents` `subagent` tool | Superpowers `executing-plans` in-session |
 | Dispatch a Superspec package agent | `pi-subagents` `subagent` tool with canonical `superspec.*` names; policy in `skills/references/subagent-routing.md` | Announced inline path only when the integration is absent; disabled/incompatible agents stop the stage |
 | Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |

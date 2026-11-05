@@ -95,9 +95,22 @@ describe("insertRoutingNote", () => {
 describe("ROUTING_NOTE", () => {
 	it("begins with its marker and mentions the key guidance", () => {
 		expect(ROUTING_NOTE.startsWith(ROUTING_NOTE_MARKER)).toBe(true);
+		expect(ROUTING_NOTE).toContain("/opsx-ff");
 		expect(ROUTING_NOTE).toContain("/opsx-new");
 		expect(ROUTING_NOTE).toContain("docs/superpowers/");
 		expect(ROUTING_NOTE).toContain("TDD");
+		expect(ROUTING_NOTE).toContain("answer directly");
+	});
+
+	it("states path and reason", () => {
+		expect(ROUTING_NOTE).toContain("state the path you chose and a one-line reason");
+	});
+
+	it("does not force a change", () => {
+		expect(ROUTING_NOTE).not.toContain("MUST first be proposed");
+		const lines = ROUTING_NOTE.split("\n").filter((l) => l.includes("/opsx-new"));
+		expect(lines.length).toBeGreaterThan(0);
+		for (const l of lines) expect(l).toContain("review");
 	});
 
 	it("builds a user message with a text part", () => {
@@ -144,6 +157,14 @@ describe("routingNote", () => {
 		for (const part of ['"vi"', "WHEN", "SHALL", "openspec/config.yaml", "language:"]) {
 			expect(text).toContain(part);
 		}
+	});
+
+	it("puts the language paragraph before the channel paragraph", () => {
+		const text = routingNote("vi", "Interaction channel: plain.");
+		expect(text).toContain('in "vi"');
+		expect(text.endsWith("Interaction channel: plain.")).toBe(true);
+		expect(text.indexOf('in "vi"')).toBeLessThan(text.indexOf("Interaction channel"));
+		expect(routingNote("vi").endsWith("openspec/config.yaml.")).toBe(true);
 	});
 
 	it("quotes the language as JSON", () => {

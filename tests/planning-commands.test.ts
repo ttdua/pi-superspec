@@ -92,6 +92,9 @@ describe("planning commands", () => {
 			expect(readFileSync(file, "utf8"), file).not.toMatch(
 				/AskUserQuestion|TodoWrite|Task tool/,
 			);
+			expect(readFileSync(file, "utf8"), file).not.toMatch(
+				/ask_user_question|plannotator/i,
+			);
 		}
 	});
 
@@ -115,12 +118,16 @@ describe("planning commands", () => {
 		}
 	});
 
-	it("skills that ask the user state a plain-text fallback", () => {
+	it("skills ask through the Interaction channel", () => {
 		for (const c of ["new", "continue", "ff"]) {
 			const text = skill(c);
-			expect(text, c).toContain("ask_user_question");
+			expect(text, c).toContain("Interaction channel");
 			expect(text, c).toContain("numbered options");
 		}
+	});
+
+	it("explore asks through the Interaction channel", () => {
+		expect(skill("explore")).toContain("Interaction channel");
 	});
 
 	it("provenance headers record the 1.16.0 sync and what was not adopted", () => {
@@ -164,9 +171,9 @@ describe("planning commands", () => {
 		}
 	});
 
-	it("continue creates one artifact then stops", () => {
+	it("continue creates one artifact per gate", () => {
 		const text = skill("continue");
-		expect(text).toContain("exactly one");
+		expect(text).toContain("exactly one artifact per gate");
 		expect(text).toContain("STOP");
 	});
 
@@ -194,38 +201,19 @@ describe("planning commands", () => {
 			expect(sentence).toContain("ask");
 		});
 
-		it("gate picks the reviewer in order", () => {
-			inOrder(gate, [
-				"`plannotator` tool",
-				"command -v plannotator",
-				"ask_user_question",
-				"plain text",
-			]);
+		it("gate defers to the Interaction channel", () => {
+			expect(gate).toContain("Interaction channel");
+			expect(gate).toContain("Result on the channel");
 		});
 
-		it("gate falls through when a tier fails", () => {
-			expect(gate).toMatch(/falls? to the next tier/);
-			expect(gate).toContain("cannot run a background command");
+		it("gate falls back when the channel fails", () => {
+			expect(gate).toContain("fails to open");
+			expect(gate).toContain("fallback");
 		});
 
-		it("gate runs the CLI with a fresh result file", () => {
-			for (const s of [
-				"plannotator annotate",
-				"--gate",
-				"--json",
-				"--result-file",
-				"does not exist yet",
-				"fresh path for every gate",
-			]) {
-				expect(gate, s).toContain(s);
-			}
-			expect(gate).toMatch(/outside the change directory/);
-		});
-
-		it("gate classifies by decision only", () => {
-			expect(gate).toContain("`decision`");
-			expect(gate).toContain("never from message text");
-			expect(gate).toContain("unknown `decision` is `dismissed`");
+		it("gate section has no tool names", () => {
+			expect(gate).not.toMatch(/plannotator/i);
+			expect(gate).not.toContain("ask_user_question");
 		});
 
 		it("gate handles notes", () => {
@@ -239,11 +227,11 @@ describe("planning commands", () => {
 			expect(gate).toContain("only the files that changed");
 		});
 
-		it("gate covers code review", () => {
+		it("code review uses the injected channel", () => {
 			for (const s of [
-				"plannotator review",
-				"stdout",
-				"`git diff --stat`",
+				"code review",
+				"before the feature branch",
+				"Interaction channel",
 				"feature branch recorded in `apply.md`",
 				"`receiving-code-review`",
 				"`/opsx-verify`",
@@ -254,11 +242,17 @@ describe("planning commands", () => {
 			expect(gate).toMatch(/changed behaviour or a requirement/);
 		});
 
-		it("gate keeps review notes, late brainstorm cascade and resume point explicit", () => {
-			expect(gate).toContain("Decide approve-or-not from `decision` only");
-			expect(gate).toContain("use `message` as the reviewer's notes to apply");
+		it("dismissed code review does not proceed", () => {
+			expect(gate).toMatch(/code review[^\n]*`dismissed`[^\n]*not approved/);
+		});
+
+		it("receipt records the channel as reviewer tier", () => {
+			expect(gate).toContain("reviewer tier");
+			expect(gate).toContain("channel");
+		});
+
+		it("gate keeps late brainstorm cascade and resume point explicit", () => {
 			expect(gate).toContain("open the next gate on every artifact that depends on it");
-			expect(gate).toContain("missing or unreadable");
 			expect(gate).toContain("at step 3");
 			expect(gate).toContain("not at step 2b");
 		});
@@ -267,7 +261,7 @@ describe("planning commands", () => {
 			expect(gate).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
 		});
 
-		it("continue runs the gate before it stops", () => {
+		it("continue runs the gate before advancing", () => {
 			const start = text.indexOf("**Act based on status**");
 			const end = text.indexOf("\n**Review gate**");
 			expect(start).toBeGreaterThan(-1);
@@ -276,13 +270,24 @@ describe("planning commands", () => {
 			inOrder(step3, [
 				"Create the artifact file",
 				"Review gate",
-				"STOP after creating that one artifact",
+				"On `approved`",
+				"next ready artifact",
 			]);
 		});
 
-		it("continue does not advance after approval", () => {
+		it("continue stops before apply", () => {
 			const guard = text.slice(text.indexOf("**Guardrails**"));
-			expect(guard).toContain("Approval does not create the next artifact");
+			expect(guard).toContain("Only a human gate approval advances");
+			expect(guard).toContain(
+				"STOP when planning is complete or the next ready artifact is `apply`",
+			);
+			expect(guard).toContain("Do NOT create an `apply` artifact");
+			const sentence = guard
+				.split(/(?<=\.)\s/)
+				.find((s) => s.includes("Only a human gate approval advances"));
+			expect(sentence).toBeDefined();
+			expect(sentence).toContain("changes_requested");
+			expect(sentence).toContain("dismissed");
 		});
 
 		it("continue runs the code review gate for finalize", () => {
@@ -290,40 +295,6 @@ describe("planning commands", () => {
 			expect(text.toLowerCase()).toContain("code review");
 			expect(gate).toContain("finalize");
 			expect(gate.toLowerCase()).toContain("code review");
-		});
-
-		it("code review CLI tier pins the full branch diff mode", () => {
-			const tier2 = gate.split("\n").find((l) => l.includes("plannotator review --base"));
-			expect(tier2).toBeDefined();
-			expect(tier2).toContain("--diff-type merge-base");
-		});
-
-		it("code review tool tier asks to confirm the full branch diff", () => {
-			const tier1 = gate.split("\n").find((l) => l.includes("`review` action"));
-			expect(tier1).toBeDefined();
-			expect(tier1).toContain("full branch diff");
-			expect(tier1).toContain("fall to Tier 2");
-		});
-
-		it("code review CLI tier keeps approve with notes", () => {
-			expect(gate).not.toContain("can only produce");
-			expect(gate).toContain("When `decision` is `approved`, read `message`");
-			expect(gate).toContain("Code review completed — no changes requested.");
-			const tier2 = gate.split("\n").find((l) => l.includes("plannotator review --base"));
-			expect(tier2).toContain("`approved_with_notes`");
-		});
-
-		it("tool tier takes its decision message as the result", () => {
-			const classify = gate.split("\n").find((l) => l.includes("**Classify the result**"));
-			expect(classify).toBeDefined();
-			expect(classify).toContain("never from message text");
-			expect(classify).toContain("the decision message is the result");
-			expect(classify).toContain("ask the user in chat");
-		});
-
-		it("a non-zero exit without a result file is a tier failure", () => {
-			const fail = gate.split("\n").find((l) => l.includes("**When a tier fails to open**"));
-			expect(fail).toContain("non-zero and leaves no result file");
 		});
 
 		it("code review fixes update apply.md as a new iteration", () => {
@@ -360,7 +331,10 @@ describe("planning commands", () => {
 
 		it("continue frontmatter mentions the review gate", () => {
 			const fm = text.split("---")[1];
-			expect(fm).toContain("run a review gate on it, then stop");
+			expect(fm).toContain(
+				"run a review gate on it, and after approval continue until apply",
+			);
+			expect(fm).not.toContain("then stop");
 			expect(fm).not.toContain("then stop for review");
 		});
 	});
@@ -469,11 +443,15 @@ describe("planning commands", () => {
 			expect(t).toContain(
 				"write only the missing files as that call's one artifact, then run the Review gate",
 			);
+			expect(t).toContain("after approval, continue");
 		});
 
 		it("continue points to /opsx-apply when planning is complete", () => {
 			expect(flat("continue")).toContain(
 				"**If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**",
+			);
+			expect(flat("continue")).toContain(
+				"create a ready `finalize`",
 			);
 		});
 
@@ -584,12 +562,21 @@ describe("planning commands", () => {
 		expect(wf).toContain("code review gate");
 		expect(wf).not.toContain("ff runs unattended but brainstorming is interactive");
 		const arch = read("docs/architecture.md");
-		const row = arch.split("\n").find((l) => l.startsWith("|") && l.includes("`plannotator`"));
-		expect(row).toBeDefined();
-		expect(row).toContain("--result-file");
-		expect(row).toContain("plannotator review");
-		expect(row).toContain("stdout is redirected");
-		expect(row).toContain("ask_user_question");
+		const rows = arch.split("\n").filter((l) => l.startsWith("|") && l.includes("`plannotator_inbox`"));
+		expect(rows).toHaveLength(1);
+		expect(rows[0]).toContain("detected");
+		expect(rows[0]).toContain("Interaction channel");
+		const order = ["inbox", "plannotator-tool", "plannotator-cli", "ask-tool", "plain"].map((c) =>
+			wf.indexOf(`\`${c}\``),
+		);
+		expect(order[0]).toBeGreaterThanOrEqual(0);
+		expect([...order].sort((a, b) => a - b)).toEqual(order);
+		expect(wf).toContain("stops before `apply`");
+		const readmeRow = read("README.md")
+			.split("\n")
+			.find((l) => l.startsWith("|") && l.includes("`/opsx-continue`"));
+		expect(readmeRow).toBeDefined();
+		expect(readmeRow).not.toContain("then stops");
 	});
 
 	it("docs describe apply.md iterations and the brainstorm approval consistently", () => {
@@ -636,7 +623,8 @@ describe("planning specialist routing", () => {
 		expect(t).toMatch(/re-review/i);
 		expect(t).toMatch(/before the (existing )?human (review )?gate/i);
 		expect(t).toMatch(/advisory[^.\n]*not (a )?(human )?approval/i);
-		expect(t).toContain("Create exactly one artifact per invocation");
+		expect(t).toContain("Create exactly one artifact per gate");
+		expect(t).toMatch(/(verdict|internal review)[^.\n]*(does not|never) advance/i);
 	});
 
 	it("SA-P04 ff runs internal reviews unattended and keeps its two stops", () => {

@@ -15,7 +15,7 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
 
    - Use the given name, or infer it from conversation context.
    - Auto-select if only one active change exists.
-   - If ambiguous, run `openspec list --json` and ask the user to pick. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+   - If ambiguous, run `openspec list --json` and ask the user to pick. Ask as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait.
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx-verify <other>`).
 
@@ -27,7 +27,7 @@ Verify that an implementation matches the change artifacts. The CLI returns the 
    ```
    Pick the entry whose `branch` line is `branch refs/heads/<change-name>` and take its `worktree` path. If no entry matches:
    - If `finalize.md` exists in the change directory (finalize removed the worktree, e.g. verifying post-PR fixes), run in the main checkout on the feature branch, which now holds the change directory.
-   - Otherwise ask the user where the worktree is (use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait). Do not guess.
+   - Otherwise ask the user where the worktree is (ask as the routing note's Interaction channel paragraph describes: plain text with numbered options, recommended first, when it names no tool; then wait). Do not guess.
 
    **Worktree authority:** until finalize, the worktree copy of the change directory is authoritative (`tasks.md` ticks, `apply.md`, `verify.md`). Every `openspec` call and every check below, including the test run, uses the worktree as working directory. Until finalize, never read the change from the main checkout; after finalize the main checkout on the feature branch is the working directory.
 
@@ -98,7 +98,7 @@ On completion:
 - Issues by priority with file references (`file.ts:123`)
 - Next step on pass: run `/opsx-continue` with the worktree as working directory to create the finalize artifact, then `/opsx-archive`; on `FAIL`, the fix loop status (iteration N of 5, from `apply.md`) and `/opsx-apply` as the next step
 
-On pause: describe the issue, offer options (use `ask_user_question` if available; otherwise numbered options), and wait.
+On pause: describe the issue, offer options (ask as the routing note's Interaction channel paragraph describes; numbered options when it names no tool), and wait.
 
 **Guardrails**
 - Run every `openspec` call and check in the worktree (the main checkout only after finalize)

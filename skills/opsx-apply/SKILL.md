@@ -15,7 +15,7 @@ Implement the tasks of an OpenSpec change. The CLI returns the apply instruction
 
    - Use the given name, or infer it from conversation context.
    - Auto-select if only one active change exists.
-   - If ambiguous, run `openspec list --json` and ask the user to pick. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+   - If ambiguous, run `openspec list --json` and ask the user to pick. Ask as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait.
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx-apply <other>`).
 
@@ -105,7 +105,7 @@ On completion:
 - Executor used and the commit range
 - "Run `/opsx-verify` to verify the change."
 
-On pause: describe the issue, offer options (use `ask_user_question` if available; otherwise numbered options), and wait.
+On pause: describe the issue, offer options (ask as the routing note's Interaction channel paragraph describes; numbered options when it names no tool), and wait.
 
 **Guardrails**
 - A `blocked` change gets no code changes; an `all_done` change gets none either, except in Fix-iteration mode (apply.md exists and verify.md reports `FAIL`) or Post-PR mode

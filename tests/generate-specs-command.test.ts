@@ -39,6 +39,7 @@ describe("opsx-generate-specs command", () => {
 			for (const banned of ["AskUserQuestion", "TodoWrite", "Task tool"]) {
 				expect(text, `${path} contains ${banned}`).not.toContain(banned);
 			}
+			expect(text, path).not.toMatch(/ask_user_question|plannotator/i);
 		}
 	});
 
@@ -51,7 +52,7 @@ describe("opsx-generate-specs command", () => {
 			"Confidence: inferred",
 			"No design needed:",
 			"pi-subagents",
-			"ask_user_question",
+			"Interaction channel",
 			"openspec/specs/",
 			"node_modules",
 			"openspec validate bootstrap-specs --strict",

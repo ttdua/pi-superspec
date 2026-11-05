@@ -16,7 +16,7 @@ This skill runs in the main checkout, after the branch is finalized and before t
 1. **Select the change**
 
    - Use the given name, or infer it from conversation context.
-   - If several active changes exist, never guess: run `openspec list --json` and ask the user to pick, showing only active (not archived) changes and their schema. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+   - If several active changes exist, never guess: run `openspec list --json` and ask the user to pick, showing only active (not archived) changes and their schema. Ask as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait.
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx-archive <other>`).
 

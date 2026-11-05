@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { findProjectRoot, isActivated } from "./activation.ts";
+import { availableChannels, channelParagraph } from "./interaction-channel.ts";
 import { resolveLanguage } from "./init/config.ts";
 import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
@@ -35,6 +36,10 @@ export function createInitIO(pi: ExtensionAPI, ctx: ExtensionCommandContext): In
 }
 
 export default function (pi: ExtensionAPI) {
+	// CLI probe state: reset on every activated session_start; a stale probe never overwrites a newer one.
+	let cliAvailable = false;
+	let probeGeneration = 0;
+
 	pi.on("resources_discover", (event) => {
 		const root = findProjectRoot(event.cwd);
 		if (!root || !isActivated(root)) return {};
@@ -47,14 +52,30 @@ export default function (pi: ExtensionAPI) {
 	pi.on("context", (event, ctx) => {
 		const root = findProjectRoot(ctx.cwd);
 		if (!root || !isActivated(root)) return undefined;
-		const messages = insertRoutingNote(event.messages, createRoutingNoteMessage(resolveLanguage(root)));
+		const tools = typeof pi.getActiveTools === "function" ? pi.getActiveTools() : [];
+		const channelText = channelParagraph(availableChannels(tools, cliAvailable));
+		const messages = insertRoutingNote(
+			event.messages,
+			createRoutingNoteMessage(resolveLanguage(root), channelText),
+		);
 		return messages && { messages };
 	});
 
-	pi.on("session_start", (_event, ctx) => {
+	pi.on("session_start", async (_event, ctx) => {
 		const root = findProjectRoot(ctx.cwd);
-		if (!root || !isActivated(root) || !ctx.hasUI) return;
-		if (!hasSuperpowers(pi.getCommands())) ctx.ui.notify(SUPERPOWERS_MISSING_WARNING, "warning");
+		if (!root || !isActivated(root)) return;
+		if (ctx.hasUI && !hasSuperpowers(pi.getCommands())) {
+			ctx.ui.notify(SUPERPOWERS_MISSING_WARNING, "warning");
+		}
+		cliAvailable = false;
+		const generation = ++probeGeneration;
+		if (typeof pi.exec !== "function") return;
+		try {
+			const result = await pi.exec("sh", ["-c", "command -v plannotator"], { timeout: 5000 });
+			if (generation === probeGeneration) cliAvailable = result.code === 0;
+		} catch {
+			// A failed probe (no sh, timeout) counts as unavailable.
+		}
 	});
 
 	pi.registerCommand("opsx-init", {

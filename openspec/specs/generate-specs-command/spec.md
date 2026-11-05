@@ -17,15 +17,15 @@ The package SHALL provide `opsx-generate-specs` as a skill `skills/opsx-generate
 - **THEN** it names `opsx-generate-specs`, references `$@`, and contains no step-by-step logic
 
 ### Requirement: No Claude tool names
-The skill and prompt SHALL NOT contain `AskUserQuestion`, `TodoWrite` or `Task tool`. Where a decision is needed the text MUST use the `ask_user_question` tool, and where subagents are dispatched it MUST use the `subagent` tool from `pi-subagents`, each with a plain fallback when the tool is unavailable.
+The skill and prompt SHALL NOT contain `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` or `plannotator`. Where a decision is needed the text MUST direct the agent to ask as the routing note's Interaction channel paragraph describes, and where subagents are dispatched it MUST use the `subagent` tool from `pi-subagents`, with a plain fallback when that tool is unavailable.
 
 #### Scenario: Forbidden names absent
-- **WHEN** the skill and prompt are searched for `AskUserQuestion`, `TodoWrite` and `Task tool`
+- **WHEN** the skill and prompt are searched for `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` and `plannotator`
 - **THEN** there are no matches
 
 #### Scenario: Ask fallback
-- **WHEN** the ask tool is unavailable and a decision is needed
-- **THEN** the skill directs the agent to ask in plain text with numbered options, recommended first, and wait
+- **WHEN** the skill asks the user to confirm the candidate list
+- **THEN** it directs the agent to ask as the Interaction channel paragraph describes, which on the `plain` channel is plain text with numbered options, recommended first, then wait
 
 ### Requirement: Activation and project precondition
 The skill SHALL run only in an activated project. When the project has no source code to scan (no files outside ignored directories), it MUST stop, say so, and create no change.

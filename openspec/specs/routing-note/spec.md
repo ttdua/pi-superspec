@@ -52,11 +52,23 @@ The routing note SHALL carry its own marker at the start of its text, and the ex
 - **THEN** the routing note is still inserted
 
 ### Requirement: Routing note content
-The routing note SHALL tell the agent that work adding or changing behaviour MUST first be proposed as a change with `/opsx-new` before brainstorming, that small work changing no spec (bug fix restoring specified behaviour, typo, refactor) is done directly with TDD and no change directory, and that design docs and plans MUST NOT be written to `docs/superpowers/`. The note SHALL be guidance only; the extension MUST NOT block any tool call.
+The routing note SHALL guide the agent to choose a path that fits the work and to state the chosen path with a one-line reason before starting. It MUST describe four paths: work that changes no project spec (a small mistake, a typo, a fix restoring specified behaviour, a refactor) is done directly with TDD and no change directory; work that changes specs and whose requirements are clear goes to `/opsx-ff`; work that changes specs and needs careful step-by-step review goes to `/opsx-new` and then `/opsx-continue`; questions, research and reviews are answered directly without proposing a change. The note MUST state that design docs and plans are not written to `docs/superpowers/`. The note MUST NOT require every behaviour change to go through `/opsx-new`. The note SHALL also contain the document language paragraph and the Interaction channel paragraph. The note SHALL be guidance only; the extension MUST NOT block any tool call.
 
 #### Scenario: Note text
 - **WHEN** the routing note is injected
-- **THEN** its text mentions `/opsx-new`, direct TDD for small fixes, and `docs/superpowers/`
+- **THEN** its text mentions direct work for no-spec changes, `/opsx-ff`, `/opsx-new`, answering questions directly, and `docs/superpowers/`
+
+#### Scenario: Path stated
+- **WHEN** the routing note is injected
+- **THEN** it tells the agent to state the chosen path and a one-line reason
+
+#### Scenario: No forced change
+- **WHEN** the routing note is injected
+- **THEN** it does not contain `MUST first be proposed`, and every mention of `/opsx-new` is tied to spec changes that need close review
+
+#### Scenario: Paragraphs present
+- **WHEN** the routing note is injected
+- **THEN** it contains the document language paragraph and the Interaction channel paragraph, and still starts with the routing note marker
 
 #### Scenario: No enforcement
 - **WHEN** the extension is loaded

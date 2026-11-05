@@ -1,4 +1,5 @@
 schema: superspec
+language: en
 
 context: |
   pi-superspec is a pi.dev package (TypeScript extension + bundled OpenSpec schema +
