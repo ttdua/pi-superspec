@@ -36,7 +36,7 @@ Các pi package tùy chọn, kèm phương án thay thế khi chúng không có:
 | `pi-subagents` | tool `subagent`, giúp `/opsx-apply` chạy các task bằng subagent-driven development và các stage dùng được agent `superspec.*` đi kèm (xem [Tích hợp subagent tùy chọn](#tích-hợp-subagent-tùy-chọn)) | Superpowers `executing-plans` trong session hiện tại |
 | `rpiv-ask-user-question` | tool `ask_user_question` để chọn giữa các lựa chọn | một câu hỏi thường với các lựa chọn đánh số |
 | `rpiv-todo` | tool `todo` để theo dõi tiến độ | một checklist được nêu trong câu trả lời của agent |
-| Plannotator (tool Inbox `plannotator_inbox`, tool `plannotator` hoặc CLI) | review gate và câu hỏi qua Plannotator Inbox hoặc giao diện review; extension chọn kênh khả dụng đầu tiên (xem [hướng dẫn sử dụng](docs/usage-guide.md)) | `ask_user_question`, rồi văn bản thường với các lựa chọn đánh số |
+| Plannotator (tool Inbox `plannotator_inbox`, tool `plannotator` hoặc CLI) | review gate và câu hỏi qua Plannotator Inbox hoặc giao diện review; extension chọn kênh khả dụng đầu tiên (xem [hướng dẫn sử dụng](docs/usage-guide.md); có cả cách bật tool Inbox) | `ask_user_question`, rồi văn bản thường với các lựa chọn đánh số |
 
 Cài chúng bằng `pi install` theo hướng dẫn riêng của từng package. Sau đó cài package này:
 

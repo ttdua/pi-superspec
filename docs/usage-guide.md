@@ -36,6 +36,8 @@ Throughout this guide, `<name>` is the change name (kebab-case) and `openspec/ch
 
 The ten steps match [workflow.md](workflow.md). The artifact steps (1 to 6) each end with a review gate on the new artifact; once it is approved, `/opsx-continue` goes on to the next artifact by itself and stops before `apply`. Read each new file, edit it or ask for changes at the gate.
 
+A single `/opsx-continue` normally covers steps 1 to 6: it gates each artifact and goes on after approval. You type it again only on a first run or after a gate that was not approved. Each "You type" line below marks where a run starts or resumes.
+
 Start the change once:
 
 ```text
@@ -49,44 +51,44 @@ Start the change once:
 - You type: `/opsx-continue`, then answer the questions. Brainstorming is interactive: one question at a time, two or three approaches, then a review gate on the written design.
 - The agent produces: the agreed design (goals, non-goals, approaches considered, the chosen one, open questions), using the Superpowers `brainstorming` skill redirected into the change.
 - Output: `openspec/changes/<name>/brainstorm.md`. Technical decisions belong in `design.md`, not here.
-- Stop: a review gate opens on `brainstorm.md`. That gate is your approval of the design; there is no separate approval step. Continue once it is approved.
+- Gate: a review gate opens on `brainstorm.md`. That gate is your approval of the design; there is no separate approval step. Continue once it is approved.
 
 For free-form thinking before a change exists, use `/opsx-explore [topic]`. It never writes application code.
 
 ### 2. Proposal
 
-- You type: `/opsx-continue`.
+- You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
 - The agent produces: the change boundary and its Capabilities list, which is the contract with the specs.
 - Output: `openspec/changes/<name>/proposal.md`.
-- Stop: check that the Capabilities list is right; the next steps create one spec per capability.
+- Gate: check that the Capabilities list is right; the next steps create one spec per capability.
 
 ### 3. Design (optional)
 
-- You type: `/opsx-continue`.
+- You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
 - The agent produces: the technical decisions, risks and migration. When there is no non-trivial technical decision it writes a two-line `design.md` that says `No design needed: <reason>`, so the artifact graph still completes.
 - Output: `openspec/changes/<name>/design.md`.
-- Stop: review it. No later artifact requires it, but it is cheap and later steps read it.
+- Gate: review it. No later artifact requires it, but it is cheap and later steps read it.
 
 ### 4. Specs
 
-- You type: `/opsx-continue`.
+- You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
 - The agent produces: delta specs with SHALL/MUST requirements and `#### Scenario:` blocks, one per capability named in the proposal.
 - Output: `openspec/changes/<name>/specs/<capability>/spec.md`.
-- Stop: review the requirements and scenarios; the plan and verify steps check against them.
+- Gate: review the requirements and scenarios; the plan and verify steps check against them.
 
 ### 5. Tasks
 
-- You type: `/opsx-continue`.
+- You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
 - The agent produces: a coarse checklist of tasks that apply, verify and archive track.
 - Output: `openspec/changes/<name>/tasks.md`.
-- Stop: review the checklist.
+- Gate: review the checklist.
 
 ### 6. Plan
 
-- You type: `/opsx-continue`.
+- You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
 - The agent produces: 2 to 5 minute TDD micro-steps with exact files, test commands and commit points, using the Superpowers `writing-plans` skill redirected into the change. Every plan task names the `tasks.md` ID it implements, and the plan lists the test that covers each scenario. The plan opens with a `## Contracts` section listing the shapes the tasks introduce or change. The skill's execution handoff is skipped; `/opsx-apply` chooses the executor.
 - Output: `openspec/changes/<name>/plan.md`.
-- Stop: review the plan. This is the last artifact before code. When `apply` becomes the next ready artifact, `/opsx-continue` does not create it; it points you to `/opsx-apply`.
+- Gate: review the plan. This is the last artifact before code. When `apply` becomes the next ready artifact, `/opsx-continue` does not create it; it points you to `/opsx-apply`.
 
 Commit the artifacts on your feature branch if you like. If you do not, `/opsx-apply` commits the change directory for you (see step 7).
 
@@ -181,7 +183,7 @@ What ff does not do:
 
 - It does not ask the execution-handoff question; `/opsx-apply` chooses the executor.
 - In the unattended phase it asks only when a required input cannot be inferred from the brainstorm, earlier artifacts and the repo. Otherwise it makes the call and records the assumption in the artifact. If no artifact is ready but the plan is not complete, it shows the status and stops.
-- It does not give you a review stop between artifacts, only the brainstorm gate and the final gate. If you want to review each artifact, use `/opsx-continue`, which gates each artifact it creates.
+- It does not give you a review stop between artifacts, only the brainstorm gate and the final gate; there is no intermediate stop. If you want to review each artifact, use `/opsx-continue`, which gates each artifact it creates and, once a gate is approved, chains on to the next.
 - It does not create a feature branch for you; do that before `/opsx-apply`.
 
 ## Existing codebase: bootstrap specs

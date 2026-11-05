@@ -133,6 +133,9 @@ closed or dismissed review is not an approval: the agent asks in chat how to pro
   4. `ask-tool`: `ask_user_question`;
   5. `plain`: plain text with numbered options.
 
+  `finalize.md` records the channel name (`inbox`, `plannotator-tool`, ...) in its
+  "Reviewer tier" field.
+
   Only active tools count. A channel that fails to open falls to the next one; the same
   channel carries the gate, the questions and the code review.
 - Wording-only notes after `approved with notes` are applied and the work continues;

@@ -29,12 +29,13 @@ Setup: install `pi-subagents` and pi-superspec, then start pi in the scratch rep
 ### Steps one to six, step by step
 
 - [ ] Run `/opsx-new e2e-a`. Expected: the directory `openspec/changes/e2e-a/` exists, the first artifact's instructions are shown, and no artifact file has been created yet.
-- [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-a/brainstorm.md` exists, a review gate opens on it, and the agent stops after a gate outcome of approved or approved with notes. A closed review is not an approval.
-- [ ] Run `/opsx-continue` (step 2, proposal). Expected: `openspec/changes/e2e-a/proposal.md` exists with a Capabilities list, a review gate runs on it, and the agent stops after the gate.
-- [ ] Run `/opsx-continue` (step 3, design, optional). Expected: `openspec/changes/e2e-a/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
-- [ ] Run `/opsx-continue` (step 4, specs). Expected: `openspec/changes/e2e-a/specs/<capability>/spec.md` exists for each capability in the proposal, with `#### Scenario:` blocks.
-- [ ] Run `/opsx-continue` (step 5, tasks). Expected: `openspec/changes/e2e-a/tasks.md` exists with a checklist of `- [ ]` tasks.
-- [ ] Run `/opsx-continue` (step 6, plan). Expected: `openspec/changes/e2e-a/plan.md` exists, each plan task names a `tasks.md` ID, and no execution-handoff question is asked.
+- [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-a/brainstorm.md` exists and a review gate opens on it. A closed review is not an approval.
+- [ ] Approve each gate as it opens (approved, or approved with notes). Expected: after an approved gate the same run goes on to the next artifact and opens a gate on it, and it stops before `apply`. For `changes requested` it revises the artifact and reopens the gate; for `dismissed` it stops and asks you on the Interaction channel. Check the files as they appear:
+  - step 2, proposal: `openspec/changes/e2e-a/proposal.md` exists with a Capabilities list.
+  - step 3, design, optional: `openspec/changes/e2e-a/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
+  - step 4, specs: `openspec/changes/e2e-a/specs/<capability>/spec.md` exists for each capability in the proposal, with `#### Scenario:` blocks.
+  - step 5, tasks: `openspec/changes/e2e-a/tasks.md` exists with a checklist of `- [ ]` tasks.
+  - step 6, plan: `openspec/changes/e2e-a/plan.md` exists, each plan task names a `tasks.md` ID, and no execution-handoff question is asked.
 - [ ] Run `/opsx-continue` once more. Expected: it does not create `apply.md`; it points you to `/opsx-apply`.
 
 ### Apply, verify, finalize, archive
@@ -73,12 +74,13 @@ Setup: remove `pi-subagents`, reinstall pi-superspec (Run A ends by removing it)
 ### Steps one to six, step by step
 
 - [ ] Run `/opsx-new e2e-b`. Expected: the directory `openspec/changes/e2e-b/` exists and no artifact file has been created yet.
-- [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-b/brainstorm.md` exists, a review gate runs on it, and the agent stops after the gate.
-- [ ] Run `/opsx-continue` (step 2, proposal). Expected: `openspec/changes/e2e-b/proposal.md` exists with a Capabilities list.
-- [ ] Run `/opsx-continue` (step 3, design, optional). Expected: `openspec/changes/e2e-b/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
-- [ ] Run `/opsx-continue` (step 4, specs). Expected: `openspec/changes/e2e-b/specs/<capability>/spec.md` exists for each capability, with `#### Scenario:` blocks.
-- [ ] Run `/opsx-continue` (step 5, tasks). Expected: `openspec/changes/e2e-b/tasks.md` exists with a checklist of tasks.
-- [ ] Run `/opsx-continue` (step 6, plan). Expected: `openspec/changes/e2e-b/plan.md` exists and every plan task names a `tasks.md` ID.
+- [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-b/brainstorm.md` exists and a review gate runs on it.
+- [ ] Approve each gate as it opens. Expected: after an approved gate the same run goes on to the next artifact and gates it, and stops before `apply`; a gate that is not approved (`changes requested` or `dismissed`) stops it. Check the files as they appear:
+  - step 2, proposal: `openspec/changes/e2e-b/proposal.md` exists with a Capabilities list.
+  - step 3, design, optional: `openspec/changes/e2e-b/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
+  - step 4, specs: `openspec/changes/e2e-b/specs/<capability>/spec.md` exists for each capability, with `#### Scenario:` blocks.
+  - step 5, tasks: `openspec/changes/e2e-b/tasks.md` exists with a checklist of tasks.
+  - step 6, plan: `openspec/changes/e2e-b/plan.md` exists and every plan task names a `tasks.md` ID.
 
 ### Apply, verify, finalize, archive
 

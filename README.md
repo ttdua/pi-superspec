@@ -36,7 +36,7 @@ Optional pi packages, each with the fallback used when it is absent:
 | `pi-subagents` | a `subagent` tool, so `/opsx-apply` runs tasks with subagent-driven development and stages can use the bundled `superspec.*` agents (see [Optional subagent integration](#optional-subagent-integration)) | Superpowers `executing-plans` in the current session |
 | `rpiv-ask-user-question` | an `ask_user_question` tool for choosing between options | a plain question with numbered options |
 | `rpiv-todo` | a `todo` tool for tracking progress | a checklist stated in the agent's reply |
-| Plannotator (Inbox tool `plannotator_inbox`, `plannotator` tool or CLI) | review gates and questions through the Plannotator Inbox or a review UI; the extension picks the first available channel (see [usage guide](docs/usage-guide.md)) | `ask_user_question`, then plain text with numbered options |
+| Plannotator (Inbox tool `plannotator_inbox`, `plannotator` tool or CLI) | review gates and questions through the Plannotator Inbox or a review UI; the extension picks the first available channel (see [usage guide](docs/usage-guide.md); it also explains how to turn on the Inbox tool) | `ask_user_question`, then plain text with numbered options |
 
 Install them with `pi install` using each package's own instructions. Then install this package:
 
