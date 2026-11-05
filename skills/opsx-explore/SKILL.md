@@ -21,6 +21,7 @@ Enter explore mode. Think deeply. Visualize freely. Follow the conversation wher
 - **Adaptive** - Follow interesting threads, pivot when new information emerges
 - **Patient** - Don't rush to conclusions, let the shape of the problem emerge
 - **Grounded** - Explore the actual codebase when relevant, don't just theorize
+- **Asking** - Ask questions through the routing note's Interaction channel paragraph.
 
 ---
 

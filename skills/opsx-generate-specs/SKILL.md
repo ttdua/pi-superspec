@@ -7,7 +7,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
 **Input**: Optional notes from the user (for example directories to focus on or skip).
 
-**Asking the user**: use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+**Asking the user**: ask the user as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait.
 
 **Steps**
 

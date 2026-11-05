@@ -13,7 +13,7 @@ Continue working on a change by creating the next artifact, gating it, and advan
 
 1. **If no change name provided, prompt for selection**
 
-   Run `openspec list --json` to get the available changes, sorted by most recently modified. If exactly one change exists and no name was given, use it and announce it ("Using change `<name>`"). If several changes exist, ask which one to work on. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+   Run `openspec list --json` to get the available changes, sorted by most recently modified. If exactly one change exists and no name was given, use it and announce it ("Using change `<name>`"). If several changes exist, ask which one to work on. Ask as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait.
 
    Present the top 3-4 most recently modified changes, showing:
    - Change name
@@ -71,7 +71,7 @@ Continue working on a change by creating the next artifact, gating it, and advan
    - Create exactly one artifact per gate, then show what was created and what is now unlocked
    - If the artifact is `finalize`, run the code review gate during creation, at its step 2b, before the git-side closeout, using the Review gate section
    - **Internal check before the gate**: read [subagent routing](../references/subagent-routing.md) and follow it. When the artifact just completed is `specs` (all files, or the missing files of a partial artifact), dispatch `superspec.spec-reviewer`; when it is `plan`, dispatch `superspec.plan-reviewer`. Give it the completed artifact and the existing dependency files needed to assess it, including existing specs when only partial specs were added. Resolve substantive findings and re-review substantive revisions before the human gate; preserve existing files unless a finding requires an explicitly reviewed revision. The verdict is advisory, not a human approval, and adds no stop or second artifact, and an internal review verdict does not advance. When the integration is absent, run an inline self-check of the same quality with the same order. A disabled or missing role stops per the shared reference.
-   - Run the **Review gate** on the written file(s). On `approved`, or on `approved_with_notes` handled per the gate, go back to step 2 and create the next ready artifact, then gate it. When planning is complete or the next ready artifact is `apply`, STOP and point to `/opsx-apply`. On `changes_requested`, revise and reopen the gate. On `dismissed`, ask the user in chat. For `finalize`, the written `finalize.md` is already committed and pushed, so a `changes_requested` on it is handled as a follow-up commit and push on the feature branch
+   - Run the **Review gate** on the written file(s). On `approved`, or on `approved_with_notes` handled per the gate, go back to step 2 and create the next ready artifact, then gate it. When planning is complete or the next ready artifact is `apply`, STOP and point to `/opsx-apply`. On `changes_requested`, revise and reopen the gate. On `dismissed`, ask the user on the Interaction channel. For `finalize`, the written `finalize.md` is already committed and pushed, so a `changes_requested` on it is handled as a follow-up commit and push on the feature branch
    - Repeat this loop for each next ready artifact until planning is complete or the next ready artifact is `apply`
 
    **If no artifacts are ready (all blocked)**:
@@ -99,7 +99,7 @@ A review gate asks the reviewer to decide on written work before the workflow mo
 | `changes_requested` | changes requested, with notes |
 | `dismissed` | closed without a decision, or no answer |
 
-Only `approved` and `approved_with_notes` let the workflow continue. The `dismissed` outcome is not an approval, so ask the user in chat how to proceed and do not continue until they answer.
+Only `approved` and `approved_with_notes` let the workflow continue. The `dismissed` outcome is not an approval, so ask the user on the Interaction channel how to proceed and do not continue until they answer.
 
 - **Open the gate** on the channel named in the routing note's Interaction channel paragraph and follow its mechanics; when it fails to open, tell the user and use the fallback it names.
 - **Handle notes** for `approved_with_notes` and `changes_requested`: apply every note to the reviewed files. After `approved_with_notes`, if every note is only wording, formatting or clarification, and none changes a requirement, scope, decision, scenario or the meaning of another artifact, continue and show a short diff of what changed. Otherwise open the gate again on the changed files. When unsure, reopen. After `changes_requested`, always open the gate again.

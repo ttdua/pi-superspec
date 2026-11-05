@@ -17,7 +17,7 @@ OpenSpec has no sync CLI, so this is an **agent-driven** operation: you read the
 
    - Use the given name, or infer it from conversation context.
    - Auto-select if exactly one active change exists.
-   - Otherwise run `openspec list --json` and ask the user to pick, showing changes that have delta specs under `specs/`. Use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait.
+   - Otherwise run `openspec list --json` and ask the user to pick, showing changes that have delta specs under `specs/`. Ask as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait.
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx-sync <other>`).
 
@@ -52,7 +52,7 @@ OpenSpec has no sync CLI, so this is an **agent-driven** operation: you read the
    - **MODIFIED**: find the requirement in the main spec and replace the whole block with the delta's block. The delta carries the full replacement text, including all scenarios to keep; do not merge partially.
    - **ADDED**: append the requirement block to the `## Requirements` section. If a requirement with that header already exists, treat it as MODIFIED.
 
-   Header matching is exact: compare the `### Requirement: <name>` header after trimming whitespace, case-sensitive. If a RENAMED `FROM`, REMOVED, or MODIFIED header has no match in the main spec (and the entry is not already applied as described below), do not guess: report it and ask the user how to proceed (use the `ask_user_question` tool if available; otherwise ask in plain text with numbered options (recommended first) and wait).
+   Header matching is exact: compare the `### Requirement: <name>` header after trimming whitespace, case-sensitive. If a RENAMED `FROM`, REMOVED, or MODIFIED header has no match in the main spec (and the entry is not already applied as described below), do not guess: report it and ask the user how to proceed (ask as the routing note's Interaction channel paragraph describes: plain text with numbered options, recommended first, when it names no tool; then wait).
 
    **New capability** (no main spec yet): create `openspec/specs/<capability>/spec.md` only from the delta's ADDED requirements. If the delta has MODIFIED or RENAMED operations, or only REMOVED ones, and the main spec does not exist, report the capability as blocked and write nothing. Otherwise copy the delta's `## Purpose` text verbatim and title the spec `# <capability> Specification`, followed by a `## Requirements` header and the ADDED requirements. If the delta has no `## Purpose`, write `TBD` as the Purpose and flag it in the report. Never write delta section headers into a main spec. Never overwrite the Purpose of an existing main spec.
 

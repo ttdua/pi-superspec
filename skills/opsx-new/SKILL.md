@@ -55,6 +55,6 @@ After completing the steps, summarize:
 **Guardrails**
 - Do NOT create any artifacts yet - just show the instructions
 - Do NOT advance beyond showing the first artifact template
-- If the name is invalid (not kebab-case), ask for a valid name: use the `ask_user_question` tool if available, otherwise plain text with numbered options (recommended first), and wait
+- If the name is invalid (not kebab-case), ask for a valid name: ask the user as the routing note's Interaction channel paragraph describes (plain text with numbered options, recommended first, when it names no tool) and wait
 - If a change with that name already exists, suggest `/opsx-continue` for that change instead
 - Never pass `--schema`; omit it so the project config applies

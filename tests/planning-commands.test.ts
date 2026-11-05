@@ -92,6 +92,9 @@ describe("planning commands", () => {
 			expect(readFileSync(file, "utf8"), file).not.toMatch(
 				/AskUserQuestion|TodoWrite|Task tool/,
 			);
+			expect(readFileSync(file, "utf8"), file).not.toMatch(
+				/ask_user_question|plannotator/i,
+			);
 		}
 	});
 
@@ -115,12 +118,16 @@ describe("planning commands", () => {
 		}
 	});
 
-	it("skills that ask the user state a plain-text fallback", () => {
+	it("skills ask through the Interaction channel", () => {
 		for (const c of ["new", "continue", "ff"]) {
 			const text = skill(c);
-			expect(text, c).toContain("ask_user_question");
+			expect(text, c).toContain("Interaction channel");
 			expect(text, c).toContain("numbered options");
 		}
+	});
+
+	it("explore asks through the Interaction channel", () => {
+		expect(skill("explore")).toContain("Interaction channel");
 	});
 
 	it("provenance headers record the 1.16.0 sync and what was not adopted", () => {
