@@ -5,7 +5,7 @@
 ## Alternatives Considered
 
 <!--
-Per openspec/config.yaml brainstorm rule: must cover 2-3 alternatives with trade-off analysis.
+Cover 2-3 alternatives with trade-off analysis.
 
 ### Alternative A: <Name>
 - **Approach**: <brief description>

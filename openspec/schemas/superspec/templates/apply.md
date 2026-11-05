@@ -13,8 +13,10 @@
 
 ## Workspace
 
-- **Worktree**: `.worktrees/<change-name>/`
-- **Branch**: `<branch-name>`
+- **Worktree path**: `<absolute worktree path>`
+- **Worktree branch**: `<change-name>`
+- **Feature branch**: `<branch checked out before apply step 0>`
+- **Base branch**: `<integration branch, typically main>`
 
 ---
 
@@ -32,6 +34,15 @@
 
 ---
 
+## Contract deviations
+
+> Contracts changed during apply, each with its reason. Cumulative:
+> keep entries from earlier iterations. Write `none` if there are none.
+
+- `<contract name>`: `<what changed and why>`
+
+---
+
 ## Next step
 
-`<e.g., "Run /opsx:verify" or "Re-run apply to address <issue>">`
+`<e.g., "Run /opsx-verify" or "Re-run apply to address <issue>">`
