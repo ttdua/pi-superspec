@@ -28,5 +28,5 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run `npm test` and `npx tsc --noEmit`; run `openspec validate prompt-and-review-gate --strict`
+- [x] 5.1 Run `npm test` and `npx tsc --noEmit`; run `openspec validate prompt-and-review-gate --strict`
 - [ ] 5.2 Manual check in pi: injected note per channel (Inbox on, Inbox off with plannotator tool, CLI only, none) and one `/opsx-continue` gate through the Inbox that advances after approval
