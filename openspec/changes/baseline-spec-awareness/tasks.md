@@ -10,8 +10,8 @@
 
 ## 3. Internal spec review
 
-- [ ] 3.1 `skills/opsx-continue/SKILL.md` and `skills/opsx-ff/SKILL.md` pass the main specs of modified, removed or renamed capabilities to the spec reviewer and to the inline self-check (spec `planning-commands`: Spec review receives the baseline)
-- [ ] 3.2 `agents/spec-reviewer.md` compares deltas with the supplied main specs and records a missing baseline under Limitations (spec `workflow-agents`: Spec reviewer compares with the baseline)
+- [x] 3.1 `skills/opsx-continue/SKILL.md` and `skills/opsx-ff/SKILL.md` pass the main specs of modified, removed or renamed capabilities to the spec reviewer and to the inline self-check (spec `planning-commands`: Spec review receives the baseline)
+- [x] 3.2 `agents/spec-reviewer.md` compares deltas with the supplied main specs and records a missing baseline under Limitations (spec `workflow-agents`: Spec reviewer compares with the baseline)
 
 ## 4. Docs
 
