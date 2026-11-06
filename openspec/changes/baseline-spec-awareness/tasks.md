@@ -15,6 +15,6 @@
 
 ## 4. Docs
 
-- [ ] 4.1 `docs/workflow.md` Step rules and Routing note describe the baseline rules
-- [ ] 4.2 `docs/usage-guide.md` brainstorm and specs steps mention the baseline reads
-- [ ] 4.3 `CHANGELOG.md` Unreleased entry
+- [x] 4.1 `docs/workflow.md` Step rules and Routing note describe the baseline rules
+- [x] 4.2 `docs/usage-guide.md` brainstorm and specs steps mention the baseline reads
+- [x] 4.3 `CHANGELOG.md` Unreleased entry
