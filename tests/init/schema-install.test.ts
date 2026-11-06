@@ -9,10 +9,12 @@ import {
 	classifySchema,
 	hashTree,
 	installSchema,
+	isPristine,
+	serializeLock,
 	treeDigest,
 	type SchemaLock,
 } from "../../extensions/init/schema-install.ts";
-import { SCHEMA_DIR } from "../helpers/project.ts";
+import { SCHEMA_DIR, asV6 } from "../helpers/project.ts";
 
 const PACKAGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const UNMARKED = fileURLToPath(
@@ -49,11 +51,15 @@ function snapshot(dir: string): Record<string, string> {
 	for (const f of listFiles(dir)) snap[f] = readFileSync(join(dir, f)).toString("base64");
 	return snap;
 }
-function readLock(root: string): SchemaLock {
+function readInstalledLock(root: string): SchemaLock {
 	return JSON.parse(readFileSync(join(target(root), LOCK_NAME), "utf8"));
 }
 function sha(buf: Buffer): string {
 	return createHash("sha256").update(buf).digest("hex");
+}
+function setMarker(t: string, v: number): void {
+	const f = join(t, "schema.yaml");
+	writeFileSync(f, readFileSync(f, "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, `$1${v}`));
 }
 function copyBundled(root: string): string {
 	const t = target(root);
@@ -66,7 +72,7 @@ describe("installSchema lock", () => {
 	it("writes a lock matching the installed tree", () => {
 		const root = tmp();
 		expect(installSchema(root, PACKAGE_ROOT)).toBe("absent");
-		const lock = readLock(root);
+		const lock = readInstalledLock(root);
 		const installed = listFiles(target(root)).filter((f) => f !== LOCK_NAME);
 		expect(Object.keys(lock.files)).toEqual(installed);
 		expect(installed).toEqual(listFiles(SCHEMA_DIR));
@@ -91,7 +97,7 @@ describe("installSchema lock", () => {
 	it("hashTree excludes the lock file", () => {
 		const root = tmp();
 		installSchema(root, PACKAGE_ROOT);
-		expect(hashTree(target(root))).toEqual(readLock(root).files);
+		expect(hashTree(target(root))).toEqual(readInstalledLock(root).files);
 	});
 });
 
@@ -136,16 +142,51 @@ describe("classifySchema", () => {
 	it("foreign without marker", () => {
 		expect(classifySchema(UNMARKED, SCHEMA_DIR)).toBe("foreign");
 	});
-	it("older and newer by marker version", () => {
-		for (const [v, state] of [[4, "older"], [8, "newer"]] as const) {
+	it("upgradable for a pristine v6 install", () => {
+		const t = copyBundled(tmp());
+		asV6(t);
+		expect(classifySchema(t, SCHEMA_DIR)).toBe("upgradable");
+	});
+	it("older for a v6 install with an edited file", () => {
+		const t = copyBundled(tmp());
+		asV6(t);
+		writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml" && f !== LOCK_NAME)!), "changed\n");
+		expect(classifySchema(t, SCHEMA_DIR)).toBe("older");
+	});
+	it("older for a v4 marker without a lock", () => {
+		const t = copyBundled(tmp());
+		setMarker(t, 4);
+		expect(classifySchema(t, SCHEMA_DIR)).toBe("older");
+	});
+	it("newer for a v8 marker", () => {
+		const t = copyBundled(tmp());
+		setMarker(t, 8);
+		expect(classifySchema(t, SCHEMA_DIR)).toBe("newer");
+	});
+	it("classification writes nothing", () => {
+		const cases: Array<(t: string) => void> = [
+			() => {},
+			(t) => asV6(t),
+			(t) => {
+				asV6(t);
+				writeFileSync(join(t, "extra.md"), "x");
+			},
+			(t) => setMarker(t, 4),
+			(t) => setMarker(t, 8),
+			(t) => writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml")!), "x"),
+		];
+		for (const mutate of cases) {
 			const t = copyBundled(tmp());
-			const f = join(t, "schema.yaml");
-			writeFileSync(
-				f,
-				readFileSync(f, "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, `$1${v}`),
-			);
-			expect(classifySchema(t, SCHEMA_DIR)).toBe(state);
+			mutate(t);
+			const before = snapshot(t);
+			classifySchema(t, SCHEMA_DIR);
+			expect(snapshot(t)).toEqual(before);
 		}
+		const foreign = tmp();
+		cpSync(UNMARKED, foreign, { recursive: true });
+		const before = snapshot(foreign);
+		classifySchema(foreign, SCHEMA_DIR);
+		expect(snapshot(foreign)).toEqual(before);
 	});
 	it("edited when content differs or a bundled file is missing", () => {
 		const t = copyBundled(tmp());
@@ -158,12 +199,60 @@ describe("classifySchema", () => {
 	});
 });
 
+describe("isPristine", () => {
+	function installed(): string {
+		const root = tmp();
+		installSchema(root, PACKAGE_ROOT);
+		return target(root);
+	}
+	it("true for installSchema output", () => {
+		expect(isPristine(installed())).toBe(true);
+	});
+	it("false when a file changed", () => {
+		const t = installed();
+		writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml" && f !== LOCK_NAME)!), "changed\n");
+		expect(isPristine(t)).toBe(false);
+	});
+	it("false when .DS_Store was added", () => {
+		const t = installed();
+		writeFileSync(join(t, ".DS_Store"), "x");
+		expect(isPristine(t)).toBe(false);
+	});
+	it("false when a file was removed", () => {
+		const t = installed();
+		rmSync(join(t, listFiles(t).find((f) => f !== "schema.yaml" && f !== LOCK_NAME)!));
+		expect(isPristine(t)).toBe(false);
+	});
+	it("false when the lock is missing", () => {
+		const t = installed();
+		rmSync(join(t, LOCK_NAME));
+		expect(isPristine(t)).toBe(false);
+	});
+	it("false when the lock is malformed JSON", () => {
+		const t = installed();
+		writeFileSync(join(t, LOCK_NAME), "{");
+		expect(isPristine(t)).toBe(false);
+	});
+	it("false when files holds non-string values", () => {
+		const t = installed();
+		writeFileSync(join(t, LOCK_NAME), JSON.stringify({ schemaVersion: 7, packageVersion: "x", files: { a: 1 } }));
+		expect(isPristine(t)).toBe(false);
+	});
+	it("false when lock schemaVersion differs from the marker", () => {
+		const t = installed();
+		const lock = JSON.parse(readFileSync(join(t, LOCK_NAME), "utf8")) as SchemaLock;
+		writeFileSync(join(t, LOCK_NAME), serializeLock({ ...lock, schemaVersion: 6 }));
+		expect(isPristine(t)).toBe(false);
+	});
+});
+
 describe("installSchema on existing states", () => {
 	it("leaves every non-absent state byte-identical", () => {
 		const cases: Array<[string, (t: string) => void]> = [
 			["identical", () => {}],
 			["edited", (t) => writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml")!), "x")],
-			["older", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$14"))],
+			["older", (t) => setMarker(t, 4)],
+			["upgradable", (t) => asV6(t)],
 			["newer", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$18"))],
 			["foreign", (t) => cpSync(UNMARKED, t, { recursive: true, force: true })],
 		];
@@ -178,7 +267,6 @@ describe("installSchema on existing states", () => {
 			const before = snapshot(t);
 			expect(installSchema(root, PACKAGE_ROOT)).toBe(state);
 			expect(snapshot(t)).toEqual(before);
-			expect(existsSync(join(t, LOCK_NAME))).toBe(false);
 		}
 	});
 });

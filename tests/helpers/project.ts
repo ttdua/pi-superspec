@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { LOCK_NAME, hashTree, serializeLock } from "../../extensions/init/schema-install.ts";
 
 export const SCHEMA_DIR = fileURLToPath(
 	new URL("../../schema/superspec", import.meta.url),
@@ -26,6 +27,19 @@ export function hasOpenspec(): boolean {
 	const res = spawnSync("openspec", ["--version"], { encoding: "utf8" });
 	if (res.status !== 0) return false;
 	return meetsOpenspecFloor(res.stdout);
+}
+
+/** Turn a bundled-copy schema dir into a pristine v6 install (marker, version line, lock). */
+export function asV6(schemaDir: string): void {
+	const f = join(schemaDir, "schema.yaml");
+	const text = readFileSync(f, "utf8")
+		.replace(/^version:\s*\d+/m, "version: 6")
+		.replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$16");
+	writeFileSync(f, text);
+	writeFileSync(
+		join(schemaDir, LOCK_NAME),
+		serializeLock({ schemaVersion: 6, packageVersion: "0.0.0-test", files: hashTree(schemaDir) }),
+	);
 }
 
 export function makeProject(): TempProject {

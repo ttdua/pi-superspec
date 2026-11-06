@@ -10,7 +10,7 @@ export interface SchemaLock {
 	files: Record<string, string>;
 }
 
-export type SchemaState = "absent" | "identical" | "foreign" | "edited" | "older" | "newer";
+export type SchemaState = "absent" | "identical" | "upgradable" | "older" | "edited" | "newer" | "foreign";
 
 const MARKER_RE = /^x-pi-superspec:\s*\n\s+version:\s*(\d+)/m;
 
@@ -52,6 +52,29 @@ export function markerVersion(schemaDir: string): number | undefined {
 	return m ? Number(m[1]) : undefined;
 }
 
+export function readLock(dir: string): SchemaLock | undefined {
+	try {
+		const raw: unknown = JSON.parse(readFileSync(join(dir, LOCK_NAME), "utf8"));
+		if (typeof raw !== "object" || raw === null) return undefined;
+		const { schemaVersion, packageVersion, files } = raw as Record<string, unknown>;
+		if (typeof schemaVersion !== "number") return undefined;
+		if (typeof files !== "object" || files === null || Array.isArray(files)) return undefined;
+		if (!Object.values(files).every((v) => typeof v === "string")) return undefined;
+		return { schemaVersion, packageVersion: String(packageVersion ?? ""), files: files as Record<string, string> };
+	} catch {
+		return undefined;
+	}
+}
+
+export function isPristine(dir: string): boolean {
+	const lock = readLock(dir);
+	if (!lock || lock.schemaVersion !== markerVersion(dir)) return false;
+	const have = hashTree(dir);
+	const haveKeys = Object.keys(have);
+	if (haveKeys.length !== Object.keys(lock.files).length) return false;
+	return haveKeys.every((f) => Object.hasOwn(lock.files, f) && lock.files[f] === have[f]);
+}
+
 export function buildLock(bundledDir: string, packageVersion: string): SchemaLock {
 	return {
 		schemaVersion: markerVersion(bundledDir) ?? 0,
@@ -69,7 +92,7 @@ export function classifySchema(projectSchemaDir: string, bundledDir: string): Sc
 	const found = markerVersion(projectSchemaDir);
 	if (found === undefined) return "foreign";
 	const bundled = markerVersion(bundledDir) ?? 0;
-	if (found < bundled) return "older";
+	if (found < bundled) return isPristine(projectSchemaDir) ? "upgradable" : "older";
 	if (found > bundled) return "newer";
 	const have = hashTree(projectSchemaDir);
 	const want = hashTree(bundledDir);
