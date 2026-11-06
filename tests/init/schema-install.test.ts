@@ -1,15 +1,20 @@
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+	BackupError,
 	LOCK_NAME,
+	ReplaceError,
+	type ReplaceFs,
+	backupPath,
 	classifySchema,
 	hashTree,
 	installSchema,
 	isPristine,
+	replaceSchema,
 	serializeLock,
 	treeDigest,
 	type SchemaLock,
@@ -268,5 +273,136 @@ describe("installSchema on existing states", () => {
 			expect(installSchema(root, PACKAGE_ROOT)).toBe(state);
 			expect(snapshot(t)).toEqual(before);
 		}
+	});
+});
+
+describe("backupPath", () => {
+	const now = new Date(Date.UTC(2026, 10, 6, 10, 15, 30, 123));
+	it("builds <root>/<name>-<hash>/<label>-<timestamp>", () => {
+		const base = tmp();
+		const root = join(base, "app");
+		mkdirSync(root);
+		expect(backupPath(join(base, "b"), root, "v7", now)).toMatch(/\/app-[0-9a-f]{8}\/v7-20261106T101530123Z$/);
+	});
+	it("supports the foreign label", () => {
+		const base = tmp();
+		const root = join(base, "app");
+		mkdirSync(root);
+		expect(basename(backupPath(join(base, "b"), root, "foreign", now))).toMatch(/^foreign-/);
+	});
+	it("separates same-named folders under different parents", () => {
+		const a = join(tmp(), "app");
+		const b = join(tmp(), "app");
+		mkdirSync(a);
+		mkdirSync(b);
+		const br = tmp();
+		expect(dirname(backupPath(br, a, "v7", now))).not.toBe(dirname(backupPath(br, b, "v7", now)));
+	});
+});
+
+describe("replaceSchema", () => {
+	function openspecLeftovers(root: string): string[] {
+		return readdirSync(join(root, "openspec")).filter((n) => n.startsWith(".superspec-"));
+	}
+
+	it("replaces without a backup", () => {
+		const root = tmp();
+		asV6(copyBundled(root));
+		const fresh = tmp();
+		installSchema(fresh, PACKAGE_ROOT);
+		expect(replaceSchema(root, PACKAGE_ROOT)).toEqual({ from: 6, to: 7 });
+		expect(snapshot(target(root))).toEqual(snapshot(target(fresh)));
+		expect(openspecLeftovers(root)).toEqual([]);
+	});
+
+	it("replaces with a backup that equals the old tree", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		writeFileSync(join(t, "schema.yaml"), `${readFileSync(join(t, "schema.yaml"), "utf8")}# edit\n`);
+		const old = snapshot(t);
+		const backup = join(tmp(), "x", "v7-1");
+		const res = replaceSchema(root, PACKAGE_ROOT, backup);
+		expect(res.backup).toBe(backup);
+		expect(snapshot(backup)).toEqual(old);
+		expect(snapshot(t)).not.toEqual(old);
+	});
+
+	it("fails with BackupError when the backup path exists", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		asV6(t);
+		const before = snapshot(t);
+		const backup = join(tmp(), "b");
+		mkdirSync(backup);
+		expect(() => replaceSchema(root, PACKAGE_ROOT, backup)).toThrow(BackupError);
+		expect(snapshot(t)).toEqual(before);
+	});
+
+	it("fails with BackupError when the backup destination is a file", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		asV6(t);
+		const before = snapshot(t);
+		const file = join(tmp(), "f");
+		writeFileSync(file, "x");
+		expect(() => replaceSchema(root, PACKAGE_ROOT, file)).toThrow(BackupError);
+		expect(() => replaceSchema(root, PACKAGE_ROOT, join(file, "sub"))).toThrow(BackupError);
+		expect(snapshot(t)).toEqual(before);
+	});
+
+	it("throws before any write when the bundled tree is missing", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		asV6(t);
+		const before = snapshot(t);
+		const backupDir = join(tmp(), "bk");
+		expect(() => replaceSchema(root, tmp(), join(backupDir, "v6"))).toThrow(Error);
+		expect(() => replaceSchema(root, tmp(), join(backupDir, "v6"))).not.toThrow(BackupError);
+		expect(snapshot(t)).toEqual(before);
+		expect(existsSync(backupDir)).toBe(false);
+	});
+
+	it("rolls back when the staging copy fails", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		asV6(t);
+		const before = snapshot(t);
+		const backup = join(tmp(), "bk", "v6");
+		const fsOps: ReplaceFs = {
+			cpSync: () => {
+				throw new Error("boom");
+			},
+			renameSync,
+			rmSync,
+		};
+		let err: unknown;
+		try {
+			replaceSchema(root, PACKAGE_ROOT, backup, fsOps);
+		} catch (e) {
+			err = e;
+		}
+		expect(err).toBeInstanceOf(ReplaceError);
+		expect((err as ReplaceError).backup).toBe(backup);
+		expect(snapshot(t)).toEqual(before);
+		expect(snapshot(backup)).toEqual(before);
+		expect(openspecLeftovers(root)).toEqual([]);
+	});
+
+	it("restores the old tree when the swap fails", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		asV6(t);
+		const before = snapshot(t);
+		const fsOps: ReplaceFs = {
+			cpSync,
+			renameSync: (from, to) => {
+				if (String(from).includes(".superspec-staging-") && String(to) === t) throw new Error("swap");
+				renameSync(from, to);
+			},
+			rmSync,
+		};
+		expect(() => replaceSchema(root, PACKAGE_ROOT, undefined, fsOps)).toThrow(ReplaceError);
+		expect(snapshot(t)).toEqual(before);
+		expect(openspecLeftovers(root)).toEqual([]);
 	});
 });

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, relative } from "node:path";
 
 export const LOCK_NAME = ".pi-superspec.json";
 
@@ -112,4 +112,93 @@ export function installSchema(root: string, packageRoot: string): SchemaState {
 	cpSync(bundled, target, { recursive: true });
 	writeFileSync(join(target, LOCK_NAME), serializeLock(buildLock(bundled, pkg.version)));
 	return state;
+}
+
+function stamp(d: Date): string {
+	return d.toISOString().replace(/[-:]/g, "").replace(".", "");
+}
+
+export function backupPath(backupRoot: string, root: string, label: string, now: Date): string {
+	const hash = createHash("sha256").update(realpathSync(root)).digest("hex").slice(0, 8);
+	return join(backupRoot, `${basename(root) || "project"}-${hash}`, `${label}-${stamp(now)}`);
+}
+
+export interface ReplaceResult {
+	from: number | undefined;
+	to: number;
+	backup?: string;
+}
+
+export interface ReplaceFs {
+	cpSync: typeof cpSync;
+	renameSync: typeof renameSync;
+	rmSync: typeof rmSync;
+}
+
+export class BackupError extends Error {}
+
+export class ReplaceError extends Error {
+	backup?: string;
+}
+
+const NODE_FS: ReplaceFs = { cpSync, renameSync, rmSync };
+
+export function replaceSchema(
+	root: string,
+	packageRoot: string,
+	backupTo?: string,
+	fsOps: ReplaceFs = NODE_FS,
+): ReplaceResult {
+	const bundled = join(packageRoot, "schema", "superspec");
+	const target = join(root, "openspec", "schemas", "superspec");
+	if (!existsSync(bundled)) throw new Error(`Bundled schema not found: ${bundled}`);
+	const pkg = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")) as { version: string };
+	const lockText = serializeLock(buildLock(bundled, pkg.version));
+	const from = markerVersion(target);
+	const to = markerVersion(bundled) ?? 0;
+
+	if (backupTo !== undefined) {
+		if (existsSync(backupTo)) throw new BackupError(`Backup path already exists: ${backupTo}`);
+		try {
+			mkdirSync(dirname(backupTo), { recursive: true });
+			cpSync(target, backupTo, { recursive: true, errorOnExist: true, force: false });
+		} catch (cause) {
+			rmSync(backupTo, { recursive: true, force: true });
+			throw new BackupError(`Backup failed: ${(cause as Error).message}`, { cause });
+		}
+	}
+
+	const suffix = `${process.pid}-${Date.now()}`;
+	const staging = join(root, "openspec", `.superspec-staging-${suffix}`);
+	const old = join(root, "openspec", `.superspec-old-${suffix}`);
+	let moved = false;
+	try {
+		fsOps.cpSync(bundled, staging, { recursive: true });
+		writeFileSync(join(staging, LOCK_NAME), lockText);
+		fsOps.renameSync(target, old);
+		moved = true;
+		fsOps.renameSync(staging, target);
+		fsOps.rmSync(old, { recursive: true, force: true });
+	} catch (cause) {
+		let restored = !moved;
+		try {
+			fsOps.rmSync(staging, { recursive: true, force: true });
+		} catch {}
+		if (moved && !existsSync(target)) {
+			try {
+				fsOps.renameSync(old, target);
+				restored = true;
+			} catch {}
+		} else if (moved) {
+			// New tree already in place; only the old-dir cleanup failed.
+			restored = false;
+		}
+		const err = new ReplaceError(
+			`Schema replacement failed: ${(cause as Error).message}${moved && !restored && !existsSync(target) ? " (old schema kept in " + old + ")" : ""}`,
+			{ cause },
+		);
+		err.backup = backupTo;
+		throw err;
+	}
+	return { from, to, ...(backupTo !== undefined ? { backup: backupTo } : {}) };
 }
