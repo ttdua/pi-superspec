@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -396,7 +396,7 @@ describe("replaceSchema", () => {
 		const fsOps: ReplaceFs = {
 			cpSync,
 			renameSync: (from, to) => {
-				if (String(from).includes(".superspec-staging-") && String(to) === t) throw new Error("swap");
+				if (String(from).includes(".superspec-staging-") && realpathSync(dirname(String(to))) === realpathSync(dirname(t)) && basename(String(to)) === basename(t)) throw new Error("swap");
 				renameSync(from, to);
 			},
 			rmSync,
@@ -404,6 +404,31 @@ describe("replaceSchema", () => {
 		expect(() => replaceSchema(root, PACKAGE_ROOT, undefined, fsOps)).toThrow(ReplaceError);
 		expect(snapshot(t)).toEqual(before);
 		expect(openspecLeftovers(root)).toEqual([]);
+	});
+
+	it("uses distinct staging names for replacements in the same millisecond", () => {
+		const staged: string[] = [];
+		const fsOps: ReplaceFs = {
+			cpSync: (from, to, o) => {
+				if (String(to).includes(".superspec-staging-")) staged.push(basename(String(to)));
+				cpSync(from, to, o);
+			},
+			renameSync,
+			rmSync,
+		};
+		const realNow = Date.now;
+		Date.now = () => 1_700_000_000_000;
+		try {
+			for (let i = 0; i < 2; i++) {
+				const root = tmp();
+				asV6(copyBundled(root));
+				replaceSchema(root, PACKAGE_ROOT, undefined, fsOps);
+			}
+		} finally {
+			Date.now = realNow;
+		}
+		expect(staged).toHaveLength(2);
+		expect(staged[0]).not.toBe(staged[1]);
 	});
 
 	it("keeps a completed swap when old-dir cleanup fails", () => {

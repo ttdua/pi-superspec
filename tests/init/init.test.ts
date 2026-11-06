@@ -592,6 +592,17 @@ describe("existing schema", () => {
 		expect(io.reloads).toBe(0);
 	});
 
+	it("puts the config note right after the main blocked line, before details", async () => {
+		const root = await newer();
+		writeFileSync(join(root, "openspec", "config.yaml"), "schema: spec-driven\n");
+		const { io } = recording(root);
+		expect(await runInit(io, packageRoot)).toBe("blocked");
+		const lines = io.notes.join("\n").split("\n");
+		expect(lines[0]).toMatch(/^Existing schema at openspec\/schemas\/superspec is newer;/);
+		expect(lines[1]).toBe("Note: openspec/config.yaml now has `schema: superspec`.");
+		expect(lines[2]).toMatch(/older than the project schema/);
+	});
+
 	it("blocks a newer schema and says the package is older", async () => {
 		const root = await newer();
 		const before = snap(schemaDir(root));

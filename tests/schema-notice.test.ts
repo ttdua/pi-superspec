@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { hashTree } from "../extensions/init/schema-install.ts";
-import { schemaNotice } from "../extensions/schema-notice.ts";
+import { schemaNotice, versionLabel } from "../extensions/schema-notice.ts";
 import { project } from "./helpers/notice-project.ts";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -47,5 +47,12 @@ describe("schemaNotice", () => {
 	it("says nothing when the schema is absent", () => {
 		const root = mkdtempSync(join(tmpdir(), "pi-superspec-notice-"));
 		expect(schemaNotice(root, PACKAGE_ROOT)).toBeUndefined();
+	});
+});
+
+describe("versionLabel", () => {
+	it("formats a known version and never prints vundefined", () => {
+		expect(versionLabel(7)).toBe("v7");
+		expect(versionLabel(undefined)).toBe("an unknown version");
 	});
 });

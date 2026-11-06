@@ -9,8 +9,13 @@ const fixture: Record<string, string> = JSON.parse(
 );
 
 describe("bundled schema version pin", () => {
-	const v = markerVersion(SCHEMA_DIR)!;
+	const found = markerVersion(SCHEMA_DIR);
+	const v = found ?? Number.NaN;
 	const digest = treeDigest(SCHEMA_DIR);
+
+	it("reads the bundled schema version marker", () => {
+		expect(found, "schema/superspec/schema.yaml has no x-pi-superspec version marker").toBeDefined();
+	});
 
 	it("records a checksum for the current version", () => {
 		expect(

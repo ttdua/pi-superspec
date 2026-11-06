@@ -143,6 +143,9 @@ export class ReplaceError extends Error {
 
 const NODE_FS: ReplaceFs = { cpSync, renameSync, rmSync };
 
+// Keeps staging/old names unique for replacements in the same millisecond.
+let replaceSeq = 0;
+
 export function replaceSchema(
 	root: string,
 	packageRoot: string,
@@ -170,7 +173,7 @@ export function replaceSchema(
 		}
 	}
 
-	const suffix = `${process.pid}-${Date.now()}`;
+	const suffix = `${process.pid}-${Date.now()}-${++replaceSeq}`;
 	const staging = join(root, "openspec", `.superspec-staging-${suffix}`);
 	const old = join(root, "openspec", `.superspec-old-${suffix}`);
 	let moved = false;
@@ -199,10 +202,8 @@ export function replaceSchema(
 			// New tree already in place; only the old-dir cleanup failed.
 			restored = false;
 		}
-		const err = new ReplaceError(
-			`Schema replacement failed: ${(cause as Error).message}${moved && !restored && !existsSync(target) ? " (old schema kept in " + old + ")" : ""}`,
-			{ cause },
-		);
+		const keptOld = moved && !restored && !existsSync(target) ? ` (old schema kept in ${old})` : "";
+		const err = new ReplaceError(`Schema replacement failed: ${(cause as Error).message}${keptOld}`, { cause });
 		err.backup = backupTo;
 		throw err;
 	}
