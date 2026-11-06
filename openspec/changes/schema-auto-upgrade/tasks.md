@@ -5,8 +5,8 @@
 
 ## 2. Lock-based classification
 
-- [ ] 2.1 Add `readLock(dir)` and `isPristine(dir)` to `extensions/init/schema-install.ts` per the "Pristine schema" requirement (lock shape check, version match, exact file set and hashes), with tests for untouched install, changed file, extra file (`.DS_Store`), missing file, missing or malformed lock and lock version mismatch
-- [ ] 2.2 Extend `SchemaState` with `upgradable` and make `classifySchema` return it for a lower marker version with a pristine tree, keeping `older` for the non-pristine case; update the existing classification tests and add one asserting classification writes nothing
+- [x] 2.1 Add `readLock(dir)` and `isPristine(dir)` to `extensions/init/schema-install.ts` per the "Pristine schema" requirement (lock shape check, version match, exact file set and hashes), with tests for untouched install, changed file, extra file (`.DS_Store`), missing file, missing or malformed lock and lock version mismatch
+- [x] 2.2 Extend `SchemaState` with `upgradable` and make `classifySchema` return it for a lower marker version with a pristine tree, keeping `older` for the non-pristine case; update the existing classification tests and add one asserting classification writes nothing
 
 ## 3. Schema replacement and backup
 
