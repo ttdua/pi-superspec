@@ -26,7 +26,7 @@
 
 ## 6. Session-start notice
 
-- [ ] 6.1 Add `schemaNotice(root, packageRoot)` in `extensions/schema-notice.ts`; in `extensions/superspec.ts` `session_start`, use it to classify the project schema when a UI is available and notify once for `upgradable` (`/opsx-init`) and for `older` or `edited` (`/opsx-init --force`), swallowing errors; add `tests/extension.test.ts`, `tests/schema-notice.test.ts` and `tests/schema-notice-failure.test.ts` cases for upgradable, older with edits, edited, identical, no UI and a throwing classification, and update the existing `marked`-fixture tests that count notifications
+- [x] 6.1 Add `schemaNotice(root, packageRoot)` in `extensions/schema-notice.ts`; in `extensions/superspec.ts` `session_start`, use it to classify the project schema when a UI is available and notify once for `upgradable` (`/opsx-init`) and for `older` or `edited` (`/opsx-init --force`), swallowing errors; add `tests/extension.test.ts`, `tests/schema-notice.test.ts` and `tests/schema-notice-failure.test.ts` cases for upgradable, older with edits, edited, identical, no UI and a throwing classification, and update the existing `marked`-fixture tests that count notifications
 
 ## 7. Docs
 
