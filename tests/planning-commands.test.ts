@@ -643,6 +643,15 @@ describe("planning specialist routing", () => {
 		}
 	});
 
+	it("SA-P06 spec review receives the baseline main specs", () => {
+		for (const c of ["continue", "ff"] as const) {
+			const t = skill(c);
+			expect(t, c).toContain("the main spec `openspec/specs/<capability>/spec.md` of every capability the deltas modify, remove or rename");
+			expect(t, c).toMatch(/no main spec[^.\n]*no baseline/i);
+			expect(t, c).toMatch(/inline self-check[^.\n]*same main specs/i);
+		}
+	});
+
 	it("links the shared reference from the three current planning consumers without copying policy", () => {
 		for (const c of ["explore", "continue", "ff"] as const) {
 			const t = skill(c);
