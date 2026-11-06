@@ -7,7 +7,7 @@
 
 **Change**: `baseline-spec-awareness`
 **Finalized at**: `2026-11-06 03:14 UTC`
-**Outcome**: `pr-updated` (canonical git-side closeout; push and PR pending, see deviations)
+**Outcome**: `pr-created` (canonical git-side closeout; PR opened at step 11 because none existed)
 
 ---
 
@@ -15,8 +15,8 @@
 
 - **Branch**: `spec/baseline-spec-awareness`
 - **Base branch**: `main`
-- **Final state**: `merged` locally (fast-forward `0fe9151..ce158ea` into the feature branch); not pushed yet
-- **PR URL**: N/A (no PR exists; `gh pr view spec/baseline-spec-awareness` found none)
+- **Final state**: `pr-open` (fast-forward `0fe9151..ce158ea` into the feature branch, pushed to `origin`)
+- **PR URL**: https://github.com/ttdua/pi-superspec/pull/14
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## PR comment
 
-- **PR comment status**: `skipped (no PR)`
+- **PR comment status**: `posted` (https://github.com/ttdua/pi-superspec/pull/14#issuecomment-6675900179)
 
 ---
 
@@ -49,7 +49,7 @@
 
 ## Deviations (project AGENTS.md)
 
-- Push (step 10) and PR creation (step 11) are held: the project AGENTS.md forbids push, merge or opening a PR without explicit user approval in chat.
+- Push (step 10) and PR creation (step 11) ran only after the user's explicit approval in chat, as the project AGENTS.md requires.
 - `git pull` (step 3) skipped: the feature branch has no upstream yet.
 - Worktree removal and branch deletion (steps 6-7) not run: worktrees are managed with Worktrunk (`wt remove`), not `git worktree`, and the worktree is harness-owned.
 
@@ -57,4 +57,4 @@
 
 ## Next step
 
-After you approve, push `spec/baseline-spec-awareness` and open a PR against `main`, then wait for PR code review. After approval, run `/opsx-archive` on this feature branch, push the archive commits, then merge the PR. Remove the implementation worktree with `wt remove` when no longer needed.
+Wait for PR review. After approval, run `/opsx-archive` on this feature branch (commits land here), push the archive commits to update the PR, then merge the PR (`gh pr merge --squash --delete-branch` or GitHub UI); that single merge lands both the implementation and the archive into main. Remove the implementation worktree with `wt remove` when no longer needed.
