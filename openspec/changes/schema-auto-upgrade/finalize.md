@@ -18,7 +18,7 @@ Deviation from the canonical `pr-updated` closeout: no PR existed before finaliz
 - **Branch**: `feat/schema-auto-upgrade`
 - **Base branch**: `main`
 - **Final state**: `pr-open`
-- **PR URL**: `<filled after gh pr create>`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/17`
 
 ---
 
@@ -31,7 +31,7 @@ Deviation from the canonical `pr-updated` closeout: no PR existed before finaliz
 
 ## PR comment
 
-- **PR comment status**: `<filled after step 12>`
+- **PR comment status**: `posted` (https://github.com/ttdua/pi-superspec/pull/17#issuecomment-6680489307)
 
 ---
 
