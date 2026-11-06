@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,7 @@ import {
 	classifySchema,
 	hashTree,
 	installSchema,
+	treeDigest,
 	type SchemaLock,
 } from "../../extensions/init/schema-install.ts";
 import { SCHEMA_DIR } from "../helpers/project.ts";
@@ -91,6 +92,32 @@ describe("installSchema lock", () => {
 		const root = tmp();
 		installSchema(root, PACKAGE_ROOT);
 		expect(hashTree(target(root))).toEqual(readLock(root).files);
+	});
+});
+
+describe("treeDigest", () => {
+	it("is deterministic", () => {
+		expect(treeDigest(SCHEMA_DIR)).toBe(treeDigest(SCHEMA_DIR));
+	});
+	it("changes when a file is renamed, added or removed", () => {
+		const base = treeDigest(SCHEMA_DIR);
+		const mutations: Array<(t: string) => void> = [
+			(t) => renameSync(join(t, "schema.yaml"), join(t, "schema2.yaml")),
+			(t) => writeFileSync(join(t, "extra.md"), "x\n"),
+			(t) => rmSync(join(t, listFiles(t).find((f) => f !== "schema.yaml")!)),
+		];
+		for (const mutate of mutations) {
+			const t = copyBundled(tmp());
+			expect(treeDigest(t)).toBe(base);
+			mutate(t);
+			expect(treeDigest(t)).not.toBe(base);
+		}
+	});
+	it("ignores the lock file", () => {
+		const root = tmp();
+		installSchema(root, PACKAGE_ROOT);
+		expect(existsSync(join(target(root), LOCK_NAME))).toBe(true);
+		expect(treeDigest(target(root))).toBe(treeDigest(SCHEMA_DIR));
 	});
 });
 

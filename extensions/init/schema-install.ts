@@ -37,7 +37,15 @@ export function hashTree(dir: string): Record<string, string> {
 	return out;
 }
 
-function markerVersion(schemaDir: string): number | undefined {
+export function treeDigest(dir: string): string {
+	const h = createHash("sha256");
+	for (const [path, sha] of Object.entries(hashTree(dir)).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+		h.update(`${path}\0${sha}\n`);
+	}
+	return h.digest("hex");
+}
+
+export function markerVersion(schemaDir: string): number | undefined {
 	const file = join(schemaDir, "schema.yaml");
 	if (!existsSync(file)) return undefined;
 	const m = MARKER_RE.exec(readFileSync(file, "utf8"));
