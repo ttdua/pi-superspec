@@ -108,8 +108,9 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	}
 	const to = markerVersion(bundled) ?? 0;
 	const noteLine = "Note: openspec/config.yaml now has `schema: superspec`.";
-	const block = async (lines: string[]): Promise<InitOutcome> => {
-		if (config === "written") lines.splice(1, 0, noteLine);
+	// Blocked notice: the main line, then the config note (when config.yaml was just written), then details.
+	const block = async (main: string, details: string[] = []): Promise<InitOutcome> => {
+		const lines = [main, ...(config === "written" ? [noteLine] : []), ...details];
 		io.notify(lines.join("\n"), "warning");
 		await cleanLegacy(io, root);
 		return "blocked";
@@ -127,32 +128,31 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 		} else if (state === "upgradable") {
 			const from = markerVersion(target);
 			if (!io.hasUI) {
-				return block([
+				return block(
 					`Schema superspec v${from} can be upgraded to v${to}. Run /opsx-init in an interactive session to confirm, ` +
 						"or /opsx-init --force to upgrade and keep a backup.",
-				]);
+				);
 			}
 			const ok = await io.confirm(
 				"Upgrade schema superspec?",
 				`Replace openspec/schemas/superspec (v${from}, unchanged since install) with the bundled v${to}? Commit the result afterwards.`,
 			);
 			if (!ok) {
-				return block([
+				return block(
 					`Schema superspec v${from} was left unchanged. Run /opsx-init again and confirm to upgrade to v${to}.`,
-				]);
+				);
 			}
 		} else {
-			const lines = [
+			const details =
+				state === "newer"
+					? ["The installed pi-superspec package is older than the project schema; update the package instead if possible."]
+					: [];
+			return block(
 				`Existing schema at openspec/schemas/superspec is ${state}; it was left unchanged. Activation stopped. ` +
 					`Run /opsx-init --force to replace it with the bundled v${to}; ` +
 					"the current files are backed up to ~/.pi/superspec-backups/ first.",
-			];
-			if (state === "newer") {
-				lines.push(
-					"The installed pi-superspec package is older than the project schema; update the package instead if possible.",
-				);
-			}
-			return block(lines);
+				details,
+			);
 		}
 		try {
 			const backupTo =
@@ -193,7 +193,12 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	}
 	// reload() rebuilds the chat from session entries, dropping notify() output,
 	// so the result is persisted as a session message before reloading.
-	const report = [...warnings, ...schemaReport, "Schema superspec is valid.", "Superspec is set up. Next: /opsx-new <name>"];
+	const report = [
+		...warnings,
+		...schemaReport,
+		"Schema superspec is valid.",
+		"Superspec is set up. Next: /opsx-new <name>",
+	];
 	if (parsed.generate) {
 		report.push("For an existing codebase, run /opsx-generate-specs to draft specs from the code.");
 	}
