@@ -76,7 +76,7 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 
 | Command | Chức năng |
 |---|---|
-| `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. Tùy chọn `--lang <language>` đặt ngôn ngữ của các tài liệu OpenSpec. Tùy chọn `--generate` chỉ in gợi ý chạy `/opsx-generate-specs` tiếp theo, không làm việc nào của agent. |
+| `/opsx-init` | Thiết lập repository cho workflow Superspec. Luôn khả dụng. Tùy chọn `--lang <language>` đặt ngôn ngữ của các tài liệu OpenSpec. Tùy chọn `--generate` chỉ in gợi ý chạy `/opsx-generate-specs` tiếp theo, không làm việc nào của agent. Tùy chọn `--force` thay thế schema hiện có mà `/opsx-init` nếu không sẽ giữ nguyên, sau khi sao lưu nó. |
 | `/opsx-explore` | Khám phá ý tưởng và làm rõ yêu cầu trước hoặc trong một change. Không viết application code. |
 | `/opsx-new` | Bắt đầu một change và hiển thị hướng dẫn của artifact đầu tiên. |
 | `/opsx-continue` | Tạo artifact kế tiếp, chạy review gate cho nó và, khi được approve, tiếp tục sang artifact kế tiếp. Dừng trước apply. |
@@ -89,7 +89,7 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 
 Mọi lệnh trừ `/opsx-init` chỉ tồn tại trong một project đã khởi tạo. Các lệnh `opsx-propose` và `opsx-bulk-archive` không được đi kèm.
 
-Nếu `openspec/schemas/superspec/` đã tồn tại và khác với schema đi kèm, `/opsx-init` cảnh báo và không ghi gì vào đó. Công cụ nâng cấp chưa được đi kèm.
+Nếu `openspec/schemas/superspec/` đã tồn tại và khác với schema đi kèm, `/opsx-init` xử lý như sau. Nếu nó cũ hơn và chưa bị sửa kể từ lúc cài (lock file `.pi-superspec.json` khớp với các file), `/opsx-init` hỏi bạn xác nhận rồi thay bằng schema đi kèm; hãy commit `openspec/schemas/superspec/` sau đó. Không có UI tương tác thì nó chỉ báo cần làm gì. Schema có chỉnh sửa cục bộ, schema mới hơn hoặc schema lạ được giữ nguyên kèm cảnh báo, và chỉ bị thay khi dùng `/opsx-init --force`, lệnh này trước tiên sao chép thư mục hiện có vào `~/.pi/superspec-backups/`. Khi bắt đầu session, schema cũ hoặc đã bị sửa hiện một dòng thông báo; không có gì được ghi cho đến khi bạn chạy `/opsx-init`.
 
 ## Gỡ cài đặt
 

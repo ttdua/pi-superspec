@@ -55,8 +55,11 @@ recover after context loss.
 **Living specs** — `openspec/specs/`, the current specification of the system.
 
 **Lock file** — `.pi-superspec.json` next to the project schema: installed version
-and file hashes. Written on a fresh install; not read yet (detecting user edits
-from it is planned with `schema-auto-upgrade`, not shipped).
+and file hashes. Written on every install and replacement; read to decide whether an
+older schema is pristine.
+
+**Backup root** — `~/.pi/superspec-backups/`, where `/opsx-init --force` copies the
+schema it replaces, outside the project so OpenSpec does not list it as a schema.
 
 **Main checkout** — The repository's primary working tree, as opposed to a linked
 worktree.
@@ -68,6 +71,11 @@ written by this package.
 tasks, archive).
 
 **Plan** — `plan.md`, the Superpowers micro-step TDD plan for a change.
+
+**Pristine** — A project schema whose files are exactly those recorded in its lock
+file, with equal hashes and the lock version equal to the marker version; an extra
+file such as `.DS_Store` breaks it. Only an older pristine schema is upgraded
+after confirmation.
 
 **Interaction channel** — How the agent asks questions and runs review gates: the first
 available of `inbox`, `plannotator-tool`, `plannotator-cli`, `ask-tool`, `plain`. The

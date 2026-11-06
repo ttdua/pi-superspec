@@ -18,8 +18,9 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 3. Removing the package removes every command and skill; `openspec/` stays a valid
    OpenSpec project.
 4. The bundled schema is versioned (marker and lock file record the version).
-   Upgrading a project's older copy automatically and safely is planned, not shipped
-   (see [Schema identity, version and upgrade](#schema-identity-version-and-upgrade)).
+   `/opsx-init` upgrades a project's older, unchanged copy after confirmation and
+   replaces any other copy only with `--force` and a backup (see
+   [Schema identity, version and upgrade](#schema-identity-version-and-upgrade)).
 5. One unified workflow where every OpenSpec/Superpowers conflict has an explicit
    resolution.
 
@@ -161,38 +162,48 @@ the user runs in the session.
 - Lock file `openspec/schemas/superspec/.pi-superspec.json`:
   `{ "schemaVersion": n, "packageVersion": "…", "files": { "<rel path>": "<sha256>" } }`.
 
-> **Status.** Shipped: `/opsx-init` installs the schema on a fresh project (and writes
-> the lock file), does nothing for an identical schema, and for any other state warns,
-> leaves `openspec/schemas/superspec/` unchanged and stops activation. To reinstall
-> now, back up local edits, remove `openspec/schemas/superspec/` and run `/opsx-init`
-> again. Planned (change `schema-auto-upgrade`, not yet shipped): the table and the
-> write guards below, including `--force`, backups, repair and migration.
+Classification (`extensions/init/schema-install.ts`), checked in this order:
+`absent` (install), `foreign` (no marker with a version), then by marker version:
+lower is `upgradable` when the schema is pristine and `older` otherwise, higher is
+`newer`; at the same version `edited` (any bundled file differs or is missing) or
+`identical`. *Pristine* means the lock file is valid, its version equals the marker
+version, and the files in the directory (at any depth, any extra file such as
+`.DS_Store` included) are exactly the lock's files with equal sha256. The lock is
+written on every install and replacement and read only for this check.
 
-Shipped classification (`extensions/init/schema-install.ts`), checked in this order:
-`absent` (install), `foreign` (no marker with a version), `older`, `newer`, `edited`
-(same version, any bundled file differs or is missing), `identical`. Only `absent` and
-`identical` continue; the other four block. The lock file is written on a fresh
-install but not read yet.
+Decision table (`extensions/init/init.ts`):
 
-Planned design (not shipped):
+| Project state | Without `--force` | With `--force` |
+|---|---|---|
+| absent | install schema and lock | install schema and lock |
+| identical | continue | continue, no backup |
+| upgradable | with UI: confirm, then replace (no backup); declined or no UI: block and print the steps | replace after backup |
+| older, edited | block, mention `--force` | replace after backup |
+| newer, foreign | block, mention `--force` (newer also says to update the package) | replace after backup |
 
-| Project state | Action |
-|---|---|
-| same version | nothing |
-| older, files match lock hashes | replace schema dir, rewrite lock, notify the user to commit it |
-| older, files edited by the user | do not overwrite; notify; `/opsx-init --force` backs up to `openspec/schemas/superspec.bak-<timestamp>/` then replaces |
-| newer than bundled | warn that the package is outdated; do nothing |
-| no marker (e.g. upstream Superspec v4) | not activated; `/opsx-init` offers migration after backup |
+A replaced schema continues like a fresh install (legacy cleanup, language, validation,
+report, reload). The report names the transition (`upgraded`, `downgraded`, `replaced`)
+and the backup path. A blocked run writes nothing under the schema directory.
 
-Planned (not shipped): automatic upgrade writes files only when all hold: the
-project root is the main checkout, not a linked worktree (`git rev-parse --git-dir` equals
-`--git-common-dir`); the project is trusted (`ctx.isProjectTrusted()`); the session
-is interactive (`ctx.hasUI`, which excludes subagent sessions). Otherwise it only
-notifies.
+Backups go to `~/.pi/superspec-backups/<folder>-<8 hex of sha256(realpath root)>/<label>-<UTC timestamp>/`
+(`<label>` is `v<marker version>` or `foreign`), never into the project: OpenSpec lists
+every directory under `openspec/schemas/` as a schema, so a backup there would appear as
+a second schema. The location is user data, not agent configuration, so
+`PI_CODING_AGENT_DIR` does not move it. An existing backup directory is never
+overwritten; the backup fails instead.
+
+Session start only reads: for an activated project with a UI, an `upgradable`, `older`
+or `edited` schema produces a one-line notice (`extensions/schema-notice.ts`); an error
+there is swallowed. Upgrade runs only from `/opsx-init`. Writing at session start, and
+guards such as main checkout, project trust or `ctx.hasUI` for such writes, are not
+planned.
 
 Rule for maintainers: a new schema version may add artifacts or change instructions
 but must not rename or remove an artifact ID an in-flight change may already have,
-unless the release notes include a migration step.
+unless the release notes include a migration step. Any change under `schema/superspec/`
+must bump the version (marker and `version:`) and record the new tree digest in
+`tests/fixtures/schema-checksums.json`; `tests/schema-version-pin.test.ts` fails
+otherwise.
 
 ## pi tool mapping
 
@@ -238,9 +249,9 @@ rules are in `skills/references/subagent-routing.md`.
 ## Testing
 
 - Unit (extension): project-root discovery, marker detection, version compare, hash
-  check, the six classification states (`absent`, `identical`, `foreign`, `older`,
-  `newer`, `edited`), `config.yaml` merge keeping other keys. Upgrade and its write
-  guards are not tested because they are not shipped.
+  check, the seven classification states (`absent`, `identical`, `foreign`, `older`,
+  `upgradable`, `newer`, `edited`), pristine detection from the lock, backup paths,
+  the init decision table, the session notice, `config.yaml` merge keeping other keys.
 - Integration (temp git repo): init logic → `openspec schema validate superspec`;
   `openspec status --change x --json` shows the DAG in [workflow.md](workflow.md);
   `openspec instructions apply` returns the apply block.

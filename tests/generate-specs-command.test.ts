@@ -129,7 +129,7 @@ describe("opsx-generate-specs command", () => {
 		expect(read(SKILL)).toContain("Do not write tasks.md");
 	});
 
-	it("lists every prompt command in a table row of both READMEs, and --generate on the init row", () => {
+	it("lists every prompt command in a table row of both READMEs, and --generate and --force on the init row", () => {
 		const names = readdirSync(new URL("prompts/", root))
 			.filter((file) => /^opsx-.+\.md$/.test(file))
 			.map((file) => file.replace(/\.md$/, ""));
@@ -145,6 +145,7 @@ describe("opsx-generate-specs command", () => {
 			}
 			const init = rows.find((row) => row.includes("`/opsx-init`"));
 			expect(init, `${readme} lacks the init row`).toContain("--generate");
+			expect(init, `${readme} init row lacks --force`).toContain("--force");
 		}
 	});
 });

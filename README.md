@@ -76,7 +76,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 
 | Command | What it does |
 |---|---|
-| `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. Optional `--lang <language>` sets the language of OpenSpec documents (default `en`). Optional `--generate` only prints a hint to run `/opsx-generate-specs` next; it does no agent work. |
+| `/opsx-init` | Sets up the repository for the Superspec workflow. Always available. Optional `--lang <language>` sets the language of OpenSpec documents (default `en`). Optional `--generate` only prints a hint to run `/opsx-generate-specs` next; it does no agent work. Optional `--force` replaces an existing schema that `/opsx-init` would otherwise leave unchanged, after backing it up. |
 | `/opsx-explore` | Explores ideas and clarifies requirements before or during a change. Writes no application code. |
 | `/opsx-new` | Starts a change and shows the first artifact instructions. |
 | `/opsx-continue` | Creates the next artifact, runs a review gate on it and, once approved, continues to the next. Stops before apply. |
@@ -89,7 +89,7 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 
 All commands except `/opsx-init` exist only in an initialised project. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped.
 
-If `openspec/schemas/superspec/` already exists and differs from the bundled schema, `/opsx-init` warns and writes nothing there. Upgrade tooling is not yet shipped.
+If `openspec/schemas/superspec/` already exists and differs from the bundled schema, `/opsx-init` behaves as follows. If it is older and unchanged since install (the lock file `.pi-superspec.json` matches the files), `/opsx-init` asks you to confirm and then replaces it with the bundled one; commit `openspec/schemas/superspec/` afterwards. Without an interactive UI it only reports what to do. A schema with local edits, a newer schema or a foreign schema is left unchanged with a warning, and is replaced only with `/opsx-init --force`, which first copies the existing directory to `~/.pi/superspec-backups/`. At session start, an outdated or edited schema shows a one-line notice; nothing is written until you run `/opsx-init`.
 
 ## Uninstall
 
