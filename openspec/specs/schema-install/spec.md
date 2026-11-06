@@ -1,7 +1,7 @@
 # schema-install Specification
 
 ## Purpose
-Define how `/opsx-init` installs the bundled schema, writes the sha256 lock file, and classifies an existing schema directory without overwriting it.
+Define how `/opsx-init` installs the bundled schema, writes the sha256 lock file, classifies an existing schema directory against the bundled schema and its lock, and replaces it safely, with a backup outside the project when forced.
 
 ## Requirements
 ### Requirement: Fresh install

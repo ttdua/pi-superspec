@@ -1,7 +1,7 @@
 # schema-version-pin Specification
 
 ## Purpose
-TBD
+Keep a schema `version` tied to exactly one content of `schema/superspec/`, so a same-version difference in an installed project always means a local edit and an upgrade is never needed without a version bump.
 
 ## Requirements
 
