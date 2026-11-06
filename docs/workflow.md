@@ -181,7 +181,7 @@ The same context carries the Interaction channel paragraph (see Review gates).
 
 | Command | Behaviour |
 |---|---|
-| `/opsx-init` | Always available. Set up the project; an existing non-identical schema is left unchanged with a warning (automatic upgrade and repair are planned, not shipped). |
+| `/opsx-init` | Always available. Set up the project; an outdated pristine schema is upgraded after confirmation, any other non-identical schema is blocked unless you pass `--force`, which replaces it after a backup. |
 | `/opsx-explore [topic]` | Free-form thinking, no code. |
 | `/opsx-new <name>` | Create a change with the `superspec` schema. |
 | `/opsx-continue [name]` | Create the next ready artifact, run a review gate on it and, once approved, continue to the next; stops before `apply`. **Default path for changes needing close review.** |

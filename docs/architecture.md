@@ -86,7 +86,7 @@ only to develop pi-superspec itself and is never edited by a change.
 
 | Component | Responsibility |
 |---|---|
-| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; probes once per session start whether the `plannotator` CLI exists; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid, and an Interaction channel paragraph for the channel detected from the active tools and the probe result. It does not check or upgrade the project schema at `session_start` (planned, see below). |
+| Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; probes once per session start whether the `plannotator` CLI exists; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid, and an Interaction channel paragraph for the channel detected from the active tools and the probe result. At `session_start` it only reads the project schema and may show a one-line notice; it never writes (see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) declared by top-level `pi-subagents.agents: ["./agents"]`. A compatible `pi-subagents` discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
@@ -108,7 +108,7 @@ session_start (activated project)
      `pi install git:github.com/obra/superpowers`
   └─ probe once: `command -v plannotator` (cached for the session; a probe not finished yet
      counts as unavailable for that turn)
-     (no schema version comparison or upgrade here yet: planned, see below)
+     (read-only schema notice with a UI when the schema is outdated or edited; nothing is written)
 context (activated project)
   └─ (always adds a document language paragraph: `language:` from openspec/config.yaml, or `en`
       when it is missing, invalid or unreadable; read each turn, so a change takes effect without reload)
@@ -123,7 +123,7 @@ context (activated project)
 
 Always available, idempotent: re-running on an initialised project changes nothing
 unless you pass `--lang`, answer the language prompt, or `language:` is missing or invalid (it is then set to `en`).
-It does not repair or upgrade an existing schema (planned, see below).
+It upgrades or replaces an existing schema only as the decision table below says; `--force` replaces after a backup.
 
 1. Require `openspec --version` ≥ 1.16; otherwise print the install line and stop.
 2. Warn (do not stop) when not in a git repo or when Superpowers skills are not
@@ -131,7 +131,7 @@ It does not repair or upgrade an existing schema (planned, see below).
 3. If `openspec/` is missing, run `openspec init --tools none` (no harness files).
 4. Write or update `openspec/config.yaml`: set `schema: superspec`, set `language` (step 7), keep all other keys.
 5. Install the schema on a fresh project (`absent`). An identical schema is left as is;
-   any other existing state stops with a warning and writes nothing (see below).
+   any other existing state follows the decision table below (upgrade after confirmation, or block and mention `--force`, which replaces after a backup).
 6. If files from `openspec init --tools pi` exist (`.pi/prompts/opsx-*.md`,
    `.pi/skills/openspec-*`), list them and **ask** before deleting them.
 7. Set the document language, after the legacy cleanup (a project blocked on an existing
@@ -155,7 +155,7 @@ the user runs in the session.
 
 ## Schema identity, version and upgrade
 
-- Schema name: `superspec`. `version:` is **6** (started at 5, continuing upstream v4).
+- Schema name: `superspec`. `version:` is the bundled schema version (started at 5, continuing upstream v4; see `schema/superspec/schema.yaml`).
 - Marker block `x-pi-superspec: { version: <n> }` identifies the package's schema.
   OpenSpec strips unknown top-level keys, so validation still passes (not verified
   against an OpenSpec release).
