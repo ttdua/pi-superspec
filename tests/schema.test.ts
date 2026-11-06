@@ -419,6 +419,27 @@ run("bundled schema", () => {
 		const tpl = (name: string) =>
 			readFileSync(join(SCHEMA_DIR, "templates", name), "utf8");
 
+		it("brainstorm reads the baseline specs of touched capabilities", () => {
+			const text = instructionFor("brainstorm");
+			expect(text).toContain("read the living spec in `openspec/specs/` of each capability the change plausibly touches");
+			expect(text).toContain("cite the existing requirements involved");
+			expect(text).toContain("state explicitly when the change alters a specified requirement");
+			for (const t of ["plannotator", "AskUserQuestion", "ask_user_question"]) expect(text).not.toContain(t);
+		});
+
+		it("proposal confirms modified capabilities in the living spec", () => {
+			expect(instructionFor("proposal")).toContain(
+				"List a capability here only after confirming in its living spec that existing requirements change.",
+			);
+		});
+
+		it("specs start MODIFIED from the baseline block with exact headers", () => {
+			const text = instructionFor("specs");
+			expect(text).toContain("copy the full current requirement block from `openspec/specs/<capability>/spec.md`");
+			expect(text).toContain("`MODIFIED`, `REMOVED` and `RENAMED` `FROM` headers MUST match the main spec header exactly");
+			expect(text).toContain("name the dropped scenario as intentional in the requirement text or the proposal");
+		});
+
 		it("brainstorm keeps technical decisions out and does not hand off to writing-plans", () => {
 			const text = instructionFor("brainstorm");
 			expect(text).toContain(
