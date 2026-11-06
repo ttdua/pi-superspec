@@ -19,10 +19,10 @@
 
 ## 5. `/opsx-init` upgrade flow
 
-- [ ] 5.1 Add `backupRoot` to `InitIO` (`extensions/init/io.ts`), wire it in `createInitIO` (`extensions/superspec.ts`) to `~/.pi/superspec-backups`, and give `fakeIO` (`tests/helpers/io.ts`) a temp default
-- [ ] 5.2 Implement the decision table (design D4) in `extensions/init/init.ts`: confirm and replace an upgradable schema with a UI, block with upgrade steps when declined or without a UI, block other states with a `--force` hint (and the "package is older" wording for newer), and with `--force` back up and replace every non-identical state; continue replaced runs through legacy cleanup, language, validation, report and reload
-- [ ] 5.3 Report wording: `upgraded` / `downgraded` / `replaced` with versions, the backup path, `Commit openspec/schemas/superspec/.`, and the backup path again when validation fails after a replacement
-- [ ] 5.4 Add `tests/init/init.test.ts` cases for every scenario of "Schema upgrade", "Forced replacement", "Force option", "Stop on unmanaged schema", the new "Validation and activation" scenario, "Language step order" after an upgrade, and second runs after upgrade and after force being byte-identical; adjust existing blocked-run assertions to the new message text
+- [x] 5.1 Add `backupRoot` to `InitIO` (`extensions/init/io.ts`), wire it in `createInitIO` (`extensions/superspec.ts`) to `~/.pi/superspec-backups`, and give `fakeIO` (`tests/helpers/io.ts`) a temp default
+- [x] 5.2 Implement the decision table (design D4) in `extensions/init/init.ts`: confirm and replace an upgradable schema with a UI, block with upgrade steps when declined or without a UI, block other states with a `--force` hint (and the "package is older" wording for newer), and with `--force` back up and replace every non-identical state; continue replaced runs through legacy cleanup, language, validation, report and reload
+- [x] 5.3 Report wording: `upgraded` / `downgraded` / `replaced` with versions, the backup path, `Commit openspec/schemas/superspec/.`, and the backup path again when validation fails after a replacement
+- [x] 5.4 Add `tests/init/init.test.ts` cases for every scenario of "Schema upgrade", "Forced replacement", "Force option", "Stop on unmanaged schema", the new "Validation and activation" scenario, "Language step order" after an upgrade, and second runs after upgrade and after force being byte-identical; adjust existing blocked-run assertions to the new message text
 
 ## 6. Session-start notice
 
