@@ -30,10 +30,10 @@
 
 ## 7. Docs
 
-- [ ] 7.1 Update `docs/usage-guide.md` "Existing schemas" and troubleshooting per the modified usage-guide requirement (lock-based check, confirmation, no-UI steps, `--force` and backup path, session notice, `--lang vi --force`, restoring from a backup)
-- [ ] 7.2 Update `README.md` and `README.vi.md`: `/opsx-init` row mentions `--force`, and the paragraph under the command table describes the confirmed upgrade and `--force` with backup
-- [ ] 7.3 Update `docs/architecture.md` (status note, classification, decision table, backup location, no automatic upgrade at session start, version-pin rule for maintainers), `docs/domain-model.md` (ProjectSchema states, SchemaLock is read, Project properties), `docs/glossary.md` (Lock file, new terms Pristine and Backup root) and `docs/e2e-checklist.md` (upgrade and `--force` steps replace the manual reinstall)
-- [ ] 7.4 Add a `CHANGELOG.md` entry under Unreleased and update the v6 reinstall note to point to the new upgrade path; mention the checksum pin in `CONTRIBUTING.md`
+- [x] 7.1 Update `docs/usage-guide.md` "Existing schemas" and troubleshooting per the modified usage-guide requirement (lock-based check, confirmation, no-UI steps, `--force` and backup path, session notice, `--lang vi --force`, restoring from a backup)
+- [x] 7.2 Update `README.md` and `README.vi.md`: `/opsx-init` row mentions `--force`, and the paragraph under the command table describes the confirmed upgrade and `--force` with backup
+- [x] 7.3 Update `docs/architecture.md` (status note, classification, decision table, backup location, no automatic upgrade at session start, version-pin rule for maintainers), `docs/domain-model.md` (ProjectSchema states, SchemaLock is read, Project properties), `docs/glossary.md` (Lock file, new terms Pristine and Backup root) and `docs/e2e-checklist.md` (upgrade and `--force` steps replace the manual reinstall)
+- [x] 7.4 Add a `CHANGELOG.md` entry under Unreleased and update the v6 reinstall note to point to the new upgrade path; mention the checksum pin in `CONTRIBUTING.md`
 
 ## 8. Verification
 
