@@ -15,7 +15,7 @@
 
 ## 4. `--force` argument
 
-- [ ] 4.1 Generalise standalone-flag handling in `extensions/init/args.ts` to `--generate` and `--force`, add `force?: true` to `InitArgs` and update the usage string; extend `tests/init/args.test.ts` for `--force` alone, before and after `--lang`, with `--generate`, repeated, valued (`--force=yes`), and `--lang --force` reporting a missing value; replace the existing `--force` "Unknown argument" expectations
+- [x] 4.1 Generalise standalone-flag handling in `extensions/init/args.ts` to `--generate` and `--force`, add `force?: true` to `InitArgs` and update the usage string; extend `tests/init/args.test.ts` for `--force` alone, before and after `--lang`, with `--generate`, repeated, valued (`--force=yes`), and `--lang --force` reporting a missing value; replace the existing `--force` "Unknown argument" expectations
 
 ## 5. `/opsx-init` upgrade flow
 
