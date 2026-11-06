@@ -1,8 +1,8 @@
 ## 1. Bundled schema instructions
 
-- [ ] 1.1 Brainstorm instruction in `schema/superspec/schema.yaml` reads the living specs of touched capabilities, cites requirements and states deliberate changes (spec `bundled-schema`: Brainstorm reads the baseline specs)
-- [ ] 1.2 Proposal instruction confirms Modified Capabilities against the living spec (spec `bundled-schema`: Proposal confirms modified capabilities)
-- [ ] 1.3 Specs instruction copies the full baseline block for `MODIFIED`, requires exact headers, and names dropped scenarios (spec `bundled-schema`: Delta specs start from the baseline)
+- [x] 1.1 Brainstorm instruction in `schema/superspec/schema.yaml` reads the living specs of touched capabilities, cites requirements and states deliberate changes (spec `bundled-schema`: Brainstorm reads the baseline specs)
+- [x] 1.2 Proposal instruction confirms Modified Capabilities against the living spec (spec `bundled-schema`: Proposal confirms modified capabilities)
+- [x] 1.3 Specs instruction copies the full baseline block for `MODIFIED`, requires exact headers, and names dropped scenarios (spec `bundled-schema`: Delta specs start from the baseline)
 
 ## 2. Routing note
 
