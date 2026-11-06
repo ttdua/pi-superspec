@@ -1,7 +1,7 @@
 ## 1. Schema checksum pin
 
-- [ ] 1.1 Add `treeDigest(dir)` to `extensions/init/schema-install.ts` (sha256 over sorted `<path>\0<sha256>\n` lines of `hashTree`), with unit tests for determinism and for rename, add and remove changing the digest (`tests/init/schema-install.test.ts`)
-- [ ] 1.2 Add `.gitattributes` (`schema/** text eol=lf`), `tests/fixtures/schema-checksums.json` with the digest of the current v7 tree and `tests/schema-version-pin.test.ts` that fails on a missing entry, a different digest or a recorded version above the current one, with a message naming the version bump or the new entry
+- [x] 1.1 Add `treeDigest(dir)` to `extensions/init/schema-install.ts` (sha256 over sorted `<path>\0<sha256>\n` lines of `hashTree`), with unit tests for determinism and for rename, add and remove changing the digest (`tests/init/schema-install.test.ts`)
+- [x] 1.2 Add `.gitattributes` (`schema/** text eol=lf`), `tests/fixtures/schema-checksums.json` with the digest of the current v7 tree and `tests/schema-version-pin.test.ts` that fails on a missing entry, a different digest or a recorded version above the current one, with a message naming the version bump or the new entry
 
 ## 2. Lock-based classification
 
