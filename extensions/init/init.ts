@@ -95,7 +95,17 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	const config = applyConfig(root);
 	const target = join(root, "openspec", "schemas", "superspec");
 	const bundled = join(packageRoot, "schema", "superspec");
-	const state = classifySchema(target, bundled);
+	let state: ReturnType<typeof classifySchema>;
+	try {
+		state = classifySchema(target, bundled);
+	} catch (err) {
+		io.notify(
+			`Could not read openspec/schemas/superspec: ${err instanceof Error ? err.message : String(err)}. Nothing was changed.`,
+			"error",
+		);
+		await cleanLegacy(io, root);
+		return "blocked";
+	}
 	const to = markerVersion(bundled) ?? 0;
 	const noteLine = "Note: openspec/config.yaml now has `schema: superspec`.";
 	const block = async (lines: string[]): Promise<InitOutcome> => {
@@ -153,8 +163,9 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 			if (backup !== undefined) schemaReport.push(`Backup of the previous schema: ${backup}`);
 			schemaReport.push("Commit openspec/schemas/superspec/.");
 		} catch (err) {
+			const reason = err instanceof Error ? err.message : String(err);
 			const lines = [
-				`Schema replacement failed: ${err instanceof Error ? err.message : String(err)}`,
+				err instanceof ReplaceError ? reason : `Schema replacement failed: ${reason}`,
 				"The schema at openspec/schemas/superspec was not changed or was restored.",
 			];
 			if (err instanceof ReplaceError && err.backup !== undefined) {

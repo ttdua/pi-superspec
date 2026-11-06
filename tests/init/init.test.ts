@@ -1,5 +1,6 @@
 import {
 	appendFileSync,
+	chmodSync,
 	cpSync,
 	existsSync,
 	mkdirSync,
@@ -732,6 +733,23 @@ describe("existing schema", () => {
 		expect(calls.some(isValidate)).toBe(false);
 		expect(io.reloads).toBe(0);
 		expect(io.notes.join("\n")).toContain("Schema replacement failed");
+		expect(io.notes.join("\n").split("Schema replacement failed")).toHaveLength(2);
+	});
+
+	it.skipIf(process.getuid?.() === 0)("blocks without throwing when the older schema is unreadable", async () => {
+		const root = await upgradable();
+		const file = join(schemaDir(root), "templates", "apply.md");
+		const { io, calls } = recording(root);
+		chmodSync(file, 0o000);
+		try {
+			expect(await runInit(io, packageRoot)).toBe("blocked");
+		} finally {
+			chmodSync(file, 0o644);
+		}
+		expect(io.notes.join("\n")).toContain("Could not read openspec/schemas/superspec:");
+		expect(io.notes.join("\n")).toContain("Nothing was changed.");
+		expect(calls.some(isValidate)).toBe(false);
+		expect(io.reloads).toBe(0);
 	});
 
 	it("writes the language after a confirmed upgrade", async () => {
