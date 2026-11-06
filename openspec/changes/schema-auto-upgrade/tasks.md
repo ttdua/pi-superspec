@@ -10,8 +10,8 @@
 
 ## 3. Schema replacement and backup
 
-- [ ] 3.1 Add `backupPath(backupRoot, root, label, now)` that builds `<folder>-<hash8>/<label>-<YYYYMMDDTHHMMSSmmmZ>` from the real root path, with tests for the path shape, the `foreign` label and two same-named projects getting different directories
-- [ ] 3.2 Add `replaceSchema(root, packageRoot, backup?, fsOps?)` that preflights the bundled tree, copies the old directory to a backup first (refusing an existing backup path), stages the bundled tree and a fresh lock outside `openspec/schemas/`, and swaps it in with renames, rolling back on failure; return `{ from, to, backup }`; test replace without backup equals a fresh install with a byte-identical lock, replace with backup keeps every old file including the lock, a failed backup or a missing bundled tree leaves the directory byte-identical, and staging or swap failures leave it byte-identical and report the backup path
+- [x] 3.1 Add `backupPath(backupRoot, root, label, now)` that builds `<folder>-<hash8>/<label>-<YYYYMMDDTHHMMSSmmmZ>` from the real root path, with tests for the path shape, the `foreign` label and two same-named projects getting different directories
+- [x] 3.2 Add `replaceSchema(root, packageRoot, backup?, fsOps?)` that preflights the bundled tree, copies the old directory to a backup first (refusing an existing backup path), stages the bundled tree and a fresh lock outside `openspec/schemas/`, and swaps it in with renames, rolling back on failure; return `{ from, to, backup }`; test replace without backup equals a fresh install with a byte-identical lock, replace with backup keeps every old file including the lock, a failed backup or a missing bundled tree leaves the directory byte-identical, and staging or swap failures leave it byte-identical and report the backup path
 
 ## 4. `--force` argument
 
