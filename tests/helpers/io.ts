@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { ExecResult, InitIO } from "../../extensions/init/io.ts";
 
 export function fakeIO(
@@ -30,6 +32,7 @@ export function fakeIO(
 		superpowersAvailable(): boolean {
 			return true;
 		},
+		backupRoot: join(tmpdir(), "pi-superspec-bak-unused"),
 	};
 	return {
 		...base,

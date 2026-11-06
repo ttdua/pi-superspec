@@ -155,7 +155,7 @@ Set the language once and agents write the prose of your OpenSpec documents (cha
 /opsx-init --lang vi
 ```
 
-`--lang <value>` (or `--lang=<value>`) writes or overwrites `language:` in `openspec/config.yaml`, directly after `schema:`. Everything after `--lang` is taken as the value (so `--lang vi --force` sets the language to `vi --force`), quotes around it are stripped, and it must be 1 to 64 characters with no control characters. An invalid or missing value stops with an error before any file is written, and arguments that do not start with `--lang` are rejected as unknown.
+`--lang <value>` (or `--lang=<value>`) writes or overwrites `language:` in `openspec/config.yaml`, directly after `schema:`. Everything after `--lang` is taken as the value, except the standalone flags `--generate` and `--force`, which are extracted first (so `--lang vi --force` sets the language to `vi` and enables `--force`), quotes around it are stripped, and it must be 1 to 64 characters with no control characters. An invalid or missing value stops with an error before any file is written, and arguments other than `--lang`, `--generate` and `--force` are rejected as unknown.
 
 Without the flag the default language is `en`. When `language:` is missing or invalid and pi has a UI, `/opsx-init` asks once per run and offers `en`; an empty answer, cancel or invalid answer (the latter with a warning) writes `language: en`. Without a UI it does not ask and writes `language: en` directly. An invalid existing `language:` line is replaced by `language: en`, and an existing valid value is never changed without the flag. A project blocked on an existing schema writes no language and does not ask.
 
@@ -235,17 +235,42 @@ Two other optional pi packages change how the agent asks and tracks, and both ha
 
 `/opsx-init` compares `openspec/schemas/superspec/` with the bundled schema:
 
-| State | What `/opsx-init` does |
-|---|---|
-| fresh install (directory missing) | Copies the bundled schema to `openspec/schemas/superspec/` and writes the lock file `.pi-superspec.json`. |
-| identical | Leaves everything as it is. Running `/opsx-init` again is safe. |
-| any other state: foreign, older, newer, edited | Warns and writes nothing under `openspec/schemas/superspec/`. It does not validate or reload. |
+| State | Without `--force` | With `--force` |
+|---|---|---|
+| fresh install (directory missing) | Copies the bundled schema and writes the lock file `.pi-superspec.json`. | Same. |
+| identical | Leaves everything as it is. Running `/opsx-init` again is safe. | Same; no backup. |
+| older, unchanged since install | With a UI, asks `Upgrade schema superspec?` and replaces the schema after you confirm (no backup). Without a UI, or if you decline, it writes nothing and prints the next steps. | Replaces it and keeps a backup. |
+| older with local edits, edited (same version, files differ), newer, foreign | Warns, writes nothing under `openspec/schemas/superspec/`, and stops activation. | Replaces it and keeps a backup. |
 
-In the last row, `foreign` is a schema without the `x-pi-superspec` marker and version (for example upstream Superspec v4); `older` and `newer` carry a marker version lower or higher than the bundled one; `edited` has the same version but differs from the bundled files.
+`foreign` is a schema without the `x-pi-superspec` marker and version (for example upstream Superspec v4); `older` and `newer` carry a marker version lower or higher than the bundled one; `edited` has the same version but differs from the bundled files.
 
-The warning reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked.
+**"Unchanged since install."** When `/opsx-init` installs the schema it writes `openspec/schemas/superspec/.pi-superspec.json`, which records the installed schema version and the sha256 of every file. An older schema counts as unchanged only if that lock is valid, its version equals the marker version in `schema.yaml`, and the files in the directory are exactly the files in the lock with the same hashes. A missing or malformed lock, a changed file, a deleted file or any extra file makes it a schema with local edits. This includes stray files such as `.DS_Store` or an editor backup: delete them (or use `--force`) if you want the plain confirmed upgrade.
 
-Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again. Upgrading from v6 to v7: schema version 7 ships with this release, so a project with v6 installed is classified `older`, `/opsx-init` warns, and the schema must be reinstalled by hand as described here.
+A blocked run reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped. Run /opsx-init --force to replace it with the bundled v<n>; the current files are backed up to ~/.pi/superspec-backups/ first.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked. A newer schema adds a line saying the installed package is older than the project schema, so update the package instead if you can.
+
+**After a package update.** At session start in an activated project with a UI, an outdated or edited schema shows a one-line notice, for example `Schema superspec v6 is older than the bundled v7. Run /opsx-init to upgrade.` (for local edits, `Schema superspec differs from the bundled v7 (local edits). Run /opsx-init --force to replace it (a backup is kept).`; for an older schema with local edits, `Schema superspec v6 is older than the bundled v7 and has local edits. Run /opsx-init --force to replace it (a backup is kept).`). The notice only reads the project; nothing is written until you run `/opsx-init`. Upgrading from v6 to v7 is an ordinary upgrade: run `/opsx-init`, confirm, and commit `openspec/schemas/superspec/`.
+
+A replaced schema then continues like a fresh install (legacy cleanup, language, `openspec schema validate superspec`, reload). The report adds `Schema superspec <upgraded|downgraded|replaced> from v<from> to v<to>.`, `Backup of the previous schema: <path>` when a backup was made, and `Commit openspec/schemas/superspec/.`
+
+### Backups and restore
+
+`--force` copies the existing schema directory before replacing it, to:
+
+```text
+~/.pi/superspec-backups/<project-folder>-<8 hex of the project path hash>/<label>-<UTC timestamp>/
+```
+
+`<label>` is `v<marker version>` or `foreign`. The backup lives outside the project on purpose: OpenSpec treats every directory under `openspec/schemas/` as a schema, so a backup kept there would show up as a second schema. A confirmed upgrade of an unchanged schema makes no backup, because the bundled files and the lock describe it exactly (and git has it).
+
+To restore, copy the backup back over the schema directory and commit:
+
+```sh
+rm -rf openspec/schemas/superspec
+cp -R ~/.pi/superspec-backups/<project>-<hash>/<label>-<timestamp> openspec/schemas/superspec
+git add openspec/schemas/superspec && git commit -m "chore: restore superspec schema"
+```
+
+A restored older schema is upgraded again the next time you run `/opsx-init`, so use `/opsx-init` only when you want that.
 
 ## Troubleshooting
 
@@ -260,6 +285,9 @@ The project is not activated. A project is activated when `openspec/schemas/supe
 
 **`Not inside a git repository; continuing without git.`**
 Only a warning for `/opsx-init`. Before you reach `/opsx-apply`, initialise git and create a feature branch with an `origin` remote, because apply and finalize rely on branches and worktrees.
+
+**My schema was replaced and I want my edits back.**
+A `--force` run always prints `Backup of the previous schema: <path>`. If you lost the message, look in `~/.pi/superspec-backups/<project-folder>-<hash>/`; the newest `<label>-<timestamp>` directory is the last backup. Copy it over `openspec/schemas/superspec/` and commit, as in [Backups and restore](#backups-and-restore). A confirmed upgrade of an unchanged schema makes no backup; restore it from git.
 
 **`openspec init --tools none failed` or `openspec schema validate superspec failed`.**
 The output of the failed command is appended to the message. Fix the cause and run `/opsx-init` again. After a validation failure the installed files are kept.

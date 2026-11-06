@@ -6,7 +6,7 @@ Thanks for helping with pi-superspec.
 
 Changes to this repository go through the OpenSpec workflow: propose the change under `openspec/changes/<name>/`, implement it, then archive it. Follow the rules in `openspec/config.yaml`, whose `context` section applies to every change.
 
-The product schema that this package ships lives in `schema/superspec/`. The copy in `openspec/schemas/superspec/` is the upstream v4 schema used by this repository itself; it is never edited.
+The product schema that this package ships lives in `schema/superspec/`. The copy in `openspec/schemas/superspec/` is the upstream v4 schema used by this repository itself; it is never edited. When you change anything under `schema/superspec/`, bump the schema version (the `x-pi-superspec` marker and `version:`) and record the new digest in `tests/fixtures/schema-checksums.json`; `tests/schema-version-pin.test.ts` prints the digest to add.
 
 ## Checks
 

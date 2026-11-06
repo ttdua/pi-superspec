@@ -1,4 +1,6 @@
 import {
+	appendFileSync,
+	chmodSync,
 	cpSync,
 	existsSync,
 	mkdirSync,
@@ -9,12 +11,13 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runInit } from "../../extensions/init/init.ts";
 import type { ExecResult, InitIO } from "../../extensions/init/io.ts";
 import { fakeIO } from "../helpers/io.ts";
+import { asV6 } from "../helpers/project.ts";
 
 const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures");
@@ -187,8 +190,7 @@ describe("runInit", () => {
 		const notice = io.notes.join("\n");
 		expect(notice).toContain("foreign");
 		expect(notice).toContain("openspec/config.yaml now has `schema: superspec`");
-		expect(notice).toContain("schema-auto-upgrade");
-		expect(notice).toContain("remove openspec/schemas/superspec/");
+		expect(notice).toContain("--force");
 		expect(readdirSync(dirname(schemaFile))).toEqual(["schema.yaml"]);
 		expect(readFileSync(schemaFile, "utf8")).toBe(before);
 	});
@@ -474,5 +476,286 @@ describe("runInit", () => {
 				readFileSync(join(plain, "openspec", "config.yaml"), "utf8"),
 			);
 		});
+	});
+});
+
+describe("existing schema", () => {
+	const schemaDir = (root: string) => join(root, "openspec", "schemas", "superspec");
+	const snap = (dir: string): Record<string, string> => {
+		const out: Record<string, string> = {};
+		const walk = (d: string) => {
+			for (const e of readdirSync(d, { withFileTypes: true })) {
+				const p = join(d, e.name);
+				if (e.isDirectory()) walk(p);
+				else out[relative(dir, p)] = readFileSync(p, "utf8");
+			}
+		};
+		walk(dir);
+		return out;
+	};
+	async function installed(): Promise<string> {
+		const root = tmp();
+		expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+		return root;
+	}
+	const upgradable = async () => {
+		const root = await installed();
+		asV6(schemaDir(root));
+		return root;
+	};
+	const edited = async () => {
+		const root = await installed();
+		appendFileSync(join(schemaDir(root), "schema.yaml"), "# local edit\n");
+		return root;
+	};
+	const older = async () => {
+		const root = await upgradable();
+		appendFileSync(join(schemaDir(root), "schema.yaml"), "# local edit\n");
+		return root;
+	};
+	const newer = async () => {
+		const root = await installed();
+		const f = join(schemaDir(root), "schema.yaml");
+		writeFileSync(
+			f,
+			readFileSync(f, "utf8")
+				.replace(/^version:\s*\d+/m, "version: 8")
+				.replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$18"),
+		);
+		return root;
+	};
+	const foreign = () => {
+		const root = tmp();
+		cpSync(join(fixtures, "unmarked"), root, { recursive: true });
+		return root;
+	};
+	const freshSnap = async () => snap(schemaDir(await installed()));
+	const backupsOf = (bak: string) => {
+		const projects = readdirSync(bak);
+		return projects.flatMap((p) => readdirSync(join(bak, p)).map((b) => join(bak, p, b)));
+	};
+
+	it("confirmed upgrade replaces without backup and reloads", async () => {
+		const root = await upgradable();
+		const bak = tmp();
+		const { io, calls } = recording(root, undefined, { backupRoot: bak, confirm: async () => true });
+		expect(await runInit(io, packageRoot)).toBe("activated");
+		expect(snap(schemaDir(root))).toEqual(await freshSnap());
+		expect(readdirSync(bak)).toEqual([]);
+		expect(io.reports[0]).toContain("upgraded from v6 to v7");
+		expect(io.reports[0]).toContain("Commit openspec/schemas/superspec/");
+		expect(calls.filter(isValidate)).toHaveLength(1);
+		expect(io.reloads).toBe(1);
+	});
+
+	it("declined upgrade is blocked and untouched", async () => {
+		const root = await upgradable();
+		const before = snap(schemaDir(root));
+		const { io, calls } = recording(root, undefined, { confirm: async () => false });
+		expect(await runInit(io, packageRoot)).toBe("blocked");
+		expect(snap(schemaDir(root))).toEqual(before);
+		expect(calls.some(isValidate)).toBe(false);
+		expect(io.reloads).toBe(0);
+	});
+
+	it("without a UI never asks and names the upgrade steps", async () => {
+		const root = await upgradable();
+		const before = snap(schemaDir(root));
+		let asked = 0;
+		const { io } = recording(root, undefined, {
+			hasUI: false,
+			async confirm() {
+				asked += 1;
+				return true;
+			},
+		});
+		expect(await runInit(io, packageRoot)).toBe("blocked");
+		expect(asked).toBe(0);
+		expect(io.notes.join("\n")).toContain("/opsx-init");
+		expect(io.notes.join("\n")).toContain("--force");
+		expect(snap(schemaDir(root))).toEqual(before);
+		expect(io.reloads).toBe(0);
+	});
+
+	it.each([
+		["edited", edited],
+		["older", older],
+		["foreign", async () => foreign()],
+	])("blocks a %s schema without --force", async (_name, make) => {
+		const root = await make();
+		const before = snap(schemaDir(root));
+		const { io, calls } = recording(root);
+		expect(await runInit(io, packageRoot)).toBe("blocked");
+		expect(io.notes.join("\n")).toContain("--force");
+		expect(snap(schemaDir(root))).toEqual(before);
+		expect(calls.some(isValidate)).toBe(false);
+		expect(io.reloads).toBe(0);
+	});
+
+	it("blocks a newer schema and says the package is older", async () => {
+		const root = await newer();
+		const before = snap(schemaDir(root));
+		const { io } = recording(root);
+		expect(await runInit(io, packageRoot)).toBe("blocked");
+		expect(io.notes.join("\n")).toContain("older than the project schema");
+		expect(snap(schemaDir(root))).toEqual(before);
+	});
+
+	it("--force on an edited schema replaces it and keeps a backup", async () => {
+		const root = await edited();
+		const before = snap(schemaDir(root));
+		const bak = tmp();
+		const { io } = recording(root, undefined, { backupRoot: bak });
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		const [b] = backupsOf(bak);
+		expect(snap(b)).toEqual(before);
+		expect(basename(b)).toMatch(/^v7-/);
+		expect(io.reports[0]).toContain("replaced");
+		expect(io.reports[0]).toContain(b);
+		expect(snap(schemaDir(root))).toEqual(await freshSnap());
+		expect(io.reloads).toBe(1);
+	});
+
+	it("--force on a newer schema reports downgraded", async () => {
+		const root = await newer();
+		const bak = tmp();
+		const { io } = recording(root, undefined, { backupRoot: bak });
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		expect(io.reports[0]).toContain("downgraded from v8 to v7");
+		expect(backupsOf(bak)).toHaveLength(1);
+	});
+
+	it("--force on an older edited schema reports upgraded", async () => {
+		const root = await older();
+		const bak = tmp();
+		const { io } = recording(root, undefined, { backupRoot: bak });
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		expect(io.reports[0]).toContain("upgraded from v6 to v7");
+		expect(backupsOf(bak)).toHaveLength(1);
+	});
+
+	it("--force on a foreign schema backs up under a foreign label", async () => {
+		const root = foreign();
+		const bak = tmp();
+		const { io } = recording(root, undefined, { backupRoot: bak });
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		const [b] = backupsOf(bak);
+		expect(basename(b)).toMatch(/^foreign-/);
+		expect(io.reports[0]).toContain("replaced");
+	});
+
+	it("--force on an upgradable schema does not ask and keeps a backup", async () => {
+		const root = await upgradable();
+		const bak = tmp();
+		let asked = 0;
+		const { io } = recording(root, undefined, {
+			backupRoot: bak,
+			async confirm() {
+				asked += 1;
+				return true;
+			},
+		});
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		expect(asked).toBe(0);
+		expect(backupsOf(bak)).toHaveLength(1);
+		expect(io.reports[0]).toContain("upgraded from v6 to v7");
+	});
+
+	it("--force on an absent schema installs fresh without backup", async () => {
+		const root = tmp();
+		const bak = tmp();
+		const { io } = recording(root, undefined, { backupRoot: bak });
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		expect(readdirSync(bak)).toEqual([]);
+		expect(snap(schemaDir(root))).toEqual(await freshSnap());
+	});
+
+	it("--force on an identical schema writes no backup", async () => {
+		const root = await installed();
+		const before = snap(schemaDir(root));
+		const bak = tmp();
+		const { io } = recording(root, undefined, { backupRoot: bak });
+		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
+		expect(readdirSync(bak)).toEqual([]);
+		expect(snap(schemaDir(root))).toEqual(before);
+	});
+
+	it("--force combined with --lang and --generate", async () => {
+		const root = await edited();
+		const { io } = recording(root, undefined, { backupRoot: tmp() });
+		expect(await runInit(io, packageRoot, "--force --lang vi --generate")).toBe("activated");
+		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("language: vi");
+		expect(io.reports[0]).toContain("/opsx-generate-specs");
+	});
+
+	it("a second run after a confirmed upgrade changes nothing", async () => {
+		const root = await upgradable();
+		expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+		const before = snap(root);
+		expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+		expect(snap(root)).toEqual(before);
+	});
+
+	it("a second run after --force writes no backup and changes nothing", async () => {
+		const root = await edited();
+		const bak = tmp();
+		expect(await runInit(recording(root, undefined, { backupRoot: bak }).io, packageRoot, "--force")).toBe("activated");
+		const before = snap(root);
+		const count = backupsOf(bak).length;
+		expect(await runInit(recording(root, undefined, { backupRoot: bak }).io, packageRoot)).toBe("activated");
+		expect(snap(root)).toEqual(before);
+		expect(backupsOf(bak)).toHaveLength(count);
+	});
+
+	it("keeps replaced files and reports the backup when validation fails", async () => {
+		const root = await edited();
+		const bak = tmp();
+		const { io } = recording(
+			root,
+			(c) => (isValidate(c) ? { code: 1, stdout: "bad", stderr: "" } : { code: 0, stdout: "1.16.0\n", stderr: "" }),
+			{ backupRoot: bak },
+		);
+		expect(await runInit(io, packageRoot, "--force")).toBe("validation-failed");
+		const [b] = backupsOf(bak);
+		expect(io.notes.join("\n")).toContain(b);
+		expect(snap(schemaDir(root))).toEqual(await freshSnap());
+		expect(io.reloads).toBe(0);
+	});
+
+	it("returns replace-failed and leaves the schema alone when the backup fails", async () => {
+		const root = await edited();
+		const before = snap(schemaDir(root));
+		const bakFile = join(tmp(), "file");
+		writeFileSync(bakFile, "x");
+		const { io, calls } = recording(root, undefined, { backupRoot: bakFile });
+		expect(await runInit(io, packageRoot, "--force")).toBe("replace-failed");
+		expect(snap(schemaDir(root))).toEqual(before);
+		expect(calls.some(isValidate)).toBe(false);
+		expect(io.reloads).toBe(0);
+		expect(io.notes.join("\n")).toContain("Schema replacement failed");
+		expect(io.notes.join("\n").split("Schema replacement failed")).toHaveLength(2);
+	});
+
+	it.skipIf(process.getuid?.() === 0)("blocks without throwing when the older schema is unreadable", async () => {
+		const root = await upgradable();
+		const file = join(schemaDir(root), "templates", "apply.md");
+		const { io, calls } = recording(root);
+		chmodSync(file, 0o000);
+		try {
+			expect(await runInit(io, packageRoot)).toBe("blocked");
+		} finally {
+			chmodSync(file, 0o644);
+		}
+		expect(io.notes.join("\n")).toContain("Could not read openspec/schemas/superspec:");
+		expect(io.notes.join("\n")).toContain("Nothing was changed.");
+		expect(calls.some(isValidate)).toBe(false);
+		expect(io.reloads).toBe(0);
+	});
+
+	it("writes the language after a confirmed upgrade", async () => {
+		const root = await upgradable();
+		const { io } = recording(root, undefined, { confirm: async () => true });
+		expect(await runInit(io, packageRoot, "--lang vi")).toBe("activated");
+		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("language: vi");
 	});
 });

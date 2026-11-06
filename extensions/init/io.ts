@@ -16,4 +16,6 @@ export interface InitIO {
 	report(message: string): void;
 	reload(): Promise<void>;
 	superpowersAvailable(): boolean;
+	/** Directory that receives backups of replaced schemas (outside the project). */
+	backupRoot: string;
 }

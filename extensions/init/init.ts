@@ -6,9 +6,29 @@ import { DEFAULT_LANGUAGE, applyConfig, applyLanguage, readLanguage, validateLan
 import type { ExecResult, InitIO } from "./io.ts";
 import { cleanLegacy } from "./legacy.ts";
 import { checkOpenspec, collectWarnings } from "./preflight.ts";
-import { installSchema } from "./schema-install.ts";
+import {
+	backupPath,
+	classifySchema,
+	installSchema,
+	markerVersion,
+	replaceSchema,
+	ReplaceError,
+	type ReplaceResult,
+} from "./schema-install.ts";
 
-export type InitOutcome = "activated" | "blocked" | "invalid-arguments" | "preflight-failed" | "validation-failed";
+export type InitOutcome =
+	| "activated"
+	| "blocked"
+	| "invalid-arguments"
+	| "preflight-failed"
+	| "replace-failed"
+	| "validation-failed";
+
+function replacementLine(r: ReplaceResult): string {
+	if (r.from === undefined) return `Schema superspec replaced (foreign) with v${r.to}.`;
+	const verb = r.from < r.to ? "upgraded" : r.from > r.to ? "downgraded" : "replaced";
+	return `Schema superspec ${verb} from v${r.from} to v${r.to}.`;
+}
 
 function output(result: ExecResult): string {
 	return [result.stdout.trim(), result.stderr.trim()].filter((s) => s !== "").join("\n");
@@ -73,19 +93,89 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	// Config is applied before the schema is classified, so a blocked run may
 	// already have switched config.yaml; the blocked notice says so.
 	const config = applyConfig(root);
-	const state = installSchema(root, packageRoot);
-	if (state !== "absent" && state !== "identical") {
-		const lines = [
-			`Existing schema at openspec/schemas/superspec is ${state}; it was left unchanged. Activation stopped.`,
-		];
-		if (config === "written") lines.push("Note: openspec/config.yaml now has `schema: superspec`.");
-		lines.push(
-			"Upgrading or repairing an existing schema is handled by the schema-auto-upgrade change. " +
-				"To reinstall now, back up any local edits, remove openspec/schemas/superspec/, and run /opsx-init again.",
+	const target = join(root, "openspec", "schemas", "superspec");
+	const bundled = join(packageRoot, "schema", "superspec");
+	let state: ReturnType<typeof classifySchema>;
+	try {
+		state = classifySchema(target, bundled);
+	} catch (err) {
+		io.notify(
+			`Could not read openspec/schemas/superspec: ${err instanceof Error ? err.message : String(err)}. Nothing was changed.`,
+			"error",
 		);
+		await cleanLegacy(io, root);
+		return "blocked";
+	}
+	const to = markerVersion(bundled) ?? 0;
+	const noteLine = "Note: openspec/config.yaml now has `schema: superspec`.";
+	const block = async (lines: string[]): Promise<InitOutcome> => {
+		if (config === "written") lines.splice(1, 0, noteLine);
 		io.notify(lines.join("\n"), "warning");
 		await cleanLegacy(io, root);
 		return "blocked";
+	};
+
+	const schemaReport: string[] = [];
+	let backup: string | undefined;
+	if (state === "absent") {
+		installSchema(root, packageRoot);
+	} else if (state !== "identical") {
+		let backupLabel: string | undefined;
+		if (parsed.force) {
+			const found = markerVersion(target);
+			backupLabel = found === undefined ? "foreign" : `v${found}`;
+		} else if (state === "upgradable") {
+			const from = markerVersion(target);
+			if (!io.hasUI) {
+				return block([
+					`Schema superspec v${from} can be upgraded to v${to}. Run /opsx-init in an interactive session to confirm, ` +
+						"or /opsx-init --force to upgrade and keep a backup.",
+				]);
+			}
+			const ok = await io.confirm(
+				"Upgrade schema superspec?",
+				`Replace openspec/schemas/superspec (v${from}, unchanged since install) with the bundled v${to}? Commit the result afterwards.`,
+			);
+			if (!ok) {
+				return block([
+					`Schema superspec v${from} was left unchanged. Run /opsx-init again and confirm to upgrade to v${to}.`,
+				]);
+			}
+		} else {
+			const lines = [
+				`Existing schema at openspec/schemas/superspec is ${state}; it was left unchanged. Activation stopped. ` +
+					`Run /opsx-init --force to replace it with the bundled v${to}; ` +
+					"the current files are backed up to ~/.pi/superspec-backups/ first.",
+			];
+			if (state === "newer") {
+				lines.push(
+					"The installed pi-superspec package is older than the project schema; update the package instead if possible.",
+				);
+			}
+			return block(lines);
+		}
+		try {
+			const backupTo =
+				backupLabel === undefined ? undefined : backupPath(io.backupRoot, root, backupLabel, new Date());
+			const result = replaceSchema(root, packageRoot, backupTo);
+			backup = result.backup;
+			schemaReport.push(replacementLine(result));
+			if (backup !== undefined) schemaReport.push(`Backup of the previous schema: ${backup}`);
+			schemaReport.push("Commit openspec/schemas/superspec/.");
+		} catch (err) {
+			const reason = err instanceof Error ? err.message : String(err);
+			const lines = [
+				err instanceof ReplaceError ? reason : `Schema replacement failed: ${reason}`,
+				"The schema at openspec/schemas/superspec was not changed or was restored.",
+			];
+			if (err instanceof ReplaceError && err.backup !== undefined) {
+				lines.push(`Backup of the previous schema: ${err.backup}`);
+			}
+			if (config === "written") lines.push(noteLine);
+			io.notify(lines.join("\n"), "error");
+			await cleanLegacy(io, root);
+			return "replace-failed";
+		}
 	}
 	await cleanLegacy(io, root);
 	await setLanguage(io, root, parsed.lang);
@@ -95,6 +185,7 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 		const detail = output(validation);
 		io.notify(
 			`openspec schema validate superspec failed${detail ? `:\n${detail}` : ""}\n` +
+				(backup !== undefined ? `Backup of the previous schema: ${backup}\n` : "") +
 				"Installed files were kept; the project activates on the next session start even though this session was not reloaded.",
 			"error",
 		);
@@ -102,7 +193,7 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	}
 	// reload() rebuilds the chat from session entries, dropping notify() output,
 	// so the result is persisted as a session message before reloading.
-	const report = [...warnings, "Schema superspec is valid.", "Superspec is set up. Next: /opsx-new <name>"];
+	const report = [...warnings, ...schemaReport, "Schema superspec is valid.", "Superspec is set up. Next: /opsx-new <name>"];
 	if (parsed.generate) {
 		report.push("For an existing codebase, run /opsx-generate-specs to draft specs from the code.");
 	}

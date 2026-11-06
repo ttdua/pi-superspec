@@ -38,7 +38,7 @@ The README SHALL include a quick start that runs `/opsx-init` in a repository an
 - **THEN** the README links to `docs/usage-guide.md`
 
 ### Requirement: README command table
-The README SHALL contain a table of every shipped command: `/opsx-init`, `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`, `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive` and `/opsx-generate-specs`, with a one-line behaviour each, and MUST state that `opsx-propose` and `opsx-bulk-archive` are not shipped. The `/opsx-init` row MUST mention the `--generate` option.
+The README SHALL contain a table of every shipped command: `/opsx-init`, `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`, `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive` and `/opsx-generate-specs`, with a one-line behaviour each, and MUST state that `opsx-propose` and `opsx-bulk-archive` are not shipped. The `/opsx-init` row MUST mention the `--generate` and `--force` options. Near the table, the README MUST say that `/opsx-init` upgrades an older schema that is unchanged since install after confirmation, and that a schema with local edits is replaced only with `--force`, which keeps a backup.
 
 #### Scenario: Table matches shipped prompts
 - **WHEN** the table is compared with the files in `prompts/` plus `/opsx-init`
@@ -46,7 +46,11 @@ The README SHALL contain a table of every shipped command: `/opsx-init`, `/opsx-
 
 #### Scenario: Init row mentions the flag
 - **WHEN** the `/opsx-init` row is read
-- **THEN** it mentions `--generate`
+- **THEN** it mentions `--generate` and `--force`
+
+#### Scenario: Upgrade behaviour stated
+- **WHEN** a reader looks for what happens to an existing schema after a package update
+- **THEN** the README describes the confirmed upgrade and `--force` with backup
 
 ### Requirement: README uninstall behaviour
 The README SHALL describe what happens on uninstall: removing the package removes every command and skill, while `openspec/` stays a valid OpenSpec project; it MUST also state that the copied `openspec/schemas/superspec/` and its lock file remain and may be deleted by the user.

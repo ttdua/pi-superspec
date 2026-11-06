@@ -12,7 +12,8 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 
 - `/opsx-init` command that sets up a repository for the Superspec workflow: checks the OpenSpec version, runs `openspec init --tools none` when needed, merges `schema: superspec` into `openspec/config.yaml`, installs the bundled schema, offers to remove legacy `.pi/` openspec files, and validates the schema.
 - Bundled `superspec` OpenSpec schema in `schema/superspec/`, installed to `openspec/schemas/superspec/` together with a lock file.
-- Schema install classification (absent, identical, foreign, older, newer, edited); an existing schema that is not identical is left unchanged and activation stops.
+- Schema install classification (absent, identical, foreign, older, newer, edited, upgradable).
+- Schema upgrade: `/opsx-init` replaces an older schema that is unchanged since install (decided from the lock file) after confirmation, or only reports the steps without a UI. A schema with local edits, a newer or a foreign schema is left unchanged until `/opsx-init --force`, which backs it up to `~/.pi/superspec-backups/` first and then replaces it. An activated project with a UI gets a session-start notice when the schema is outdated or edited. A test pins the bundled schema's version to a recorded checksum.
 - Package activation: the workflow commands and skills are offered only in a project whose installed schema carries the `x-pi-superspec` marker.
 - Planning commands: `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`.
 - Execution commands: `/opsx-apply`, `/opsx-verify`, `/opsx-sync`, `/opsx-archive`.
@@ -24,7 +25,7 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 - Plan Contracts: `plan.md` has a required `## Contracts` section before the tasks that is the reviewed source of truth for contract shapes. Apply writes matching declarations or stubs per task and stops when a contract must change (asking the user for a public one), recording each change in a cumulative `## Contract deviations` section of `apply.md`. Verify check 5 checks design and contract coherence; verify still runs six checks.
 - Routing note injected into the session context that directs the agent to the path that fits the work.
 - Warning at session start when Superpowers is not installed.
-- Baseline spec awareness: brainstorm, proposal and specs read the living specs under `openspec/specs/` where they decide; the spec reviewer compares deltas with those main specs; the routing note confirms specified behaviour before the fix path. Schema version 7; reinstall an installed v6 schema by removing `openspec/schemas/superspec/` and running `/opsx-init`.
+- Baseline spec awareness: brainstorm, proposal and specs read the living specs under `openspec/specs/` where they decide; the spec reviewer compares deltas with those main specs; the routing note confirms specified behaviour before the fix path. Schema version 7; run `/opsx-init` to upgrade an installed v6 schema.
 - Optional `language` key in `openspec/config.yaml` for the language of OpenSpec document prose.
   - `/opsx-init --lang <value>` writes it.
   - `/opsx-init` asks for it once per run when it is missing or invalid and a UI is available.
