@@ -34,7 +34,13 @@ Planning reads the living specs (`openspec/specs/`) too late. A `MODIFIED` delta
 - Reason: ground the routing decision in the spec text.
 - Impact: non-breaking; injected guidance text changes.
 
-**Docs**: `docs/workflow.md` (Step rules, Routing note) and `docs/usage-guide.md` describe the new rules.
+**Schema version**
+- From: `version: 6`.
+- To: `version: 7` (`x-pi-superspec.version` too).
+- Reason: an installed v6 copy must read as `older`, not `edited`, so `/opsx-init` reports an upgrade instead of a local edit.
+- Impact: projects reinstall the schema by hand (remove `openspec/schemas/superspec/`, rerun `/opsx-init`); no artifact ID changes.
+
+**Docs**: `docs/workflow.md` (Step rules, Routing note) and `docs/usage-guide.md` describe the new rules and the v6 to v7 upgrade.
 
 ## Capabilities
 
@@ -42,14 +48,14 @@ Planning reads the living specs (`openspec/specs/`) too late. A `MODIFIED` delta
 <!-- none -->
 
 ### Modified Capabilities
-- `bundled-schema`: adds three requirements so that the brainstorm, proposal and specs instructions each read the baseline.
+- `bundled-schema`: adds three requirements so that the brainstorm, proposal and specs instructions each read the baseline, and modifies "Schema identity" to `version: 7`.
 - `routing-note`: the routing note content requirement adds the spec check before the "fix restoring specified behaviour" path.
 - `planning-commands`: adds a requirement that the internal spec review handoff includes the baseline main specs.
 - `workflow-agents`: adds a requirement that the spec reviewer compares deltas with the baseline.
 
 ## Impact
 
-- `schema/superspec/schema.yaml` (brainstorm, proposal, specs instructions); schema stays `version: 6` (package unreleased). `openspec/schemas/superspec/` is not edited.
+- `schema/superspec/schema.yaml` (brainstorm, proposal, specs instructions); schema bumps to `version: 7` so installed v6 copies are classified `older`. `openspec/schemas/superspec/` is not edited.
 - `extensions/routing-note.ts` (`ROUTING_NOTE` text).
 - `skills/opsx-continue/SKILL.md`, `skills/opsx-ff/SKILL.md` (internal check handoff), `agents/spec-reviewer.md`.
 - `docs/workflow.md`, `docs/usage-guide.md`, `CHANGELOG.md`.

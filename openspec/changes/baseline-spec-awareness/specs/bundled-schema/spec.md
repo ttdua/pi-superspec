@@ -36,3 +36,24 @@ The `specs` instruction SHALL tell the agent to start every `MODIFIED` requireme
 #### Scenario: Dropped scenario is visible
 - **WHEN** the `specs` instruction is read
 - **THEN** it requires a scenario dropped from a `MODIFIED` block to be named as intentional in the requirement text or the proposal
+
+## MODIFIED Requirements
+
+### Requirement: Schema identity
+The bundled schema at `schema/superspec/schema.yaml` SHALL have `name: superspec`, an integer `version: 7`, and a top-level `x-pi-superspec` block whose `version` equals `version`. It MUST pass `openspec schema validate superspec` when copied into a project's `openspec/schemas/superspec/`. The directory SHALL credit upstream Superspec v4 and include its MIT license.
+
+#### Scenario: Identity fields
+- **WHEN** `schema/superspec/schema.yaml` is parsed
+- **THEN** `name` is `superspec`, `version` is `7` and `x-pi-superspec.version` is `7`
+
+#### Scenario: Validates in a temp project
+- **WHEN** the schema directory is copied into a temp project's `openspec/schemas/superspec/` and `openspec schema validate superspec` runs
+- **THEN** validation passes
+
+#### Scenario: Upstream credit
+- **WHEN** `schema/superspec/` is listed
+- **THEN** it contains the upstream `LICENSE` and `schema.yaml` names Superspec v4 in its header comment
+
+#### Scenario: No artifact ID changes
+- **WHEN** the version 7 schema is compared with version 6
+- **THEN** every artifact ID of version 6 still exists, so no migration step is needed

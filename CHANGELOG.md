@@ -24,7 +24,7 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 - Plan Contracts: `plan.md` has a required `## Contracts` section before the tasks that is the reviewed source of truth for contract shapes. Apply writes matching declarations or stubs per task and stops when a contract must change (asking the user for a public one), recording each change in a cumulative `## Contract deviations` section of `apply.md`. Verify check 5 checks design and contract coherence; verify still runs six checks.
 - Routing note injected into the session context that directs the agent to the path that fits the work.
 - Warning at session start when Superpowers is not installed.
-- Baseline spec awareness: brainstorm, proposal and specs read the living specs under `openspec/specs/` where they decide; the spec reviewer compares deltas with those main specs; the routing note confirms specified behaviour before the fix path.
+- Baseline spec awareness: brainstorm, proposal and specs read the living specs under `openspec/specs/` where they decide; the spec reviewer compares deltas with those main specs; the routing note confirms specified behaviour before the fix path. Schema version 7; reinstall an installed v6 schema by removing `openspec/schemas/superspec/` and running `/opsx-init`.
 - Optional `language` key in `openspec/config.yaml` for the language of OpenSpec document prose.
   - `/opsx-init --lang <value>` writes it.
   - `/opsx-init` asks for it once per run when it is missing or invalid and a UI is available.
