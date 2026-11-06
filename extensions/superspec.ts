@@ -7,6 +7,7 @@ import { availableChannels, channelParagraph } from "./interaction-channel.ts";
 import { resolveLanguage } from "./init/config.ts";
 import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
+import { schemaNotice } from "./schema-notice.ts";
 import {
 	createRoutingNoteMessage,
 	hasSuperpowers,
@@ -68,6 +69,14 @@ export default function (pi: ExtensionAPI) {
 		if (!root || !isActivated(root)) return;
 		if (ctx.hasUI && !hasSuperpowers(pi.getCommands())) {
 			ctx.ui.notify(SUPERPOWERS_MISSING_WARNING, "warning");
+		}
+		if (ctx.hasUI) {
+			try {
+				const text = schemaNotice(root, packageRoot);
+				if (text) ctx.ui.notify(text, "info");
+			} catch {
+				// A classification failure must not block the session or the probe.
+			}
 		}
 		cliAvailable = false;
 		const generation = ++probeGeneration;

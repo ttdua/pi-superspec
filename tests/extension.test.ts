@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { channelParagraph } from "../extensions/interaction-channel.ts";
 import { ROUTING_NOTE, ROUTING_NOTE_MARKER, routingNote } from "../extensions/routing-note.ts";
+import { hashTree } from "../extensions/init/schema-install.ts";
 import superspec, { createInitIO } from "../extensions/superspec.ts";
+import { project, type State } from "./helpers/notice-project.ts";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 
@@ -204,23 +206,68 @@ describe("session_start handler", () => {
 		return calls;
 	}
 
+	function startSuperpowers(cwd: string, commands: { name: string }[], hasUI = true) {
+		return start(cwd, commands, hasUI).filter(([m]) => m.includes("Superpowers"));
+	}
+
 	it("warns once with the install command when Superpowers is missing", () => {
-		const calls = start(join(fixtures, "marked"), []);
+		const calls = startSuperpowers(join(fixtures, "marked"), []);
 		expect(calls).toHaveLength(1);
 		expect(calls[0][0]).toContain("pi install git:github.com/obra/superpowers");
 		expect(calls[0][1]).toBe("warning");
 	});
 
 	it("does not warn when Superpowers is discoverable", () => {
-		expect(start(join(fixtures, "marked"), [{ name: "skill:brainstorming" }])).toHaveLength(0);
+		expect(startSuperpowers(join(fixtures, "marked"), [{ name: "skill:brainstorming" }])).toHaveLength(0);
 	});
 
 	it("does not warn in an unmarked project", () => {
-		expect(start(join(fixtures, "unmarked"), [])).toHaveLength(0);
+		expect(startSuperpowers(join(fixtures, "unmarked"), [])).toHaveLength(0);
 	});
 
 	it("does not warn without a UI", () => {
-		expect(start(join(fixtures, "marked"), [], false)).toHaveLength(0);
+		expect(startSuperpowers(join(fixtures, "marked"), [], false)).toHaveLength(0);
+	});
+
+	describe("schema notice", () => {
+		const sp = [{ name: "skill:brainstorming" }];
+		const run = (state: State, hasUI = true) => {
+			const { root, schema } = project(state);
+			const before = hashTree(schema);
+			const calls = start(root, sp, hasUI);
+			expect(hashTree(schema)).toEqual(before);
+			return calls;
+		};
+
+		it("notifies once at info for an upgradable schema", () => {
+			const calls = run("upgradable");
+			expect(calls).toHaveLength(1);
+			expect(calls[0][1]).toBe("info");
+			expect(calls[0][0]).toContain("v6");
+			expect(calls[0][0]).toContain("v7");
+			expect(calls[0][0]).toContain("/opsx-init");
+			expect(calls[0][0]).not.toContain("--force");
+		});
+
+		it("notifies with --force for an older schema with edits", () => {
+			const calls = run("older");
+			expect(calls).toHaveLength(1);
+			expect(calls[0][0]).toContain("/opsx-init --force");
+		});
+
+		it("notifies with --force for an edited schema", () => {
+			const calls = run("edited");
+			expect(calls).toHaveLength(1);
+			expect(calls[0][0]).toContain("/opsx-init --force");
+		});
+
+		it("says nothing for an identical schema", () => {
+			expect(run("identical")).toHaveLength(0);
+		});
+
+		it("says nothing without a UI", () => {
+			expect(run("upgradable", false)).toHaveLength(0);
+		});
 	});
 });
 
@@ -293,7 +340,7 @@ describe("interaction channel wiring", () => {
 			getActiveTools: () => [],
 		});
 		await expect(start()).resolves.toBeUndefined();
-		expect(notes.filter(([m]) => !m.includes("Superpowers"))).toHaveLength(0);
+		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("Schema superspec"))).toHaveLength(0);
 		expect(note()).not.toContain("plannotator-cli");
 	});
 
