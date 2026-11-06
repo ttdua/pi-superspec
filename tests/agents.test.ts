@@ -169,6 +169,15 @@ describe("reviewer contract (SA-A04)", () => {
 		expect(list(frontmatter.tools)).not.toContain("edit");
 	});
 
+	it("spec-reviewer compares deltas with the supplied baseline", () => {
+		const { body } = load("spec-reviewer");
+		expect(body).toContain("## Baseline comparison");
+		expect(body).toMatch(/header[^.\n]*no exact match[^.\n]*main spec/i);
+		expect(body).toMatch(/scenario[^.\n]*missing from a `MODIFIED` block[^.\n]*intentional/i);
+		expect(body).toMatch(/main spec[^.\n]*not supplied[^.\n]*Limitations/i);
+		expect(body).toMatch(/never report the comparison as passed/i);
+	});
+
 	it("task-reviewer supports exact per-task and whole-branch ranges and never claims an unavailable diff", () => {
 		const { body } = load("task-reviewer");
 		expect(body).toMatch(/per-task/i);

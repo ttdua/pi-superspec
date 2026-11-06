@@ -50,6 +50,7 @@ comment under the same policy as finalize.
 - **brainstorm** holds the *why*: intent, goals / non-goals / anti-goals, approaches
   considered and the one chosen, open questions. Technical decisions go to
   `design.md`. The two must not repeat each other.
+- **baseline specs**: brainstorm reads the living specs of the capabilities it touches and states any deliberate change to a specified requirement; proposal lists a Modified Capability only after checking its living spec; a `MODIFIED` delta starts from the full current block, headers match the main spec exactly, and a dropped scenario is named; the spec reviewer (or inline self-check) receives those main specs.
 - **specs → tests**: `plan.md` lists, for every `#### Scenario:`, the test that
   covers it. Verify checks this list.
 - **plan Contracts**: `plan.md` has a required `## Contracts` section before the tasks (name,
@@ -166,7 +167,7 @@ present, otherwise at the head after compaction summaries (Superpowers no longer
 its bootstrap from the second agent run). If Superpowers is not installed, `session_start`
 warns once per session start (including reload) with `pi install git:github.com/obra/superpowers`:
 
-- No spec change (small mistake, typo, fix restoring specified behaviour, refactor) →
+- No spec change (small mistake, typo, fix restoring specified behaviour, refactor; confirm the behaviour in openspec/specs/ first, unspecified behaviour is a spec change) →
   work directly with TDD, no change directory.
 - Spec change with clear requirements → `/opsx-ff`.
 - Spec change that needs careful step-by-step review → `/opsx-new`, then `/opsx-continue`.

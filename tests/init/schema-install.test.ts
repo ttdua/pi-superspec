@@ -72,7 +72,7 @@ describe("installSchema lock", () => {
 		for (const [f, h] of Object.entries(lock.files)) {
 			expect(h).toBe(sha(readFileSync(join(target(root), f))));
 		}
-		expect(lock.schemaVersion).toBe(6);
+		expect(lock.schemaVersion).toBe(7);
 		const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8"));
 		expect(lock.packageVersion).toBe(pkg.version);
 	});
@@ -110,7 +110,7 @@ describe("classifySchema", () => {
 		expect(classifySchema(UNMARKED, SCHEMA_DIR)).toBe("foreign");
 	});
 	it("older and newer by marker version", () => {
-		for (const [v, state] of [[4, "older"], [7, "newer"]] as const) {
+		for (const [v, state] of [[4, "older"], [8, "newer"]] as const) {
 			const t = copyBundled(tmp());
 			const f = join(t, "schema.yaml");
 			writeFileSync(
@@ -137,7 +137,7 @@ describe("installSchema on existing states", () => {
 			["identical", () => {}],
 			["edited", (t) => writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml")!), "x")],
 			["older", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$14"))],
-			["newer", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$17"))],
+			["newer", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$18"))],
 			["foreign", (t) => cpSync(UNMARKED, t, { recursive: true, force: true })],
 		];
 		for (const [state, mutate] of cases) {

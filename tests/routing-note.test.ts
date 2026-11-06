@@ -93,6 +93,12 @@ describe("insertRoutingNote", () => {
 });
 
 describe("ROUTING_NOTE", () => {
+	it("confirms specified behaviour before the fix path", () => {
+		const line = ROUTING_NOTE.split("\n").find((l) => l.startsWith("- No spec change"));
+		expect(line).toContain("confirm the behaviour in the living specs under openspec/specs/");
+		expect(line).toContain("behaviour not specified there makes it a spec change");
+	});
+
 	it("begins with its marker and mentions the key guidance", () => {
 		expect(ROUTING_NOTE.startsWith(ROUTING_NOTE_MARKER)).toBe(true);
 		expect(ROUTING_NOTE).toContain("/opsx-ff");

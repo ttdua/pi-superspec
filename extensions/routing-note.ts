@@ -5,7 +5,7 @@ export const ROUTING_NOTE = `${ROUTING_NOTE_MARKER}
 
 This project uses OpenSpec with the superspec schema. Choose the path that fits the work:
 
-- No spec change (a small mistake, a typo, a fix restoring specified behaviour, a refactor): work directly with TDD and no change directory.
+- No spec change (a small mistake, a typo, a fix restoring specified behaviour, a refactor): work directly with TDD and no change directory. Before treating work as a fix, confirm the behaviour in the living specs under openspec/specs/; behaviour not specified there makes it a spec change.
 - Spec change with clear requirements: use /opsx-ff.
 - Spec change that needs careful step-by-step review: use /opsx-new, then /opsx-continue.
 - Questions, research and reviews: answer directly, without proposing a change.

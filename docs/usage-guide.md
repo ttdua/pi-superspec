@@ -49,7 +49,7 @@ Start the change once:
 ### 1. Brainstorm
 
 - You type: `/opsx-continue`, then answer the questions. Brainstorming is interactive: one question at a time, two or three approaches, then a review gate on the written design.
-- The agent produces: the agreed design (goals, non-goals, approaches considered, the chosen one, open questions), using the Superpowers `brainstorming` skill redirected into the change.
+- The agent produces: the agreed design (goals, non-goals, approaches considered, the chosen one, open questions), citing the existing requirements of the capabilities it touches, using the Superpowers `brainstorming` skill redirected into the change.
 - Output: `openspec/changes/<name>/brainstorm.md`. Technical decisions belong in `design.md`, not here.
 - Gate: a review gate opens on `brainstorm.md`. That gate is your approval of the design; there is no separate approval step. Continue once it is approved.
 
@@ -72,7 +72,7 @@ For free-form thinking before a change exists, use `/opsx-explore [topic]`. It n
 ### 4. Specs
 
 - You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
-- The agent produces: delta specs with SHALL/MUST requirements and `#### Scenario:` blocks, one per capability named in the proposal.
+- The agent produces: delta specs with SHALL/MUST requirements and `#### Scenario:` blocks, one per capability named in the proposal; a modified requirement starts from its current text in openspec/specs/ so nothing is dropped by accident.
 - Output: `openspec/changes/<name>/specs/<capability>/spec.md`.
 - Gate: review the requirements and scenarios; the plan and verify steps check against them.
 
@@ -245,7 +245,7 @@ In the last row, `foreign` is a schema without the `x-pi-superspec` marker and v
 
 The warning reads: `Existing schema at openspec/schemas/superspec is <state>; it was left unchanged. Activation stopped.` If `openspec/config.yaml` was just changed to `schema: superspec`, a `Note:` line says so, because config is updated before the schema is checked.
 
-Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again. Upgrading from v5 to v6: schema version 6 ships with this release, so a project with v5 installed is classified `older`, `/opsx-init` warns, and the schema must be reinstalled by hand as described here.
+Automatic upgrade, `--force` and backup are not yet shipped. `/opsx-init` takes only the optional `--lang` argument. To reinstall now, back up any local edits, remove `openspec/schemas/superspec/`, and run `/opsx-init` again. Upgrading from v6 to v7: schema version 7 ships with this release, so a project with v6 installed is classified `older`, `/opsx-init` warns, and the schema must be reinstalled by hand as described here.
 
 ## Troubleshooting
 
