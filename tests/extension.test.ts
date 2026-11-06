@@ -1,5 +1,5 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -365,5 +365,9 @@ describe("createInitIO", () => {
 
 	it("prompt resolves undefined when the user cancels", async () => {
 		expect(await io(async () => undefined).prompt("Language")).toBeUndefined();
+	});
+
+	it("keeps backups under ~/.pi/superspec-backups", () => {
+		expect(io(async () => undefined).backupRoot).toBe(join(homedir(), ".pi", "superspec-backups"));
 	});
 });

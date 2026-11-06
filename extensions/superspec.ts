@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
@@ -32,6 +33,7 @@ export function createInitIO(pi: ExtensionAPI, ctx: ExtensionCommandContext): In
 			pi.sendMessage({ customType: "superspec-init", content: message, display: true }),
 		reload: () => ctx.reload(),
 		superpowersAvailable: () => hasSuperpowers(pi.getCommands()),
+		backupRoot: join(homedir(), ".pi", "superspec-backups"),
 	};
 }
 
