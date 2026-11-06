@@ -163,7 +163,9 @@ export function replaceSchema(
 			mkdirSync(dirname(backupTo), { recursive: true });
 			cpSync(target, backupTo, { recursive: true, errorOnExist: true, force: false });
 		} catch (cause) {
-			rmSync(backupTo, { recursive: true, force: true });
+			try {
+				rmSync(backupTo, { recursive: true, force: true });
+			} catch {}
 			throw new BackupError(`Backup failed: ${(cause as Error).message}`, { cause });
 		}
 	}
@@ -178,7 +180,11 @@ export function replaceSchema(
 		fsOps.renameSync(target, old);
 		moved = true;
 		fsOps.renameSync(staging, target);
-		fsOps.rmSync(old, { recursive: true, force: true });
+		try {
+			fsOps.rmSync(old, { recursive: true, force: true });
+		} catch {
+			// Replacement succeeded; a leftover old dir lives outside openspec/schemas/.
+		}
 	} catch (cause) {
 		let restored = !moved;
 		try {

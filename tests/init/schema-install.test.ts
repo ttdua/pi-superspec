@@ -405,4 +405,23 @@ describe("replaceSchema", () => {
 		expect(snapshot(t)).toEqual(before);
 		expect(openspecLeftovers(root)).toEqual([]);
 	});
+
+	it("keeps a completed swap when old-dir cleanup fails", () => {
+		const root = tmp();
+		const t = copyBundled(root);
+		asV6(t);
+		const fsOps: ReplaceFs = {
+			cpSync,
+			renameSync,
+			rmSync: (p, o) => {
+				if (String(p).includes(".superspec-old-")) throw new Error("rm old");
+				rmSync(p, o);
+			},
+		};
+		const res = replaceSchema(root, PACKAGE_ROOT, undefined, fsOps);
+		expect(res.from).toBe(6);
+		const fresh = tmp();
+		installSchema(fresh, PACKAGE_ROOT);
+		expect(snapshot(t)).toEqual(snapshot(join(fresh, "openspec", "schemas", "superspec")));
+	});
 });
