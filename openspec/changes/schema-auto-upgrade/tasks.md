@@ -37,5 +37,5 @@
 
 ## 8. Verification
 
-- [ ] 8.1 Run `npm test`, `npm run typecheck` and `openspec validate schema-auto-upgrade --strict`
-- [ ] 8.2 End-to-end in a scratch repository with a real `openspec`: install, rewrite the marker to v6 and its lock to match, run `/opsx-init` (upgrade), then edit a file and run `/opsx-init --force`, checking the backup and that OpenSpec lists only `superspec` under project schemas
+- [x] 8.1 Run `npm test`, `npm run typecheck` and `openspec validate schema-auto-upgrade --strict`
+- [x] 8.2 End-to-end in a scratch repository with a real `openspec`: install, rewrite the marker to v6 and its lock to match, run `/opsx-init` (upgrade), then edit a file and run `/opsx-init --force`, checking the backup and that OpenSpec lists only `superspec` under project schemas
