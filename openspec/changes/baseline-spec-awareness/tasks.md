@@ -6,7 +6,7 @@
 
 ## 2. Routing note
 
-- [ ] 2.1 `ROUTING_NOTE` in `extensions/routing-note.ts` tells the agent to confirm specified behaviour in `openspec/specs/` before the fix path (spec `routing-note`: Routing note content)
+- [x] 2.1 `ROUTING_NOTE` in `extensions/routing-note.ts` tells the agent to confirm specified behaviour in `openspec/specs/` before the fix path (spec `routing-note`: Routing note content)
 
 ## 3. Internal spec review
 
