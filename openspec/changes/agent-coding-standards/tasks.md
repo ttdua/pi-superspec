@@ -11,8 +11,8 @@
 
 ## 3. Missing coding standard warning
 
-- [ ] 3.1 Add `hasCodingStandards` and `CODING_STANDARDS_MISSING_WARNING` to `extensions/routing-note.ts`, with unit tests in `tests/routing-note.test.ts`
-- [ ] 3.2 Emit the warning from the `session_start` handler in `extensions/superspec.ts` with the Superpowers guards, with handler tests in `tests/extension.test.ts` (missing, installed, unactivated, no UI, both missing)
+- [x] 3.1 Add `hasCodingStandards` and `CODING_STANDARDS_MISSING_WARNING` to `extensions/routing-note.ts`, with unit tests in `tests/routing-note.test.ts`
+- [x] 3.2 Emit the warning from the `session_start` handler in `extensions/superspec.ts` with the Superpowers guards, with handler tests in `tests/extension.test.ts` (missing, installed, unactivated, no UI, both missing)
 
 ## 4. Documentation
 
