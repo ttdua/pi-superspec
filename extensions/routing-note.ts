@@ -86,3 +86,11 @@ export function hasSuperpowers(commands: { name: string }[]): boolean {
 
 export const SUPERPOWERS_MISSING_WARNING =
 	"pi-superspec needs Superpowers, which is not installed. Install it with: pi install git:github.com/obra/superpowers";
+
+/** True when a coding standard skill is installed (it registers a `skill:coding-standards` command). */
+export function hasCodingStandards(commands: { name: string }[]): boolean {
+	return commands.some((command) => command.name === "skill:coding-standards");
+}
+
+export const CODING_STANDARDS_MISSING_WARNING =
+	"pi-superspec agents use a coding-standards skill, which was not found. Without it the implementer and reviewers fall back to project conventions (AGENTS.md, contributing guide). Add your own under ~/.agents/skills/coding-standards/ or .agents/skills/coding-standards/.";

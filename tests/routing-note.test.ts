@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
 	BOOTSTRAP_MARKER,
+	CODING_STANDARDS_MISSING_WARNING,
 	createRoutingNoteMessage,
+	hasCodingStandards,
 	hasSuperpowers,
 	insertRoutingNote,
 	ROUTING_NOTE,
@@ -190,5 +192,29 @@ describe("routingNote", () => {
 		const assistant: Msg = { role: "assistant", content: [{ type: "text", text: routingNote("vi") }] };
 		const withLang = createRoutingNoteMessage("vi");
 		expect(insertRoutingNote([assistant], withLang)).toEqual([withLang, assistant]);
+	});
+});
+
+describe("hasCodingStandards", () => {
+	it("is true when the coding-standards skill command exists", () => {
+		expect(hasCodingStandards([{ name: "skill:coding-standards" }])).toBe(true);
+	});
+
+	it("is false otherwise", () => {
+		expect(hasCodingStandards([])).toBe(false);
+		expect(hasCodingStandards([{ name: "skill:brainstorming" }])).toBe(false);
+		expect(hasCodingStandards([{ name: "coding-standards" }])).toBe(false);
+	});
+});
+
+describe("CODING_STANDARDS_MISSING_WARNING", () => {
+	it("names the skill and the fallback", () => {
+		expect(CODING_STANDARDS_MISSING_WARNING).toContain("coding-standards");
+		expect(CODING_STANDARDS_MISSING_WARNING).toContain("project conventions");
+	});
+
+	it("does not tell the user to install a package or mention Superpowers", () => {
+		expect(CODING_STANDARDS_MISSING_WARNING).not.toContain("pi install");
+		expect(CODING_STANDARDS_MISSING_WARNING).not.toContain("Superpowers");
 	});
 });

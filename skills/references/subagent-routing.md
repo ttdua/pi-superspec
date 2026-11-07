@@ -7,7 +7,7 @@ Shared integration policy for Superspec skills that delegate bounded work to the
 Resolve availability at use time, and preflight only the roles the current stage requires.
 
 1. **Helper-only.** If only `subagents_enable` is visible, call it, then re-evaluate on the next model turn. Do not assume the full tool exists in the same turn.
-2. **Available.** Use the installed tool's documented management surface to list or inspect agents. Resolve each required canonical name and confirm it is not disabled, and that the skills and tools the role needs are present.
+2. **Available.** Use the installed tool's documented management surface to list or inspect agents. Resolve each required canonical name and confirm it is not disabled, and that the skills and tools the role needs are present. Role skills are required or optional. `coding-standards` (implementer, task reviewer, plan reviewer) is the only optional role skill; every other role skill is required. Treat it as missing when the management surface reports it not found for the role or `skill:coding-standards` is not discoverable. Then announce once per stage that the coding standard is unavailable and agents fall back to project conventions, and dispatch as usual: a missing optional skill does not stop the stage, and the parent writes no settings. A missing required skill goes to Failures.
 3. **Absent.** If neither the tool nor its activation helper is available, announce the inline fallback once and follow the existing inline path. Gates, ordering, and evidence rules are unchanged. Do not invent or fabricate child calls.
 4. **Unsupported or disabled.** Integration that is present but incompatible, or a role that is disabled or missing, is distinct from absent integration. See Failures; it never selects the inline fallback.
 
@@ -58,7 +58,7 @@ The parent owns official artifact writes, task checkbox updates, receipt outcome
 
 ## Failures
 
-- **Named cause, stop.** When a required canonical role is disabled or missing, discovery is unsupported, or required skills or tools are unavailable, report the named cause and stop the affected delegated stage. Do not rewrite settings, and do not fall back to a generic agent, an alternate CLI, or inline recovery. Offer a package update or an explicitly chosen inline route as options for the user. The parent never chooses either route silently; the user decides.
+- **Named cause, stop.** When a required canonical role is disabled or missing, discovery is unsupported, or required skills or tools are unavailable (a missing optional skill is handled in Availability and does not stop the stage), report the named cause and stop the affected delegated stage. Do not rewrite settings, and do not fall back to a generic agent, an alternate CLI, or inline recovery. Offer a package update or an explicitly chosen inline route as options for the user. The parent never chooses either route silently; the user decides.
 - **Launch or runtime failure.** Stop the lane. Retain and report the exact error, run identity, cwd/worktree, and any partial state. Do not retry with another mechanism or recover inline in the background.
 - **Incomplete report.** Record the gap and treat the task as not complete.
 

@@ -210,6 +210,10 @@ describe("session_start handler", () => {
 		return start(cwd, commands, hasUI).filter(([m]) => m.includes("Superpowers"));
 	}
 
+	function startCodingStandards(cwd: string, commands: { name: string }[], hasUI = true) {
+		return start(cwd, commands, hasUI).filter(([m]) => m.includes("coding-standards"));
+	}
+
 	it("warns once with the install command when Superpowers is missing", () => {
 		const calls = startSuperpowers(join(fixtures, "marked"), []);
 		expect(calls).toHaveLength(1);
@@ -229,8 +233,33 @@ describe("session_start handler", () => {
 		expect(startSuperpowers(join(fixtures, "marked"), [], false)).toHaveLength(0);
 	});
 
+	it("warns once when the coding standard is missing", () => {
+		const calls = startCodingStandards(join(fixtures, "marked"), [{ name: "skill:brainstorming" }]);
+		expect(calls).toHaveLength(1);
+		expect(calls[0][1]).toBe("warning");
+	});
+
+	it("does not warn when the coding standard is discoverable", () => {
+		const commands = [{ name: "skill:brainstorming" }, { name: "skill:coding-standards" }];
+		expect(startCodingStandards(join(fixtures, "marked"), commands)).toHaveLength(0);
+	});
+
+	it("does not warn about the coding standard in an unmarked project", () => {
+		expect(startCodingStandards(join(fixtures, "unmarked"), [])).toHaveLength(0);
+	});
+
+	it("does not warn about the coding standard without a UI", () => {
+		expect(startCodingStandards(join(fixtures, "marked"), [], false)).toHaveLength(0);
+	});
+
+	it("warns separately when Superpowers and the coding standard are both missing", () => {
+		const calls = start(join(fixtures, "marked"), []);
+		expect(calls.filter(([m]) => m.includes("Superpowers"))).toHaveLength(1);
+		expect(calls.filter(([m]) => m.includes("coding-standards"))).toHaveLength(1);
+	});
+
 	describe("schema notice", () => {
-		const sp = [{ name: "skill:brainstorming" }];
+		const sp = [{ name: "skill:brainstorming" }, { name: "skill:coding-standards" }];
 		const run = (state: State, hasUI = true) => {
 			const { root, schema } = project(state);
 			const before = hashTree(schema);
@@ -340,7 +369,7 @@ describe("interaction channel wiring", () => {
 			getActiveTools: () => [],
 		});
 		await expect(start()).resolves.toBeUndefined();
-		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("Schema superspec"))).toHaveLength(0);
+		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("coding-standards") && !m.includes("Schema superspec"))).toHaveLength(0);
 		expect(note()).not.toContain("plannotator-cli");
 	});
 

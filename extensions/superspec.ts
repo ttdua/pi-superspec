@@ -9,7 +9,9 @@ import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
 import { schemaNotice } from "./schema-notice.ts";
 import {
+	CODING_STANDARDS_MISSING_WARNING,
 	createRoutingNoteMessage,
+	hasCodingStandards,
 	hasSuperpowers,
 	insertRoutingNote,
 	SUPERPOWERS_MISSING_WARNING,
@@ -70,6 +72,7 @@ export default function (pi: ExtensionAPI) {
 		if (ctx.hasUI && !hasSuperpowers(pi.getCommands())) {
 			ctx.ui.notify(SUPERPOWERS_MISSING_WARNING, "warning");
 		}
+		if (ctx.hasUI && !hasCodingStandards(pi.getCommands())) ctx.ui.notify(CODING_STANDARDS_MISSING_WARNING, "warning");
 		if (ctx.hasUI) {
 			try {
 				const text = schemaNotice(root, packageRoot);

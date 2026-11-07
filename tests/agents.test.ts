@@ -103,19 +103,87 @@ describe("bundled agent defaults and tools (SA-A02)", () => {
 		expect(list(f.tools)).not.toContain("subagent");
 	});
 
-	it("selects explicit skills only for implementer and verifier", () => {
-		expect(list(load("implementer").frontmatter.skills).sort()).toEqual(
-			[
-				"systematic-debugging",
-				"test-driven-development",
-				"verification-before-completion",
-			].sort(),
-		);
+	it("selects explicit skills per role", () => {
+		expect(list(load("implementer").frontmatter.skills)).toEqual([
+			"test-driven-development",
+			"verification-before-completion",
+			"systematic-debugging",
+			"coding-standards",
+		]);
 		expect(list(load("verifier").frontmatter.skills)).toEqual([
 			"verification-before-completion",
 		]);
-		for (const name of ["scout", ...REVIEWERS] as const) {
+		expect(list(load("task-reviewer").frontmatter.skills)).toEqual(["coding-standards"]);
+		expect(list(load("plan-reviewer").frontmatter.skills)).toEqual(["coding-standards"]);
+		for (const name of ["scout", "spec-reviewer"] as const) {
 			expect(load(name).frontmatter.skills, name).toBeUndefined();
+		}
+	});
+});
+
+describe("coding standard in code-facing roles", () => {
+	const CODE_FACING = ["implementer", "task-reviewer", "plan-reviewer"] as const;
+
+	it.each(CODE_FACING)("coding standard is optional for %s", (name) => {
+		const { body } = load(name);
+		expect(body).toContain("coding-standards");
+		expect(body).toMatch(/Limitations/);
+		expect(body).toMatch(/project conventions/i);
+	});
+
+	it.each(["task-reviewer", "plan-reviewer"] as const)(
+		"%s does not return INCOMPLETE for a missing standard",
+		(name) => {
+			expect(load(name).body).toMatch(
+				/not[^.]*INCOMPLETE[^.]*(missing|unavailable)|(missing|unavailable)[^.]*not[^.]*INCOMPLETE/i,
+			);
+		},
+	);
+
+	it("implementer applies the coding standard at refactor", () => {
+		const { body } = load("implementer");
+		expect(body).toMatch(/refactor/i);
+		expect(body).toMatch(/(do not|never) defer/i);
+		const escalation = body.split("## Escalation")[1]?.split(/\n## /)[0] ?? "";
+		expect(escalation).toMatch(/except[^.]*`coding-standards`/);
+	});
+
+	it("task-reviewer reviews code quality and structure", () => {
+		const { body } = load("task-reviewer");
+		expect(body).toMatch(/code quality/i);
+		expect(body).toMatch(/structure/i);
+		expect(body).toMatch(/coding standard rule/i);
+		expect(body).toMatch(/CHANGES_REQUESTED[^.]*structure|structure[^.]*CHANGES_REQUESTED/i);
+	});
+
+	it("plan-reviewer checks decomposition by responsibility", () => {
+		const { body } = load("plan-reviewer");
+		expect(body).toMatch(/responsibilit/i);
+		expect(body).toMatch(/before[^.]*contracts?[^.]*fixed/i);
+		expect(body).toMatch(/entry point/i);
+	});
+
+	it.each(["task-reviewer", "plan-reviewer"] as const)(
+		"%s prompt states no numeric thresholds",
+		(name) => {
+			expect(load(name).body).not.toMatch(
+				/\d+\s*(lines|complexity)|(lines|complexity)\D{0,12}\d/i,
+			);
+		},
+	);
+
+	it("package ships no coding-standards skill", () => {
+		const pkg = JSON.parse(readFileSync(new URL("package.json", root), "utf8")) as {
+			files: string[];
+		};
+		for (const entry of pkg.files) {
+			const dir = new URL(entry, root);
+			if (!existsSync(dir)) continue;
+			for (const path of readdirSync(dir, { recursive: true }) as string[]) {
+				expect(String(path).split(/[\\/]/), `${entry}/${path}`).not.toContain(
+					"coding-standards",
+				);
+			}
 		}
 	});
 });

@@ -103,6 +103,20 @@ describe("subagent routing reference", () => {
 		expect(text).toMatch(/inline/i);
 	});
 
+	it("SA-R09 treats coding-standards as the only optional role skill", () => {
+		const avail = section("Availability");
+		expect(avail).toMatch(/optional/i);
+		expect(avail).toContain("`coding-standards`");
+		expect(avail).toMatch(/once per stage/i);
+		expect(avail).toMatch(/dispatch/i);
+		expect(avail).toMatch(/project conventions/i);
+		expect(avail).toMatch(/not found|skill:coding-standards/);
+		expect(avail).toMatch(/only optional/i);
+		expect(avail).toMatch(/(does not|not) stop/i);
+		expect(avail).toMatch(/no settings/i);
+		expect(section("Failures")).toMatch(/optional skill[^.]*does not stop/i);
+	});
+
 	it("SA-R04 retains exact failure state and stops the lane", () => {
 		const text = section("Failures");
 		expect(text).toMatch(/exact error/i);
