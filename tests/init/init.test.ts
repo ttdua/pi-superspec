@@ -19,6 +19,11 @@ import type { ExecResult, InitIO } from "../../extensions/init/io.ts";
 import { fakeIO } from "../helpers/io.ts";
 import { asV6 } from "../helpers/project.ts";
 
+const V = Number(
+	/^version:\s*(\d+)/m.exec(
+		readFileSync(new URL("../../schema/superspec/schema.yaml", import.meta.url), "utf8"),
+	)?.[1],
+);
 const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures");
 
@@ -519,8 +524,8 @@ describe("existing schema", () => {
 		writeFileSync(
 			f,
 			readFileSync(f, "utf8")
-				.replace(/^version:\s*\d+/m, "version: 8")
-				.replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$18"),
+				.replace(/^version:\s*\d+/m, `version: ${V + 1}`)
+				.replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, `$1${V + 1}`),
 		);
 		return root;
 	};
@@ -542,7 +547,7 @@ describe("existing schema", () => {
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		expect(snap(schemaDir(root))).toEqual(await freshSnap());
 		expect(readdirSync(bak)).toEqual([]);
-		expect(io.reports[0]).toContain("upgraded from v6 to v7");
+		expect(io.reports[0]).toContain(`upgraded from v6 to v${V}`);
 		expect(io.reports[0]).toContain("Commit openspec/schemas/superspec/");
 		expect(calls.filter(isValidate)).toHaveLength(1);
 		expect(io.reloads).toBe(1);
@@ -620,7 +625,7 @@ describe("existing schema", () => {
 		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
 		const [b] = backupsOf(bak);
 		expect(snap(b)).toEqual(before);
-		expect(basename(b)).toMatch(/^v7-/);
+		expect(basename(b)).toMatch(new RegExp(`^v${V}-`));
 		expect(io.reports[0]).toContain("replaced");
 		expect(io.reports[0]).toContain(b);
 		expect(snap(schemaDir(root))).toEqual(await freshSnap());
@@ -632,7 +637,7 @@ describe("existing schema", () => {
 		const bak = tmp();
 		const { io } = recording(root, undefined, { backupRoot: bak });
 		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
-		expect(io.reports[0]).toContain("downgraded from v8 to v7");
+		expect(io.reports[0]).toContain(`downgraded from v${V + 1} to v${V}`);
 		expect(backupsOf(bak)).toHaveLength(1);
 	});
 
@@ -641,7 +646,7 @@ describe("existing schema", () => {
 		const bak = tmp();
 		const { io } = recording(root, undefined, { backupRoot: bak });
 		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
-		expect(io.reports[0]).toContain("upgraded from v6 to v7");
+		expect(io.reports[0]).toContain(`upgraded from v6 to v${V}`);
 		expect(backupsOf(bak)).toHaveLength(1);
 	});
 
@@ -669,7 +674,7 @@ describe("existing schema", () => {
 		expect(await runInit(io, packageRoot, "--force")).toBe("activated");
 		expect(asked).toBe(0);
 		expect(backupsOf(bak)).toHaveLength(1);
-		expect(io.reports[0]).toContain("upgraded from v6 to v7");
+		expect(io.reports[0]).toContain(`upgraded from v6 to v${V}`);
 	});
 
 	it("--force on an absent schema installs fresh without backup", async () => {
