@@ -40,17 +40,17 @@ Blocked by: 1
 
 Blocked by: 5
 
-- [ ] 6.1 Update the `opsx-apply` skill: role-based executor selection, one lane per plan task, parallel scheduling, merge after review, conflict handling, escalation waits and `## Lanes` recording, with no plugin names (spec execution-commands, parallel-apply-lanes)
-- [ ] 6.2 Update the `opsx-verify` skill to select an agent meeting the verifier role and delegate through the paragraph (spec execution-commands)
-- [ ] 6.3 Update `tests/execution-commands.test.ts` for role wording, lanes and the forbidden-name guard over the execution skills and prompts
+- [x] 6.1 Update the `opsx-apply` skill: role-based executor selection, one lane per plan task, parallel scheduling, merge after review, conflict handling, escalation waits and `## Lanes` recording, with no plugin names (spec execution-commands, parallel-apply-lanes)
+- [x] 6.2 Update the `opsx-verify` skill to select an agent meeting the verifier role and delegate through the paragraph (spec execution-commands)
+- [x] 6.3 Update `tests/execution-commands.test.ts` for role wording, lanes and the forbidden-name guard over the execution skills and prompts
 
 ## 7. Planning and bootstrap skills
 
 Blocked by: 5
 
-- [ ] 7.1 Update the `opsx-continue`, `opsx-ff` and `opsx-explore` skills to name the scout, spec reviewer and plan reviewer roles and delegate through the paragraph (spec planning-commands)
-- [ ] 7.2 Update the `opsx-generate-specs` skill to use the scout and spec reviewer roles, report collection through the paragraph, and no plugin names (spec generate-specs-command)
-- [ ] 7.3 Update `tests/planning-commands.test.ts` and `tests/generate-specs-command.test.ts` for role wording and the forbidden-name guard over those skills and prompts
+- [x] 7.1 Update the `opsx-continue`, `opsx-ff` and `opsx-explore` skills to name the scout, spec reviewer and plan reviewer roles and delegate through the paragraph (spec planning-commands)
+- [x] 7.2 Update the `opsx-generate-specs` skill to use the scout and spec reviewer roles, report collection through the paragraph, and no plugin names (spec generate-specs-command)
+- [x] 7.3 Update `tests/planning-commands.test.ts` and `tests/generate-specs-command.test.ts` for role wording and the forbidden-name guard over those skills and prompts
 
 ## 8. Documentation and release checks
 
