@@ -56,7 +56,7 @@ Blocked by: 5
 
 Blocked by: 1, 2, 3, 4, 5, 6, 7
 
-- [ ] 8.1 Update `docs/architecture.md` ("pi tool mapping", "Subagent compatibility" with per-plugin inspected or smoke-tested status), `docs/workflow.md`, `docs/domain-model.md` and `docs/glossary.md`
-- [ ] 8.2 Update `README.md` and `README.vi.md` optional packages for the three subagent plugins, and `docs/usage-guide.md` for executor variants, task groups and parallel lanes, and bootstrap scouts (spec project-readme, usage-guide)
-- [ ] 8.3 Update `docs/e2e-checklist.md` with the tintinweb, pi-subagents and no-plugin runs, the gotgenes smoke and the parallel-lanes observation, and add a `CHANGELOG.md` entry (spec release-metadata)
-- [ ] 8.4 Add the tree-wide guard (no `superspec.*` agent names or plugin tool names in `skills/**`, `prompts/**` and agent bodies), then run `npm test`, `npm run typecheck` and `openspec validate subagent-adapters --strict`
+- [x] 8.1 Update `docs/architecture.md` ("pi tool mapping", "Subagent compatibility" with per-plugin inspected or smoke-tested status), `docs/workflow.md`, `docs/domain-model.md` and `docs/glossary.md`
+- [x] 8.2 Update `README.md` and `README.vi.md` optional packages for the three subagent plugins, and `docs/usage-guide.md` for executor variants, task groups and parallel lanes, and bootstrap scouts (spec project-readme, usage-guide)
+- [x] 8.3 Update `docs/e2e-checklist.md` with the tintinweb, pi-subagents and no-plugin runs, the gotgenes smoke and the parallel-lanes observation, and add a `CHANGELOG.md` entry (spec release-metadata)
+- [x] 8.4 Add the tree-wide guard (no `superspec.*` agent names or plugin tool names in `skills/**`, `prompts/**` and agent bodies), then run `npm test`, `npm run typecheck` and `openspec validate subagent-adapters --strict`
