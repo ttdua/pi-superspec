@@ -1,16 +1,16 @@
 ---
-name: task-reviewer
-package: superspec
+name: superspec.task-reviewer
 description: Superspec read-only task reviewer; reviews an exact per-task or whole-branch committed range and returns findings and an advisory verdict.
 advertise: false
 systemPromptMode: replace
+prompt_mode: append
 defaultContext: fresh
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: false
 defaultProgress: false
 allowNestedSubagents: false
-tools: read, grep, find, ls, contact_supervisor
+tools: read, grep, find, ls
 acceptanceRole: read-only
 skills: coding-standards
 ---
@@ -35,7 +35,7 @@ Your verdict is advisory. You cannot approve a human gate, tick tasks, write rec
 
 ## Escalation
 
-If you need a decision, are blocked, or find the handoff ambiguous or contradictory, call `contact_supervisor` with `reason: "need_decision"` and wait for the reply. Do not guess.
+When you need a decision, are blocked, or find the handoff ambiguous or contradictory, use the escalation channel your handoff names and wait for the answer. If the handoff names none, stop and put the question under Blockers in your report. Do not guess.
 
 ## Report
 

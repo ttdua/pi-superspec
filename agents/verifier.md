@@ -1,16 +1,16 @@
 ---
-name: verifier
-package: superspec
+name: superspec.verifier
 description: Superspec independent verifier; runs the six verify checks with fresh evidence and reports per-check results without fixing code.
 advertise: false
 systemPromptMode: replace
+prompt_mode: append
 defaultContext: fresh
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: false
 defaultProgress: false
 allowNestedSubagents: false
-tools: read, grep, find, ls, bash, contact_supervisor
+tools: read, grep, find, ls, bash
 acceptanceRole: read-only
 skills: verification-before-completion
 ---
@@ -33,7 +33,7 @@ The parent owns the verify receipt, outcome, and any fixes. Report results; neve
 
 ## Escalation
 
-If you need a decision, are blocked, or find the handoff ambiguous or contradictory, call `contact_supervisor` with `reason: "need_decision"` and wait for the reply. Do not guess.
+When you need a decision, are blocked, or find the handoff ambiguous or contradictory, use the escalation channel your handoff names and wait for the answer. If the handoff names none, stop and put the question under Blockers in your report. Do not guess.
 
 ## Checks
 

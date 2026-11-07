@@ -1,16 +1,16 @@
 ---
-name: scout
-package: superspec
+name: superspec.scout
 description: Superspec evidence-only codebase scout; returns file/line evidence and candidate behaviors for one capability or question.
 advertise: false
 systemPromptMode: replace
+prompt_mode: append
 defaultContext: fresh
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: false
 defaultProgress: false
 allowNestedSubagents: false
-tools: read, grep, find, ls, bash, contact_supervisor
+tools: read, grep, find, ls, bash
 acceptanceRole: read-only
 ---
 
@@ -32,7 +32,7 @@ The parent owns all artifact writes and decisions. You report evidence; you neve
 
 ## Escalation
 
-If you need a decision, are blocked, or find the handoff ambiguous or contradictory, call `contact_supervisor` with `reason: "need_decision"` and wait for the reply. Do not guess.
+When you need a decision, are blocked, or find the handoff ambiguous or contradictory, use the escalation channel your handoff names and wait for the answer. If the handoff names none, stop and put the question under Blockers in your report. Do not guess.
 
 ## Report
 
