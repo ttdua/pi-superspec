@@ -24,17 +24,17 @@ Blocked by: none
 
 Blocked by: 1
 
-- [ ] 4.1 Update the `tasks` instruction and `templates/tasks.md`: a group is the unit given to one agent, independent work is its own group, and a `Blocked by:` line under each group heading naming groups only (spec bundled-schema)
-- [ ] 4.2 Update the `plan` instruction and `templates/plan.md`: `## Task N` implements group N and lists its checkboxes, `**Difficulty:**`, `**Blocked by:**`, and the dependency carry-over rule (spec bundled-schema)
-- [ ] 4.3 Update the `apply` instruction for parallel unblocked plan tasks and `templates/apply.md` with the `## Lanes` section (spec bundled-schema)
-- [ ] 4.4 Bump the schema version and marker to 8, record the new digest in `tests/fixtures/schema-checksums.json`, and update the schema tests and the version-sensitive init and notice tests (spec bundled-schema "Schema identity", schema-version-pin)
+- [x] 4.1 Update the `tasks` instruction and `templates/tasks.md`: a group is the unit given to one agent, independent work is its own group, and a `Blocked by:` line under each group heading naming groups only (spec bundled-schema)
+- [x] 4.2 Update the `plan` instruction and `templates/plan.md`: `## Task N` implements group N and lists its checkboxes, `**Difficulty:**`, `**Blocked by:**`, and the dependency carry-over rule (spec bundled-schema)
+- [x] 4.3 Update the `apply` instruction for parallel unblocked plan tasks and `templates/apply.md` with the `## Lanes` section (spec bundled-schema)
+- [x] 4.4 Bump the schema version and marker to 8, record the new digest in `tests/fixtures/schema-checksums.json`, and update the schema tests and the version-sensitive init and notice tests (spec bundled-schema "Schema identity", schema-version-pin)
 
 ## 5. Shared routing reference
 
 Blocked by: 1
 
-- [ ] 5.1 Rewrite `skills/references/subagent-routing.md` plugin-neutral: role requirement table, requirement-based selection with announcement and the fail-closed read-only rule, handoff with escalation, report collection, lanes, the difficulty-to-thinking mapping, and a link to the compatibility docs (spec subagent-routing, parallel-apply-lanes)
-- [ ] 5.2 Update `tests/subagent-routing.test.ts` for the plugin-neutral reference, role table, selection, handoff, escalation and lane rules
+- [x] 5.1 Rewrite `skills/references/subagent-routing.md` plugin-neutral: role requirement table, requirement-based selection with announcement and the fail-closed read-only rule, handoff with escalation, report collection, lanes, the difficulty-to-thinking mapping, and a link to the compatibility docs (spec subagent-routing, parallel-apply-lanes)
+- [x] 5.2 Update `tests/subagent-routing.test.ts` for the plugin-neutral reference, role table, selection, handoff, escalation and lane rules
 
 ## 6. Execution skills
 
