@@ -601,7 +601,7 @@ describe("planning specialist routing", () => {
 	it("SA-P01 explore offers an optional evidence-only scout via the shared reference", () => {
 		const t = skill("explore");
 		expect(t).toContain(REF);
-		expect(t).toContain("superspec.scout");
+		expect(t).toContain("scout role");
 		expect(t).toMatch(/evidence-only/i);
 		expect(t).toMatch(/no-write|read-only/i);
 		expect(t).toMatch(/never (write|create)[^.\n]*(code|schema|artifact)/i);
@@ -617,8 +617,8 @@ describe("planning specialist routing", () => {
 	it("SA-P03 continue reviews the completed artifact before the gate, without a second artifact", () => {
 		const t = skill("continue");
 		expect(t).toContain(REF);
-		expect(t).toContain("superspec.spec-reviewer");
-		expect(t).toContain("superspec.plan-reviewer");
+		expect(t).toContain("spec reviewer role");
+		expect(t).toContain("plan reviewer role");
 		expect(t).toMatch(/existing dependency files/i);
 		expect(t).toMatch(/re-review/i);
 		expect(t).toMatch(/before the (existing )?human (review )?gate/i);
@@ -630,8 +630,8 @@ describe("planning specialist routing", () => {
 	it("SA-P04 ff runs internal reviews unattended and keeps its two stops", () => {
 		const t = skill("ff");
 		expect(t).toContain(REF);
-		expect(t).toContain("superspec.spec-reviewer");
-		expect(t).toContain("superspec.plan-reviewer");
+		expect(t).toContain("spec reviewer role");
+		expect(t).toContain("plan reviewer role");
 		expect(t).toMatch(/internal (spec|review)[^.\n]*(no|without)[^.\n]*(extra|additional|another)[^.\n]*(human )?(stop|approval)/i);
 		expect(t).toContain("The brainstorm gate and the final gate are the only planned stops");
 		expect(t).toMatch(/recon never moves the user conversation/i);
@@ -650,6 +650,23 @@ describe("planning specialist routing", () => {
 			expect(t, c).toMatch(/no main spec[^.\n]*no baseline/i);
 			expect(t, c).toMatch(/inline self-check[^.\n]*same main specs/i);
 		}
+	});
+
+	it("Delegation through the paragraph: skills and prompts name roles, not plugins", () => {
+		const forbidden = /pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
+		for (const c of ["continue", "ff", "explore", "generate-specs"]) {
+			expect(read(`skills/opsx-${c}/SKILL.md`), `skill ${c}`).not.toMatch(forbidden);
+			expect(read(`prompts/opsx-${c}.md`), `prompt ${c}`).not.toMatch(forbidden);
+		}
+	});
+
+	it("Delegation routes through the Subagent integration paragraph", () => {
+		for (const c of ["continue", "ff", "explore"] as const) {
+			expect(skill(c), c).toMatch(/as the Subagent integration paragraph describes/);
+		}
+		const recon = skill("explore");
+		const section = recon.slice(recon.indexOf("Before any delegation"));
+		expect(section).toMatch(/collect the report as the paragraph describes/);
 	});
 
 	it("links the shared reference from the three current planning consumers without copying policy", () => {
