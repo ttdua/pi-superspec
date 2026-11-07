@@ -386,7 +386,8 @@ describe("execution specialist routing", () => {
 		expect(t).toMatch(/no available agent meets[^.]*stop/i);
 		expect(t).toMatch(/launch (or|and) runtime failure|runtime failure/i);
 		expect(t).toMatch(/mid-run/i);
-		expect(t).toMatch(/(no|never)[^.]*(generic replacement|silently go inline)/i);
+		expect(t).toMatch(/no generic replacement or substitute/i);
+		expect(t).toMatch(/never silently go inline/i);
 	});
 
 	it("SA-E04 verify loads shared policy and delegates collection to the verifier in the authoritative cwd", () => {
@@ -452,7 +453,22 @@ describe("execution specialist routing", () => {
 		expect(t).toContain("## Lanes");
 		expect(t).toMatch(/merge[^.]*after[^.]*review/i);
 		expect(flat).toMatch(/without[^.]*Blocked by[^.]*one after another/i);
-		expect(flat).toMatch(/escalat[^.]*(neither|not)[^.]*(merge|tick)/i);
+		expect(flat).toMatch(/every task in its `Blocked by` is merged/i);
+		expect(flat).toMatch(/plan[^.]*metadata[^.]*governs? scheduling/i);
+		expect(flat).toMatch(/escalated lane waits[^.]*does neither merge/i);
+		expect(flat).toMatch(/escalated lane waits[^.]*nor tick it/i);
+	});
+
+	it("apply and verify refer delegation to the Subagent integration paragraph", () => {
+		const apply = skill("apply").replace(/\s+/g, " ");
+		const step5 = apply.slice(apply.indexOf("5. **Choose the executor**"), apply.indexOf("6. **Write the receipt"));
+		expect(step5).toMatch(/through the Subagent integration paragraph/);
+		expect(step5).toMatch(/If delegation is available through the Subagent integration paragraph/);
+		expect(step5).toMatch(/If the Subagent integration paragraph says delegation is unavailable/);
+		const verify = skill("verify").replace(/\s+/g, " ");
+		const ev = verify.slice(verify.indexOf("**Delegated evidence:**"), verify.indexOf("Beyond the instruction"));
+		expect(ev).toMatch(/Delegate as the Subagent integration paragraph describes/);
+		expect(ev).toMatch(/When the Subagent integration paragraph says delegation is absent/);
 	});
 
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
