@@ -41,7 +41,7 @@
 | `SubagentToolInfo` | new | `interface SubagentToolInfo { name: string; parameters?: unknown; sourceInfo?: { source?: string; path?: string } }` | no |
 | `paramKeys` | new | `paramKeys(parameters: unknown): Set<string>`; reads `properties` when it is an object, otherwise the object's own keys; anything else gives an empty set | no |
 | `pickSpawnTool` | new | `pickSpawnTool(tools: readonly SubagentToolInfo[], adapter: SubagentAdapter): SubagentToolInfo \| undefined`; exported; prefers a tool whose `sourceInfo.source` contains the adapter's package name | no |
-| `detectSubagentAdapter` | new | `detectSubagentAdapter(tools: readonly SubagentToolInfo[]): SubagentAdapter`; input is `getAllTools()` filtered to the active names | no |
+| `detectSubagentAdapter` | new | `detectSubagentAdapter(tools: readonly SubagentToolInfo[]): SubagentAdapter`; input is `getAllTools()` filtered to the active names. The pi-subagents rule requires `agent` or `task` and no `subagent_type` (changed in apply: a gotgenes-style tool with an extra `task` was misread) | no |
 | `subagentParagraph` | new | `subagentParagraph(adapter: SubagentAdapter): string`; first line `Subagent integration: <adapter>.` | no |
 | `routingNote` | modified | `routingNote(language: string, channelText = "", subagentText = ""): string`; `subagentText` follows `channelText`, separated by a blank line; with `subagentText === ""` the output is identical to today | no |
 | `createRoutingNoteMessage` | modified | `createRoutingNoteMessage(language: string, channelText = "", subagentText = ""): { role: "user"; content: { type: "text"; text: string }[]; timestamp: number }` | no |
