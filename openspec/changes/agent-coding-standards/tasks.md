@@ -16,5 +16,5 @@
 
 ## 4. Documentation
 
-- [ ] 4.1 Add the `coding-standards` prerequisite to `README.md` and `README.vi.md` (who provides it, where pi discovers it, which roles apply it, fallback, no stop), with a README test in `tests/project-readme.test.ts`
-- [ ] 4.2 Name the three roles that carry the coding standard in `docs/architecture.md` (Package agents) and `docs/workflow.md` (specialist seats)
+- [x] 4.1 Add the `coding-standards` prerequisite to `README.md` and `README.vi.md` (who provides it, where pi discovers it, which roles apply it, fallback, no stop), with a README test in `tests/project-readme.test.ts`
+- [x] 4.2 Name the three roles that carry the coding standard in `docs/architecture.md` (Package agents) and `docs/workflow.md` (specialist seats)
