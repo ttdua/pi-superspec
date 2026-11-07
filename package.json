@@ -18,7 +18,12 @@
 	"pi": {
 		"extensions": [
 			"./extensions/superspec.ts"
-		]
+		],
+		"subagents": {
+			"agents": [
+				"./agents"
+			]
+		}
 	},
 	"pi-subagents": {
 		"agents": [
