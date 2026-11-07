@@ -21,6 +21,7 @@ import {
 } from "../../extensions/init/schema-install.ts";
 import { SCHEMA_DIR, asV6 } from "../helpers/project.ts";
 
+const V = Number(/^version:\s*(\d+)/m.exec(readFileSync(join(SCHEMA_DIR, "schema.yaml"), "utf8"))?.[1]);
 const PACKAGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const UNMARKED = fileURLToPath(
 	new URL("../fixtures/unmarked/openspec/schemas/superspec", import.meta.url),
@@ -84,7 +85,7 @@ describe("installSchema lock", () => {
 		for (const [f, h] of Object.entries(lock.files)) {
 			expect(h).toBe(sha(readFileSync(join(target(root), f))));
 		}
-		expect(lock.schemaVersion).toBe(7);
+		expect(lock.schemaVersion).toBe(V);
 		const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8"));
 		expect(lock.packageVersion).toBe(pkg.version);
 	});
@@ -163,9 +164,9 @@ describe("classifySchema", () => {
 		setMarker(t, 4);
 		expect(classifySchema(t, SCHEMA_DIR)).toBe("older");
 	});
-	it("newer for a v8 marker", () => {
+	it("newer for a marker above the bundled version", () => {
 		const t = copyBundled(tmp());
-		setMarker(t, 8);
+		setMarker(t, V + 1);
 		expect(classifySchema(t, SCHEMA_DIR)).toBe("newer");
 	});
 	it("classification writes nothing", () => {
@@ -177,7 +178,7 @@ describe("classifySchema", () => {
 				writeFileSync(join(t, "extra.md"), "x");
 			},
 			(t) => setMarker(t, 4),
-			(t) => setMarker(t, 8),
+			(t) => setMarker(t, V + 1),
 			(t) => writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml")!), "x"),
 		];
 		for (const mutate of cases) {
@@ -258,7 +259,7 @@ describe("installSchema on existing states", () => {
 			["edited", (t) => writeFileSync(join(t, listFiles(t).find((f) => f !== "schema.yaml")!), "x")],
 			["older", (t) => setMarker(t, 4)],
 			["upgradable", (t) => asV6(t)],
-			["newer", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, "$18"))],
+			["newer", (t) => writeFileSync(join(t, "schema.yaml"), readFileSync(join(t, "schema.yaml"), "utf8").replace(/(x-pi-superspec:\s*\n\s+version:\s*)\d+/, `$1${V + 1}`))],
 			["foreign", (t) => cpSync(UNMARKED, t, { recursive: true, force: true })],
 		];
 		for (const [state, mutate] of cases) {
@@ -310,7 +311,7 @@ describe("replaceSchema", () => {
 		asV6(copyBundled(root));
 		const fresh = tmp();
 		installSchema(fresh, PACKAGE_ROOT);
-		expect(replaceSchema(root, PACKAGE_ROOT)).toEqual({ from: 6, to: 7 });
+		expect(replaceSchema(root, PACKAGE_ROOT)).toEqual({ from: 6, to: V });
 		expect(snapshot(target(root))).toEqual(snapshot(target(fresh)));
 		expect(openspecLeftovers(root)).toEqual([]);
 	});

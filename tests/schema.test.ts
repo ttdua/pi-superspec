@@ -47,8 +47,23 @@ run("bundled schema", () => {
 	it("identity: name, version and marker", () => {
 		const text = schemaYaml();
 		expect(text).toMatch(/^name: superspec$/m);
-		expect(text).toMatch(/^version: 7$/m);
-		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 7$/m);
+		expect(text).toMatch(/^version: 8$/m);
+		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 8$/m);
+	});
+
+	it("keeps the nine artifact IDs of version 7", () => {
+		const ids = [...schemaYaml().matchAll(/^  - id: (\S+)/gm)].map((m) => m[1]);
+		expect(ids).toEqual([
+			"brainstorm",
+			"proposal",
+			"design",
+			"specs",
+			"tasks",
+			"plan",
+			"apply",
+			"verify",
+			"finalize",
+		]);
 	});
 
 	it("openspec schema validate superspec passes", () => {
@@ -128,6 +143,29 @@ run("bundled schema", () => {
 			const text = applyInstruction();
 			expect(text).toContain("branch named <change-name>");
 			expect(text).toContain("authoritative");
+		});
+
+		it("parallel rule present", () => {
+			const text = applyInstruction().replace(/\s+/g, " ");
+			expect(text).toMatch(/one writer per worktree/i);
+			expect(text).toMatch(/merged? (back )?after[^.]*review/i);
+			expect(text).toMatch(/without dependency metadata[^.]*one after another/i);
+		});
+
+		it("lanes table is recorded per plan task", () => {
+			const text = applyInstruction().replace(/\s+/g, " ");
+			expect(text).toMatch(/Lanes[^.]*each (plan )?task/i);
+			expect(text).toMatch(/commit range[^.]*(covers|including)[^.]*merge/i);
+		});
+
+		it("apply.md template has the Lanes section", () => {
+			const tpl = readFileSync(join(SCHEMA_DIR, "templates", "apply.md"), "utf8");
+			expect(tpl).toContain("## Lanes");
+			const lanes = tpl.slice(tpl.indexOf("## Lanes"));
+			for (const col of ["Task", "Lane branch", "Lane range", "Review", "Merge commit"]) {
+				expect(lanes, col).toContain(col);
+			}
+			expect(tpl).toContain("## Contract deviations");
 		});
 
 		it("fallback executor still requests a whole-branch review", () => {
@@ -537,7 +575,7 @@ run("bundled schema", () => {
 				"Skip the skill's execution handoff; `/opsx-apply` chooses the executor.",
 			);
 			expect(text).toContain(
-				"Every plan task names the tasks.md ID it implements (e.g. `Task 3 — implements 1.2`).",
+				"Every plan task names the tasks.md group it implements (e.g. `Task 3 — implements 3`)",
 			);
 			expect(text).toContain(
 				"List, for every `#### Scenario:` in specs/, the test that covers it.",
@@ -551,9 +589,76 @@ run("bundled schema", () => {
 			const t = tpl("plan.md");
 			expect(t).not.toContain("subagent-driven-development");
 			expect(t).toContain("Executed via `/opsx-apply`, which chooses the executor.");
-			expect(t).toMatch(/^## Task 1: .*implements X\.Y$/m);
+			expect(t).toMatch(/^## Task 1: .*implements N$/m);
 			expect(t).toMatch(/^## Scenario → test$/m);
 		});
+
+		it("plan template has the metadata fields", () => {
+			const t = tpl("plan.md");
+			for (const f of ["**Covers:**", "**Difficulty:**", "**Blocked by:**"]) {
+				expect(t, f).toContain(f);
+			}
+		});
+
+		it("plan instruction requires the metadata and lists difficulties", () => {
+			const text = instructionFor("plan");
+			for (const d of ["Easy", "Normal", "Hard", "Very Hard"]) expect(text, d).toContain(d);
+			expect(text).toContain("**Difficulty:**");
+			expect(text).toContain("**Blocked by:**");
+		});
+
+		it("plan dropped dependency needs a reason", () => {
+			expect(instructionFor("plan")).toMatch(
+				/carry[^.]*tasks\.md[^.]*dependenc[^.]*reason/i,
+			);
+		});
+
+		it("tasks instruction states the unit of work", () => {
+			const text = instructionFor("tasks");
+			expect(text).toMatch(/group[^.]*unit[^.]*one agent/i);
+			expect(text).toMatch(/independent[^.]*own group/i);
+		});
+
+		it("tasks instruction allows group numbers only", () => {
+			expect(instructionFor("tasks")).toMatch(/Blocked by[^.]*group numbers/i);
+		});
+
+		it("tasks template shows the Blocked by line under each group", () => {
+			const lines = tpl("tasks.md").split("\n");
+			let groups = 0;
+			lines.forEach((line, i) => {
+				if (/^## \d+\./.test(line)) {
+					groups++;
+					const next = lines[i + 1] === "" ? lines[i + 2] : lines[i + 1];
+					expect(next, line).toMatch(/^Blocked by: /);
+				}
+				if (/^- \[ \]/.test(line)) {
+					expect(lines[i + 1] ?? "", line).not.toMatch(/Blocked by/);
+				}
+			});
+			expect(groups).toBeGreaterThan(0);
+		});
+
+		it("task progress ignores Blocked by metadata", () => {
+			const boxes = '- [ ] 1.1 a\n- [ ] 1.2 b\n';
+			const variants: Record<string, string> = {
+				filled: `## 1. A\n\nBlocked by: none\n\n${boxes}\n## 2. B\n\nBlocked by: 1\n\n- [ ] 2.1 c\n`,
+				legacy: "## 1. A\n\n- [ ] 1.1 a\n  - Blocked by: nothing\n- [ ] 1.2 b\n  - Blocked by: 1.1\n- [ ] 2.1 c\n",
+				none: `${boxes}- [ ] 2.1 c\n`,
+			};
+			for (const [name, text] of Object.entries(variants)) {
+				const id = `prog-${name}`;
+				const res = project.openspec(["new", "change", id]);
+				expect(res.status, res.stdout + res.stderr).toBe(0);
+				const dir = join(project.dir, "openspec", "changes", id);
+				writeFileSync(join(dir, "plan.md"), "");
+				writeFileSync(join(dir, "tasks.md"), text);
+				const out = project.openspec(["instructions", "apply", "--change", id, "--json"]);
+				expect(out.status, out.stdout + out.stderr).toBe(0);
+				const total = (text.match(/^\s*- \[ \]/gm) ?? []).length;
+				expect(JSON.parse(out.stdout).progress.total, name).toBe(total);
+			}
+		}, 30_000);
 
 		it("plan template has a Contracts section before Task 1", () => {
 			const t = tpl("plan.md");
@@ -595,7 +700,7 @@ run("bundled schema", () => {
 		it("apply ticks tasks.md as official status and commits dirty change dirs", () => {
 			const text = instructionFor("apply");
 			expect(text).toContain(
-				"When a plan task's review passes, tick its tasks.md box. tasks.md is the official status; the executor's ledger is for recovery only.",
+				"When a plan task's review passes, tick the tasks.md boxes of its group. tasks.md is the official status; the executor's ledger is for recovery only.",
 			);
 			expect(text).toContain(
 				"If the output is non-empty (untracked `??` or modified entries), stage and commit ONLY this change's directory",

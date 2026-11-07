@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,11 @@ import { hashTree } from "../extensions/init/schema-install.ts";
 import superspec, { createInitIO } from "../extensions/superspec.ts";
 import { project, type State } from "./helpers/notice-project.ts";
 
+const V = Number(
+	/^version:\s*(\d+)/m.exec(
+		readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "schema", "superspec", "schema.yaml"), "utf8"),
+	)?.[1],
+);
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 
 type Handler = (event: any, ctx?: any) => unknown;
@@ -274,7 +279,7 @@ describe("session_start handler", () => {
 			expect(calls).toHaveLength(1);
 			expect(calls[0][1]).toBe("info");
 			expect(calls[0][0]).toContain("v6");
-			expect(calls[0][0]).toContain("v7");
+			expect(calls[0][0]).toContain(`v${V}`);
 			expect(calls[0][0]).toContain("/opsx-init");
 			expect(calls[0][0]).not.toContain("--force");
 		});
