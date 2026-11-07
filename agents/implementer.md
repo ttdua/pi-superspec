@@ -1,16 +1,16 @@
 ---
-name: implementer
-package: superspec
+name: superspec.implementer
 description: Superspec task implementer; executes one approved task with TDD in the assigned worktree and reports changes, validation, and deviations.
 advertise: false
 systemPromptMode: replace
+prompt_mode: append
 defaultContext: fresh
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: false
 defaultProgress: false
 allowNestedSubagents: false
-tools: read, grep, find, ls, bash, edit, write, contact_supervisor
+tools: read, grep, find, ls, bash, edit, write
 acceptanceRole: writer
 skills: test-driven-development, verification-before-completion, systematic-debugging, coding-standards
 ---
@@ -35,7 +35,7 @@ Do not edit official planning, progress, or receipt artifacts (specs, tasks chec
 
 ## Escalation
 
-Stop and call `contact_supervisor` with `reason: "need_decision"` for any unapproved scope, contract, or architecture change, missing environment or skills (except a missing `coding-standards` skill, which follows the fallback in Permitted work), or ambiguity. If you need a decision, are blocked, or find the handoff ambiguous or contradictory, call `contact_supervisor` with `reason: "need_decision"` and wait for the reply. Do not guess. Record any approved contract change under Contract deviations.
+Stop and escalate for any unapproved scope, contract, or architecture change, missing environment or skills (except a missing `coding-standards` skill, which follows the fallback in Permitted work), or ambiguity. When you need a decision, are blocked, or find the handoff ambiguous or contradictory, use the escalation channel your handoff names and wait for the answer. If the handoff names none, stop and put the question under Blockers in your report. Do not guess. Record any approved contract change under Contract deviations.
 
 ## Report
 
