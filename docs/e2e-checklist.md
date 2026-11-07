@@ -1,6 +1,6 @@
 # Manual end-to-end checklist
 
-This checklist takes one small change through all ten workflow steps (brainstorm, proposal, design, specs, tasks, plan, apply, verify, finalize, archive), once with `pi-subagents` installed and once without it. A maintainer runs it by hand before a release. The expected behaviour of each step is described in the [usage guide](usage-guide.md); the rules behind it are in [workflow.md](workflow.md).
+This checklist takes one small change through all ten workflow steps (brainstorm, proposal, design, specs, tasks, plan, apply, verify, finalize, archive), three times: with `@tintinweb/pi-subagents`, with `pi-subagents` and without a subagent plugin. A maintainer runs it by hand before a release. The expected behaviour of each step is described in the [usage guide](usage-guide.md); the rules behind it are in [workflow.md](workflow.md).
 
 Tick each box only when you observed the result named after the item's marker. If a step goes wrong, check the [troubleshooting section](usage-guide.md#troubleshooting) first and record what you saw under [Recording results](#recording-results).
 
@@ -13,11 +13,11 @@ Tick each box only when you observed the result named after the item's marker. I
 - [ ] The feature branch for the run is created and checked out (for example `git switch -c feat/e2e-a`). Expected: `git branch --show-current` prints the feature branch, not `main` or `master`.
 - [ ] The feature branch is pushed with an upstream (`git push -u origin feat/e2e-a`), because finalize runs a plain `git pull`. Expected: `git rev-parse --abbrev-ref @{upstream}` prints `origin/feat/e2e-a`.
 
-Use a fresh scratch repository (or a clean reset of it) for each run. Run A needs `pi-subagents` installed, Run B needs it removed, so restart pi after changing that package.
+Use a fresh scratch repository (or a clean reset of it) for each run. Each run needs a different set of subagent plugins installed, so restart pi after changing them.
 
-## Run A — with pi-subagents
+## Run A — with @tintinweb/pi-subagents
 
-Setup: install `pi-subagents` and pi-superspec, then start pi in the scratch repository.
+Setup: install `@tintinweb/pi-subagents` (and no other subagent plugin) and pi-superspec, then start pi in the scratch repository. The change for this run has two independent tasks (`Blocked by: none` on both), so that parallel lanes are observed.
 
 ### Init
 
@@ -42,8 +42,9 @@ Setup: install `pi-subagents` and pi-superspec, then start pi in the scratch rep
 
 - [ ] Commit the `/opsx-init` output on the feature branch (`git add openspec/config.yaml openspec/schemas/superspec`, then `git commit`), because apply commits only the change directory and the worktree is created from the feature branch. Expected: `git status --porcelain openspec/config.yaml openspec/schemas` prints nothing.
 - [ ] Confirm you are on the feature branch, then run `/opsx-apply` (step 7, apply). Expected: `git log` shows a commit `docs(openspec): scaffold e2e-a change` if the change directory was uncommitted; `git worktree list` shows a worktree on a new branch named `e2e-a`.
-- [ ] Watch the executor during apply. Expected: the agent uses the `subagent` tool for subagent-driven development (a fresh subagent per task, a reviewer per task, a final whole-implementation review), and `tasks.md` boxes in the worktree are ticked as tasks pass review.
-- [ ] Read the apply result in the worktree. Expected: `openspec/changes/e2e-a/apply.md` exists in the worktree and is committed, lists the worktree path, branches, commit range and `Iteration: 1`, and records subagent-driven development as the executor; the agent tells you to run `/opsx-verify`.
+- [ ] Watch the executor during apply. Expected: the agent uses the `Agent` tool for subagent-driven development (a fresh subagent per task, a reviewer per task, a final whole-implementation review), announces which agent it chose for each role, and `tasks.md` boxes in the worktree are ticked as tasks pass review.
+- [ ] Watch the two independent tasks. Expected: two lane worktrees appear in `git worktree list` on branches `e2e-a--task-1` and `e2e-a--task-2` while both run; each lane is merged into `e2e-a` with a merge commit only after its task review passes, and the lane worktrees are removed afterwards.
+- [ ] Read the apply result in the worktree. Expected: `openspec/changes/e2e-a/apply.md` exists in the worktree and is committed, lists the worktree path, branches, commit range and `Iteration: 1`, and records subagent-driven development as the executor, and has a `## Lanes` table with one row per task (task ID, lane branch, lane commit range, review verdict, merge commit); the agent tells you to run `/opsx-verify`.
 - [ ] Run `/opsx-verify` (step 8, verify); it finds the worktree itself, so either checkout works. Expected: `openspec/changes/e2e-a/verify.md` exists in the worktree with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL` under Overall Decision; on `FAIL`, rerun `/opsx-apply` then `/opsx-verify` until it is not `FAIL`.
 - [ ] Start (or restart) pi with the worktree path as its working directory (the path is printed by `/opsx-apply` and recorded in `apply.md`), then run `/opsx-continue` (step 9, finalize). Expected: the project's tests run in the worktree first (or a "no tests" result is recorded); then, before the feature branch is touched, the code review gate (step 2b) opens on the full worktree branch diff against the feature branch; on approved with notes or changes requested, it stops before the feature branch is checked out, merged or pushed. Once the gate is approved: the worktree branch is merged into the feature branch with `--ff-only`, the worktree is removed or recorded as `preserved (harness-owned)`, and `openspec/changes/e2e-a/finalize.md` exists on the feature branch with an outcome and a `PR comment status` line.
 - [ ] Check the remote after finalize. Expected: `git log origin/<feature-branch> --oneline` shows the `finalize.md` commit, because finalize pushed the feature branch.
@@ -67,9 +68,17 @@ Setup: install `pi-subagents` and pi-superspec, then start pi in the scratch rep
 - [ ] Open a new pi session in a directory with no `openspec/` folder above it. Expected: only `/opsx-init` is listed among the `opsx-*` commands.
 - [ ] Remove pi-superspec (the package) and start a new pi session in the scratch repository (see the [README](../README.md#uninstall)). Expected: no `/opsx-*` command is listed, `openspec/` still holds the changes, archive and specs, and `openspec/schemas/superspec/` and `openspec/schemas/superspec/.pi-superspec.json` still exist.
 
-## Run B — without pi-subagents
+## Run B — with pi-subagents
 
-Setup: remove `pi-subagents`, reinstall pi-superspec (Run A ends by removing it), restart pi, and use a fresh scratch repository with a new feature branch (for example `feat/e2e-b`) pushed with `git push -u origin feat/e2e-b`.
+Setup: remove `@tintinweb/pi-subagents`, install `pi-subagents`, reinstall pi-superspec (Run A ends by removing it), restart pi, and use a fresh scratch repository with a new feature branch (for example `feat/e2e-b`) pushed with `git push -u origin feat/e2e-b`. Walk through the same steps as Run A, using the change name `e2e-b`; only the differences are listed here.
+
+- [ ] Run `/opsx-init`, then `/opsx-new e2e-b` and `/opsx-continue` through the plan, approving each gate. Expected: the same artifacts as in Run A exist under `openspec/changes/e2e-b/`, and the workflow stops before `apply`.
+- [ ] Run `/opsx-apply`. Expected: the agent uses the `subagent` tool, announces the agent chosen for each role, passes no thinking level and no model, and `openspec/changes/e2e-b/apply.md` records subagent-driven development and a `## Lanes` table.
+- [ ] Run `/opsx-verify`, then `/opsx-continue` (finalize) from the worktree and `/opsx-archive` as in Run A. Expected: `verify.md` has one outcome, `finalize.md` exists on the feature branch, and `openspec/changes/archive/YYYY-MM-DD-e2e-b/` exists.
+
+## Run C — without a subagent plugin
+
+Setup: remove every subagent plugin, reinstall pi-superspec, restart pi, and use a fresh scratch repository with a new feature branch (for example `feat/e2e-c`) pushed with `git push -u origin feat/e2e-c`.
 
 ### Init
 
@@ -77,33 +86,33 @@ Setup: remove `pi-subagents`, reinstall pi-superspec (Run A ends by removing it)
 
 ### Steps one to six, step by step
 
-- [ ] Run `/opsx-new e2e-b`. Expected: the directory `openspec/changes/e2e-b/` exists and no artifact file has been created yet.
-- [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-b/brainstorm.md` exists and a review gate runs on it.
+- [ ] Run `/opsx-new e2e-c`. Expected: the directory `openspec/changes/e2e-c/` exists and no artifact file has been created yet.
+- [ ] Run `/opsx-continue`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked (step 1, brainstorm). Expected: `openspec/changes/e2e-c/brainstorm.md` exists and a review gate runs on it.
 - [ ] Approve each gate as it opens. Expected: after an approved gate the same run goes on to the next artifact and gates it, and stops before `apply`; for `changes requested` it revises the artifact and reopens the gate, and for `dismissed` it stops and asks you on the Interaction channel. Check the files as they appear:
-  - step 2, proposal: `openspec/changes/e2e-b/proposal.md` exists with a Capabilities list.
-  - step 3, design, optional: `openspec/changes/e2e-b/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
-  - step 4, specs: `openspec/changes/e2e-b/specs/<capability>/spec.md` exists for each capability, with `#### Scenario:` blocks.
-  - step 5, tasks: `openspec/changes/e2e-b/tasks.md` exists with a checklist of tasks.
-  - step 6, plan: `openspec/changes/e2e-b/plan.md` exists and every plan task names a `tasks.md` ID.
+  - step 2, proposal: `openspec/changes/e2e-c/proposal.md` exists with a Capabilities list.
+  - step 3, design, optional: `openspec/changes/e2e-c/design.md` exists; for a trivial change it is a two-line file that says `No design needed: <reason>`.
+  - step 4, specs: `openspec/changes/e2e-c/specs/<capability>/spec.md` exists for each capability, with `#### Scenario:` blocks.
+  - step 5, tasks: `openspec/changes/e2e-c/tasks.md` exists with a checklist of tasks.
+  - step 6, plan: `openspec/changes/e2e-c/plan.md` exists and every plan task names a `tasks.md` ID.
 
 ### Apply, verify, finalize, archive
 
 - [ ] Commit the `/opsx-init` output on the feature branch (`git add openspec/config.yaml openspec/schemas/superspec`, then `git commit`), because apply commits only the change directory and the worktree is created from the feature branch. Expected: `git status --porcelain openspec/config.yaml openspec/schemas` prints nothing.
-- [ ] Confirm you are on the feature branch, then run `/opsx-apply` (step 7, apply). Expected: a worktree on a new branch named `e2e-b` appears in `git worktree list`.
-- [ ] Watch the executor during apply. Expected: the agent says it uses Superpowers `executing-plans` in the current session, tells you that TDD and review are not enforced for it, makes no subagent calls, and ticks `tasks.md` boxes in the worktree.
-- [ ] Watch the end of apply. Expected: before `apply.md` is written the agent requests a whole-branch review over the full commit range (`requesting-code-review`), and then `openspec/changes/e2e-b/apply.md` exists in the worktree and records `executing-plans` as the executor.
-- [ ] Run `/opsx-verify` (step 8, verify); it finds the worktree itself, so either checkout works. Expected: `openspec/changes/e2e-b/verify.md` exists in the worktree with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`; on `FAIL`, rerun `/opsx-apply` then `/opsx-verify`.
-- [ ] Start (or restart) pi with the worktree path as its working directory (the path is printed by `/opsx-apply` and recorded in `apply.md`), then run `/opsx-continue` (step 9, finalize). Expected: after the in-worktree test run, the code review gate (step 2b) opens on the worktree branch diff against the feature branch; once it is approved, the worktree branch is merged into the feature branch with `--ff-only`, `openspec/changes/e2e-b/finalize.md` exists on the feature branch, and the feature branch is pushed to `origin`.
-- [ ] Reopen pi in the main checkout on the feature branch (finalize may have removed the worktree your session was in), then run `/opsx-archive` (step 10, archive) and confirm the prompts. Expected: the directory `openspec/changes/archive/YYYY-MM-DD-e2e-b/` exists and `openspec/changes/e2e-b/` is gone.
+- [ ] Confirm you are on the feature branch, then run `/opsx-apply` (step 7, apply). Expected: a worktree on a new branch named `e2e-c` appears in `git worktree list`.
+- [ ] Watch the executor during apply. Expected: the agent says it uses Superpowers `executing-plans` in the current session, tells you that TDD and review are not enforced for it, makes no subagent calls, runs the tasks one after another with no lane worktrees, and ticks `tasks.md` boxes in the worktree.
+- [ ] Watch the end of apply. Expected: before `apply.md` is written the agent requests a whole-branch review over the full commit range (`requesting-code-review`), and then `openspec/changes/e2e-c/apply.md` exists in the worktree and records `executing-plans` as the executor.
+- [ ] Run `/opsx-verify` (step 8, verify); it finds the worktree itself, so either checkout works. Expected: `openspec/changes/e2e-c/verify.md` exists in the worktree with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`; on `FAIL`, rerun `/opsx-apply` then `/opsx-verify`.
+- [ ] Start (or restart) pi with the worktree path as its working directory (the path is printed by `/opsx-apply` and recorded in `apply.md`), then run `/opsx-continue` (step 9, finalize). Expected: after the in-worktree test run, the code review gate (step 2b) opens on the worktree branch diff against the feature branch; once it is approved, the worktree branch is merged into the feature branch with `--ff-only`, `openspec/changes/e2e-c/finalize.md` exists on the feature branch, and the feature branch is pushed to `origin`.
+- [ ] Reopen pi in the main checkout on the feature branch (finalize may have removed the worktree your session was in), then run `/opsx-archive` (step 10, archive) and confirm the prompts. Expected: the directory `openspec/changes/archive/YYYY-MM-DD-e2e-c/` exists and `openspec/changes/e2e-c/` is gone.
 
 ### Fast-forward variant
 
-- [ ] On the feature branch, run `/opsx-ff e2e-b-ff`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked. Expected: after the `brainstorm.md` gate is approved, `proposal.md`, `design.md`, `specs/`, `tasks.md` and `plan.md` exist under `openspec/changes/e2e-b-ff/`, one final review gate runs over those five, and once it is approved the command ends with `All artifacts created!` and `Run /opsx-apply to start implementing.`
-- [ ] Check the change directory after `/opsx-ff` finished. Expected: `openspec/changes/e2e-b-ff/apply.md` does not exist and no product code was written.
+- [ ] On the feature branch, run `/opsx-ff e2e-c-ff`, answer the brainstorm questions, then decide at the review gate on `brainstorm.md`, which is the only design approval asked. Expected: after the `brainstorm.md` gate is approved, `proposal.md`, `design.md`, `specs/`, `tasks.md` and `plan.md` exist under `openspec/changes/e2e-c-ff/`, one final review gate runs over those five, and once it is approved the command ends with `All artifacts created!` and `Run /opsx-apply to start implementing.`
+- [ ] Check the change directory after `/opsx-ff` finished. Expected: `openspec/changes/e2e-c-ff/apply.md` does not exist and no product code was written.
 
 ## Runtime smoke: Superspec package agents
 
-These procedures check the optional `pi-subagents` integration (six `superspec.*` agents) in a real pi session. They describe what to do and what to observe; they record no results. Unit tests and prompt-string tests do not replace them. Run them only in disposable fixture projects outside this repository, and configure the candidate package through the fixture's local project package settings, never by editing global settings. Use `pi-subagents` and Superpowers as installed; do not install packages mid-run. If setup, auth, a required skill or an optional package is unavailable, stop and record a blocker instead of substituting another tool.
+These procedures check the optional `pi-subagents` integration (six bundled `superspec.*` agents) in a real pi session. They describe what to do and what to observe; they record no results. Unit tests and prompt-string tests do not replace them. Run them only in disposable fixture projects outside this repository, and configure the candidate package through the fixture's local project package settings, never by editing global settings. Use `pi-subagents` and Superpowers as installed; do not install packages mid-run. If setup, auth, a required skill or an optional package is unavailable, stop and record a blocker instead of substituting another tool.
 
 Never synthesize a human approval. A required human gate that cannot be answered is a blocker.
 
@@ -140,14 +149,25 @@ Record these for every case, in the run-managed or scratch report (not a checked
 - [ ] **SM-09 Generate specs.** Run `/opsx-generate-specs` on a scratch codebase. Expected: a map stage returns a bounded candidate list, you confirm or trim it, capability scouts run only for the confirmed list, and the parent alone writes the delta files. Cancel at the list: no change directory and no capability scouts. Interrupt and resume: existing spec bytes are preserved. Every requirement carries evidence naming source, test or doc locations; source-only requirements are labelled inferred; the language setting is honoured; `openspec validate <change> --strict` passes.
 - [ ] **SM-10 Planning commands.** Run `/opsx-continue` and `/opsx-ff` with the integration available. Expected: the internal spec and plan reviews add no human stop beyond the existing gates (one per `/opsx-continue` artifact; for `/opsx-ff`, the `brainstorm.md` gate and the final gate). A small `/opsx-explore` question stays inline; a repository-scale one may use scouts that only gather evidence and write nothing official.
 
+## Smoke: @gotgenes/pi-subagents
+
+`@gotgenes/pi-subagents` 25.0.5 was inspected, not smoke-tested, and supplies no bundled agents. Run this procedure in a disposable marked fixture with only `@gotgenes/pi-subagents` and pi-superspec installed. Record results as in [Recording results](#recording-results).
+
+- [ ] Start a session and start a stage that delegates (for example `/opsx-generate-specs`). Expected: the Subagent integration paragraph read by the agent starts with `Subagent integration: gotgenes.` (detected by the tool's schema, not its name), and no `superspec.*` agent is listed.
+- [ ] Watch how the agent picks agents. Expected: it lists the registered agent types, announces once per stage which one it chose for each role, and chooses only agents whose tools and skills meet the role; a read-only role never gets an agent with edit or write tools.
+- [ ] Make a child ask a question (for example a scratch task whose handoff tells it to escalate a decision). Expected: the child calls `ask_parent` and ends its turn; the parent treats it as pending, not complete, and answers with `subagent({ resume, prompt })`; the child then finishes and its report is accepted only after the parent checks the evidence.
+- [ ] Remove the agent types needed for one role. Expected: the stage reports the role and the missing requirement and stops, with no generic-agent, CLI or inline bypass.
+
 ## Recording results
 
 Copy this table into your release notes or issue and fill one row per run.
 
 | Date | pi-superspec version | OpenSpec version | Run | Pass or fail | Notes |
 |---|---|---|---|---|---|
-|  |  |  | A (with pi-subagents) |  |  |
-|  |  |  | B (without pi-subagents) |  |  |
+|  |  |  | A (with @tintinweb/pi-subagents) |  |  |
+|  |  |  | B (with pi-subagents) |  |  |
+|  |  |  | C (without a subagent plugin) |  |  |
+|  |  |  | G (@gotgenes/pi-subagents smoke) |  |  |
 |  |  |  | SM-01 to SM-10 (runtime smoke, one row each) |  |  |
 
 ### Known limitations of the initial agent-integration smoke

@@ -24,17 +24,18 @@ completes and archive does not warn.
 | 2 | proposal | `proposal.md` | OpenSpec | Change boundary; the **Capabilities** list is the contract with specs. |
 | 3 | design *(optional)* | `design.md` | OpenSpec template | Technical *how* only: decisions, risks, migration. |
 | 4 | specs | `specs/<capability>/spec.md` | OpenSpec | SHALL/MUST requirements, `#### Scenario:` blocks, validated delta semantics. |
-| 5 | tasks | `tasks.md` | OpenSpec | Coarse, human-scannable checklist tracked by apply, verify and archive. |
-| 6 | plan | `plan.md` | Superpowers `writing-plans` (redirected) | Opens with `## Contracts`, then 2–5 minute TDD micro-steps, exact files, test commands, commit points. |
-| 7 | apply | code + `apply.md` | Superpowers `using-git-worktrees` + `subagent-driven-development` (fallback `executing-plans`) | Isolation, fresh subagent per task, TDD, per-task and whole-branch review, ledger for recovery. |
+| 5 | tasks | `tasks.md` | OpenSpec | Coarse, human-scannable checklist in numbered task groups (with `Blocked by`), tracked by apply, verify and archive. |
+| 6 | plan | `plan.md` | Superpowers `writing-plans` (redirected) | Opens with `## Contracts`, then tasks with `Covers`, `Difficulty` and `Blocked by` and 2–5 minute TDD micro-steps, exact files, test commands, commit points. |
+| 7 | apply | code + `apply.md` | Superpowers `using-git-worktrees` + `subagent-driven-development` (fallback `executing-plans`) | Isolation, fresh subagent per plan task, TDD, per-task and whole-branch review, ledger for recovery; unblocked tasks may run in parallel lanes. |
 | 8 | verify | `verify.md` | OpenSpec verify + Superpowers `verification-before-completion`; `systematic-debugging` on FAIL | Spec-level correctness backed by fresh evidence. |
 | 9 | finalize | `finalize.md` | Superspec v4 git-side closeout; `finishing-a-development-branch` as escape hatch | Deterministic merge back to the feature branch, push, PR offer, reviewer comment. |
 | 10 | archive | change moved to `archive/` | OpenSpec `/opsx-archive` | Sync deltas into living specs; runs before the PR merges so the PR holds the full history. |
 
-Optional specialist seats (bundled agents, invoked through
-`skills/references/subagent-routing.md`; parent keeps artifact writes and human gates):
-`superspec.scout` gives evidence-only recon for explore and brainstorm;
-`superspec.spec-reviewer` checks completed specs and `superspec.plan-reviewer` checks the
+Optional specialist seats (roles resolved through
+`skills/references/subagent-routing.md`; the bundled `superspec.*` agents are bundled candidates
+for them, with no precedence over other qualifying agents; parent keeps artifact writes and human gates):
+the scout role gives evidence-only recon for explore and brainstorm;
+the spec reviewer role checks completed specs and the plan reviewer role checks the
 completed plan, both inside `/opsx-continue` and `/opsx-ff` before the existing human gate. These
 internal reviews are advisory, not human approval, and add no stop: ff keeps its two planned stops
 (brainstorm and final). Without the integration the parent does the same check inline.
@@ -157,7 +158,7 @@ closed or dismissed review is not an approval: the agent asks on the Interaction
 | 5 | Upstream verify's five checks differ from `openspec-verify-change`; its sync check belongs to archive. | One verify list (above); sync moved to archive. |
 | 6 | Finalize guesses the feature branch from `git log`. | `apply.md` records branch facts; finalize reads them. |
 | 7 | OpenSpec-generated skills name Claude tools (`AskUserQuestion`, `Task`). | Package skills use pi tools with fallbacks ([architecture.md](architecture.md#pi-tool-mapping)). |
-| 8 | Upstream says `executing-plans` lacks TDD/review; Superpowers 7 requires TDD there. | `executing-plans` is the fallback without `pi-subagents`; it must still request a whole-branch review before `apply.md`. |
+| 8 | Upstream says `executing-plans` lacks TDD/review; Superpowers 7 requires TDD there. | `executing-plans` is the fallback without a subagent plugin; it must still request a whole-branch review before `apply.md`. |
 | 9 | `/opsx-ff` runs unattended but brainstorming is interactive. | ff gates `brainstorm.md`, runs proposal, design, specs, tasks and plan unattended, then runs one final review gate over those five, stopping before apply. |
 | 10 | The Superpowers bootstrap pushes brainstorming before any creative work, writing outside OpenSpec. | Routing note: four paths by kind of work (below). |
 

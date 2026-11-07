@@ -44,7 +44,7 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 
 ```text
 pi-superspec/
-├── package.json            # keywords: pi-package; pi.extensions only; pi-subagents.agents; `files` lists the published entries
+├── package.json            # keywords: pi-package; pi.extensions only; pi-subagents.agents and pi.subagents.agents; `files` lists the published entries
 ├── package-lock.json       # repository only
 ├── tsconfig.json           # repository only
 ├── vitest.config.ts        # repository only
@@ -58,7 +58,7 @@ pi-superspec/
 │   ├── interaction-channel.ts  # channel detection and the Interaction channel paragraph
 │   └── init/               # /opsx-init steps: init.ts, preflight.ts, config.ts,
 │                           #   schema-install.ts, legacy.ts, io.ts
-├── agents/                 # published; six namespaced superspec.* specialist agents (discovered by pi-subagents)
+├── agents/                 # published; six plugin-neutral superspec.<role> specialist agents (discovered by plugins that read the package manifest)
 ├── schema/superspec/       # published; bundled OpenSpec schema: schema.yaml + templates/ + LICENSE
 ├── skills/                 # published; pi-adapted openspec skills (loaded dynamically)
 │   └── opsx-generate-specs/  # SKILL.md: draft specs for an existing codebase
@@ -88,7 +88,7 @@ only to develop pi-superspec itself and is never edited by a change.
 |---|---|
 | Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; probes once per session start whether the `plannotator` CLI exists; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid, and an Interaction channel paragraph for the channel detected from the active tools and the probe result. At `session_start` it only reads the project schema and may show a one-line notice; it never writes (see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
-| Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) declared by top-level `pi-subagents.agents: ["./agents"]`. A compatible `pi-subagents` discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. The implementer, task reviewer and plan reviewer select a user-provided `coding-standards` skill; it is optional (missing: warning, fallback to project conventions). |
+| Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) declared by top-level `pi-subagents.agents: ["./agents"]` and by `pi.subagents.agents`. A compatible plugin discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. The implementer, task reviewer and plan reviewer select a user-provided `coding-standards` skill; it is optional (missing: warning, fallback to project conventions). |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
 | `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then gathers evidence per capability with evidence-only `superspec.scout` agents (one map scout before confirmation on configured models, then one per confirmed capability; sequentially inline when the integration is absent). The parent alone writes the delta specs in a `bootstrap-specs` change, has them reviewed by `superspec.spec-reviewer` and strict-validates them, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
 
@@ -211,8 +211,8 @@ otherwise.
 |---|---|---|
 | Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`, name not verified) | plain question, numbered options |
 | Review written work (review gate) | tool `plannotator_inbox` (Plannotator Inbox, enabled in Plannotator's config), then tool `plannotator` | The first available channel is detected by the extension and injected as the Interaction channel paragraph: `inbox`, `plannotator-tool`, `plannotator-cli`, `ask-tool`, `plain` |
-| Dispatch a subagent | `pi-subagents` `subagent` tool | Superpowers `executing-plans` in-session |
-| Dispatch a Superspec package agent | `pi-subagents` `subagent` tool with canonical `superspec.*` names; policy in `skills/references/subagent-routing.md` | Announced inline path only when the integration is absent; disabled/incompatible agents stop the stage |
+| Dispatch a subagent | The Subagent integration paragraph (detected): the extension reads the active tools and injects the spawn, list, thinking, report and escalation mechanics of the detected plugin (`tintinweb`, `pi-subagents`, `gotgenes`), or the activation step (`pi-subagents-helper`), or the inline path (`none`) | Superpowers `executing-plans` in-session |
+| Choose an agent for a role | Role requirements in `skills/references/subagent-routing.md`; the bundled `superspec.*` agents are candidates, with no precedence over other qualifying agents | Announced inline path only when the integration is absent; a role no agent meets stops the stage |
 | Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
@@ -221,12 +221,22 @@ schema.
 
 ### Subagent compatibility
 
-Package agents need these `pi-subagents` capabilities: discovery through top-level
-`pi-subagents.agents`, package namespaces, user/project overrides, selected skills, and the
-`output` parameter. The reference build is `0.84.0` at commit
-`d9f8f8c9a709a23adf5f323bb046f3fa91517d4c`: inspected, not smoke-tested, and not a proven minimum; other versions and forks are untested. Runtime smoke evidence supersedes these
-assumptions, and no dependency pin is added. Availability, handoff, authority and failure
-rules are in `skills/references/subagent-routing.md`.
+The skills name roles only. Plugin mechanics (spawn call, listing, thinking, report
+collection, escalation) come from the Subagent integration paragraph that the extension
+injects each turn; detection is a pure function of the active tools (see
+`extensions/subagent-integration.ts`). The bundled agents are plugin-neutral: they use the
+`superspec.<role>` identity, built-in tools only, and carry both escalation dialects in their
+handoff. Availability, handoff, lanes, authority and failure rules are in
+`skills/references/subagent-routing.md`.
+
+| Plugin | Reference build | Status |
+|---|---|---|
+| `pi-subagents` | 0.84.0 at `d9f8f8c9a709a23adf5f323bb046f3fa91517d4c` | smoke-tested for the cases listed in [e2e-checklist.md](e2e-checklist.md) |
+| `@tintinweb/pi-subagents` | `50460b5df6934c4237983a504808a04ee0f8a0a0` | inspected, not smoke-tested |
+| `@gotgenes/pi-subagents` | 25.0.5 at `52854c12d590142e61a4f6a6947be9084035300d` | inspected, not smoke-tested; supplies no bundled agents, so only its own agents are used |
+
+These builds are references, not a proven minimum; other versions and forks are untested.
+Runtime smoke evidence supersedes these assumptions, and no dependency pin is added.
 
 ## Constraints
 
@@ -256,4 +266,4 @@ rules are in `skills/references/subagent-routing.md`.
   `openspec status --change x --json` shows the DAG in [workflow.md](workflow.md);
   `openspec instructions apply` returns the apply block.
 - Manual end-to-end in pi: follow [e2e-checklist.md](e2e-checklist.md) (one small change
-  through all ten steps, with and without `pi-subagents`).
+  through all ten steps, with `@tintinweb/pi-subagents`, with `pi-subagents` and without a subagent plugin).

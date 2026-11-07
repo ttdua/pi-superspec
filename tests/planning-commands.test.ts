@@ -681,9 +681,11 @@ describe("planning specialist routing", () => {
 
 	it("docs/workflow.md names specialist seats as advisory, beside unchanged gates", () => {
 		const wf = read("docs/workflow.md");
-		for (const a of ["superspec.scout", "superspec.spec-reviewer", "superspec.plan-reviewer"]) {
-			expect(wf).toContain(a);
+		for (const role of ["scout", "spec reviewer", "plan reviewer"]) {
+			expect(wf.toLowerCase()).toContain(role);
 		}
+		// Bundled agent names appear only as candidates for a role.
+		expect(wf).toMatch(/bundled candidates?/i);
 		expect(wf).toMatch(/advisory[^.\n]*not (a )?human approval/i);
 		expect(wf).toMatch(/two (planned )?(ff )?stops/i);
 	});

@@ -473,9 +473,11 @@ describe("execution specialist routing", () => {
 
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
 		const g = read("docs/usage-guide.md");
-		for (const a of ["superspec.implementer", "superspec.task-reviewer", "superspec.verifier"]) {
-			expect(g).toContain(a);
+		for (const role of ["implementer", "task reviewer", "verifier"]) {
+			expect(g.toLowerCase()).toContain(role);
 		}
+		// Bundled agent names appear only as candidates for a role.
+		expect(g).toMatch(/bundled candidates?/i);
 		expect(g).toMatch(/absent[^.\n]*inline/i);
 		expect(g).toMatch(/(disabled|incompatible)[^.\n]*stop/i);
 		expect(g).toMatch(/runtime failure[^.\n]*mid-run|mid-run[^.\n]*runtime failure/i);

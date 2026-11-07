@@ -7,11 +7,23 @@ commands and skills.
 **Apply block** — The top-level `apply:` section of the schema; the instructions
 `/opsx-apply` follows.
 
-**Package agents** — The six `superspec.*` specialist agent definitions under
-`agents/`, declared by `pi-subagents.agents` and available wherever the package is
+**Package agents** — The six `superspec.<role>` specialist agent definitions under
+`agents/`, declared by `pi-subagents.agents` and `pi.subagents.agents` and available wherever the package is
 installed. Unlike activated project skills and prompts, they do not depend on
 activation, are not returned by `resources_discover`, and are never copied; the
 parent session owns dispatch and all official artifact writes.
+
+**Subagent integration paragraph** — Context the extension injects each turn that describes
+how to delegate with the detected subagent plugin (`tintinweb`, `pi-subagents`, `gotgenes`,
+`pi-subagents-helper` or `none`): spawn, list, thinking, report collection and escalation. Skills
+refer to it and never name plugin tools.
+
+**Role** — A set of requirements (access, tools, skills, report sections) that a stage needs from a
+child agent, such as scout or task reviewer. Any available agent that evidently meets them may take
+the role; the bundled `superspec.*` agents are only candidates.
+
+**Lane** — One run of one plan task by one implementer. Independent ready tasks run in parallel
+lanes, each in its own child worktree, merged after review.
 
 **Archive** — OpenSpec step that syncs a change's delta specs into
 `openspec/specs/` and moves the change into `openspec/changes/archive/`.

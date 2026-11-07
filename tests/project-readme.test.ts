@@ -37,3 +37,37 @@ describe("README prerequisites", () => {
 		expect(read("docs/workflow.md")).toContain("coding-standards");
 	});
 });
+
+describe("README install and optional packages", () => {
+	const en = read("README.md");
+	const vi = read("README.vi.md");
+
+	it("Required install commands present", () => {
+		const install = section(en, "## Install");
+		const order = [
+			"brew install openspec",
+			"pi install git:github.com/obra/superpowers",
+			"pi install https://github.com/ttdua/pi-superspec",
+		].map((cmd) => install.indexOf(cmd));
+		for (const at of order) expect(at).toBeGreaterThanOrEqual(0);
+		expect([...order].sort((a, b) => a - b)).toEqual(order);
+	});
+
+	it("Optional packages explained", () => {
+		for (const [name, text] of [["README.md", en], ["README.vi.md", vi]] as const) {
+			for (const pkg of ["@tintinweb/pi-subagents", "pi-subagents", "@gotgenes/pi-subagents", "rpiv-ask-user-question", "rpiv-todo"]) {
+				expect(text, `${name} ${pkg}`).toContain(pkg);
+			}
+		}
+	});
+
+	it("Subagent plugin support stated", () => {
+		expect(en).toMatch(/gotgenes[^\n]*own agents/i);
+		expect(vi).toMatch(/gotgenes[^\n]*agent (riêng|của nó)/i);
+	});
+
+	it("READMEs keep the same section headings in the same order", () => {
+		const headings = (text: string): number => text.split("\n").filter((l) => l.startsWith("## ")).length;
+		expect(headings(vi)).toBe(headings(en));
+	});
+});
