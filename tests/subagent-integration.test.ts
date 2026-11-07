@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
 	detectSubagentAdapter,
 	pickSpawnTool,
+	type SubagentAdapter,
 	subagentParagraph,
 	type SubagentToolInfo,
 } from "../extensions/subagent-integration.ts";
@@ -65,6 +66,14 @@ describe("detectSubagentAdapter", () => {
 	});
 });
 
+const PARAGRAPH_ADAPTERS: Record<SubagentAdapter, true> = {
+	tintinweb: true,
+	"pi-subagents": true,
+	gotgenes: true,
+	"pi-subagents-helper": true,
+	none: true,
+};
+
 describe("subagentParagraph", () => {
 	const spawning = ["tintinweb", "pi-subagents", "gotgenes"] as const;
 
@@ -107,6 +116,31 @@ describe("subagentParagraph", () => {
 	});
 	it("gotgenes has no bundled agents", () => {
 		expect(subagentParagraph("gotgenes")).toMatch(/no bundled agents/i);
+	});
+	it("gives bundled agents no default or precedence", () => {
+		for (const adapter of Object.keys(PARAGRAPH_ADAPTERS) as SubagentAdapter[]) {
+			expect(subagentParagraph(adapter)).not.toMatch(/superspec\./i);
+		}
+	});
+	it("states how to read each agent's tools and skills", () => {
+		for (const adapter of spawning) {
+			const text = subagentParagraph(adapter);
+			expect(text).toMatch(/tools/i);
+			expect(text).toMatch(/skills/i);
+			expect(text).toMatch(/frontmatter/i);
+			expect(text).toMatch(/unknown[^.]*read-only/i);
+		}
+		expect(subagentParagraph("tintinweb")).toContain("/agents");
+		expect(subagentParagraph("tintinweb")).toContain(".agents/agents/");
+		expect(subagentParagraph("gotgenes")).toContain("~/.pi/agent/agents/");
+		expect(subagentParagraph("gotgenes")).toMatch(/built-in/i);
+		expect(subagentParagraph("pi-subagents")).toMatch(/management/i);
+	});
+	it("Helper paragraph does not send the parent inline", () => {
+		const text = subagentParagraph("pi-subagents-helper");
+		expect(text).not.toMatch(/inline/i);
+		expect(text).toMatch(/list/i);
+		expect(text).toMatch(/do not start/i);
 	});
 	it("Pure functions", () => {
 		expect(subagentParagraph("tintinweb")).toBe(subagentParagraph("tintinweb"));

@@ -79,16 +79,16 @@ const SHARED_THINKING_AND_WAIT =
 const PARAGRAPHS: Record<SubagentAdapter, string> = {
 	tintinweb: [
 		"Subagent integration: tintinweb.",
-		'Spawn: `Agent({ subagent_type, prompt, description, run_in_background, thinking })`; use `subagent_type: "superspec.<role>"` for the bundled roles.',
-		"List: the available agents are listed in the `Agent` tool description.",
+		"Spawn: `Agent({ subagent_type, prompt, description, run_in_background, thinking })`, with the agent you selected for the role.",
+		"List: the available agents are listed in the `Agent` tool description, and `/agents` shows them. Read each candidate's tools and skills from that listing; when it lacks them, read the agent definition frontmatter in `.pi/agents/`, `.agents/agents/`, `~/.pi/agent/agents/` or the package agents. An unknown tool set does not qualify for a read-only role.",
 		SHARED_THINKING_AND_WAIT,
 		"Report: collect the final result with `get_subagent_result({ agent_id, wait: true })`, then write it to a scratch file before checking evidence.",
 		"Escalation: the child ends its turn with the question under Blockers. Answer with `steer_subagent` while the child runs, or `Agent({ resume, prompt })` after it ends. Treat an escalation as a pending question, not a completed report.",
 	].join("\n"),
 	"pi-subagents": [
 		"Subagent integration: pi-subagents.",
-		'Spawn: `subagent({ agent, task, cwd, context: "fresh", output })`; use `agent: "superspec.<role>"` for the bundled roles.',
-		"List: list agents with the tool's documented management action; read the tool's own guide before using it.",
+		'Spawn: `subagent({ agent, task, cwd, context: "fresh", output })`, with the agent you selected for the role.',
+		"List: list agents with the tool's documented management action; read the tool's own guide before using it. Read each candidate's tools and skills from that listing; when it lacks them, read the agent definition frontmatter via the management or guide action. An unknown tool set does not qualify for a read-only role.",
 		"Thinking: there is no thinking level per call; do not pass one.",
 		"Report: bind `output` to a scratch path and read the report from it before checking evidence.",
 		"Wait: the call returns when the child finishes; use the tool's own status action for background runs.",
@@ -97,14 +97,14 @@ const PARAGRAPHS: Record<SubagentAdapter, string> = {
 	gotgenes: [
 		"Subagent integration: gotgenes.",
 		"Spawn: `subagent({ subagent_type, prompt, description, run_in_background, thinking })`. There are no bundled agents; pick from the registered agent types.",
-		"List: the available agents are listed in the `subagent` tool description.",
+		"List: the available agents are listed in the `subagent` tool description, including the built-in agents. Read each candidate's tools and skills from that listing; when it lacks them, read the agent definition frontmatter in `.pi/agents/` or `~/.pi/agent/agents/`. An unknown tool set does not qualify for a read-only role.",
 		SHARED_THINKING_AND_WAIT,
 		"Report: collect the final result with `get_subagent_result({ agent_id, wait: true })`, then write it to a scratch file before checking evidence.",
 		"Escalation: the child calls `ask_parent` and ends its turn. Answer with `subagent({ resume, prompt })`. Treat an escalation as a pending question, not a completed report.",
 	].join("\n"),
 	"pi-subagents-helper": [
 		"Subagent integration: pi-subagents-helper.",
-		"Only the activation helper is active. Call `subagents_enable`; the spawn tools become available from the next turn, when this paragraph is re-evaluated. Until then, take the inline path.",
+		"Only the activation helper is active. Call `subagents_enable`; the spawn tools become available from the next turn, when this paragraph is re-evaluated on the next model call. Then list the agents before dispatching. Do not start the delegated stage, and do not work around the missing tools, in the meantime.",
 	].join("\n"),
 	none: [
 		"Subagent integration: none.",
