@@ -2,23 +2,23 @@
 
 Blocked by: none
 
-- [ ] 1.1 Add `extensions/subagent-integration.ts` with pure `detectSubagentAdapter` (rule order tintinweb, pi-subagents, gotgenes, helper, none; schema-based with provenance tie-break) and unit tests for every rule (design D1; spec subagent-integration-paragraph)
-- [ ] 1.2 Add `subagentParagraph(adapter)` with per-adapter text for spawn, agent listing, thinking, report collection, waiting and escalation, plus the helper, none and gotgenes cases, with unit tests (design D2, D7, D8, D10)
-- [ ] 1.3 Wire the paragraph into `routingNote()` after the Interaction channel paragraph and compute it in the `context` hook from the active tools; update routing-note and extension tests (spec routing-note)
+- [x] 1.1 Add `extensions/subagent-integration.ts` with pure `detectSubagentAdapter` (rule order tintinweb, pi-subagents, gotgenes, helper, none; schema-based with provenance tie-break) and unit tests for every rule (design D1; spec subagent-integration-paragraph)
+- [x] 1.2 Add `subagentParagraph(adapter)` with per-adapter text for spawn, agent listing, thinking, report collection, waiting and escalation, plus the helper, none and gotgenes cases, with unit tests (design D2, D7, D8, D10)
+- [x] 1.3 Wire the paragraph into `routingNote()` after the Interaction channel paragraph and compute it in the `context` hook from the active tools; update routing-note and extension tests (spec routing-note)
 
 ## 2. Bundled agents
 
 Blocked by: none
 
-- [ ] 2.1 Rewrite the frontmatter of the six `agents/*.md`: `name: superspec.<role>`, no `package`, `advertise: false`, both prompt-inheritance dialects with `prompt_mode: append`, built-in tools only (design D4; spec workflow-agents)
-- [ ] 2.2 Make the six agent bodies plugin-neutral (escalation through the handoff's channel, or stop and report under Blockers) and add the plan reviewer's task-metadata checks (design D10; spec workflow-agents)
-- [ ] 2.3 Update `tests/agents.test.ts` for the identities, frontmatter keys and the no-plugin-tool-name guard on agent bodies
+- [x] 2.1 Rewrite the frontmatter of the six `agents/*.md`: `name: superspec.<role>`, no `package`, `advertise: false`, both prompt-inheritance dialects with `prompt_mode: append`, built-in tools only (design D4; spec workflow-agents)
+- [x] 2.2 Make the six agent bodies plugin-neutral (escalation through the handoff's channel, or stop and report under Blockers) and add the plan reviewer's task-metadata checks (design D10; spec workflow-agents)
+- [x] 2.3 Update `tests/agents.test.ts` for the identities, frontmatter keys and the no-plugin-tool-name guard on agent bodies
 
 ## 3. Package manifest
 
 Blocked by: none
 
-- [ ] 3.1 Add `pi.subagents.agents` beside `pi-subagents.agents` in `package.json` and update `tests/manifest.test.ts` (spec package-manifest, release-metadata "Package metadata")
+- [x] 3.1 Add `pi.subagents.agents` beside `pi-subagents.agents` in `package.json` and update `tests/manifest.test.ts` (spec package-manifest, release-metadata "Package metadata")
 
 ## 4. Bundled schema v8
 
