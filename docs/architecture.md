@@ -217,8 +217,8 @@ otherwise.
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
 Plugin-specific tool names live only in `extensions/subagent-integration.ts`, which
-supplies them through the Subagent integration paragraph; skills and prompts name roles
-and never the schema.
+supplies them through the Subagent integration paragraph; skills and prompts name roles,
+and the schema contains no plugin-specific tool names.
 
 ### Subagent compatibility
 
