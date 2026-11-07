@@ -47,7 +47,10 @@ Child context is fresh, so the brief must be recoverable without parent history.
 - validation commands
 - stop conditions
 - report contract (the role's required sections)
+- report destination: where the child returns or saves its report, from the Subagent integration paragraph
 - escalation: the channel from the Subagent integration paragraph, or "none"
+
+Omit any model setting on every dispatch; user and project configuration choose models. A thinking level, derived only from task difficulty as Lanes defines, is the sole per-dispatch setting allowed.
 
 Spawn, thinking, and report collection follow the Subagent integration paragraph; do not invent mechanics it does not describe. Collect each report through that mechanism and keep it as a run-managed or explicit scratch artifact. When the integration returns the report inline instead of writing a file, the parent writes it to a scratch file itself before checking its evidence. A path in prose does not bind a report destination.
 
@@ -57,14 +60,15 @@ A child that escalated is waiting for an answer, not complete. Answer it through
 
 Apply schedules by plan task. A plan task is one group of the tasks list; one lane runs one whole group, so the same implementer does its checkboxes in order, and they are never dispatched as separate lanes.
 
-- **Ready.** A plan task is ready when every task named in its `Blocked by` is merged into the `<change-name>` branch. If two ready tasks have files overlap in their declared files, they do not run at the same time; run them one after another.
+- **Ready.** A plan task is ready when every task named in its `Blocked by` is merged into the `<change-name>` branch. A task with `Blocked by: none` is ready at the start of apply; a task whose blockers are not yet merged waits and is not started. If two ready tasks have files overlap in their declared files, they do not run at the same time; run them one after another.
 - **Legacy plan.** A plan without `Blocked by` metadata runs its tasks one after another in plan order. When the plan has metadata, the plan governs scheduling whatever the tasks list holds.
 - **Isolation.** A writer lane that runs while another writer lane is active gets its own child worktree on branch `<change-name>--task-<N>`, cut from the current `<change-name>` HEAD and created through the worktree mechanism apply already uses. Each worktree keeps exactly one writer. Read-only and review lanes may run in parallel without a child worktree.
 - **Cap.** Run at most three writer lanes at once unless project instructions set a lower limit; the remaining ready tasks wait.
 - **Review and merge.** The task reviewer reviews the lane range. Merge a lane into `<change-name>` with a merge commit only after its review passes, in task-ID order among the lanes that are done, then remove the lane worktree. The final whole-branch review covers the full `<change-name>` range, merges included.
 - **Escalation.** A lane whose implementer has escalated is waiting: the parent does neither merge nor tick it until the answer is given and the lane finishes.
 - **Conflicts.** On a merge conflict, abort the merge, discard the lane, and run that task alone on the new HEAD. A second conflict for the same task stops apply and asks the user.
-- **Thinking.** For the implementer and the task reviewer of a plan task, derive the thinking level from the task's `Difficulty` and pass it only through the mechanism the Subagent integration paragraph names. Set no model. An agent definition that locks thinking wins. If the paragraph says no thinking level is accepted, pass none.
+- **Receipt.** `apply.md` keeps one commit range over `<change-name>` that covers the merges, which finalize and the code review gate keep reading. It also gets a `## Lanes` section with one row per task: task ID, lane branch or `sequential`, lane commit range, task review verdict and merge commit.
+- **Thinking.** For the implementer and the task reviewer of a plan task, derive the thinking level from the task's `Difficulty` and pass it only through the mechanism the Subagent integration paragraph names. Set no model (see Handoff). An agent definition that locks thinking wins. If the paragraph says no thinking level is accepted, pass none.
 
 | Difficulty | Thinking |
 | --- | --- |

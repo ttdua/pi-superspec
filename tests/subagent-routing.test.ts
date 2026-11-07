@@ -80,6 +80,22 @@ describe("subagent routing reference", () => {
 			expect(access[role]).toBe("read-only");
 		}
 		expect(access.implementer).toBe("writer");
+		const byRole = Object.fromEntries(body.map((row) => [row[0].toLowerCase(), row]));
+		for (const row of body) {
+			expect(row[2], `${row[0]} tools`).not.toBe("");
+			expect(row[3], `${row[0]} skills`).not.toBe("");
+			expect(row[4], `${row[0]} report`).not.toBe("");
+		}
+		expect(byRole.implementer[2]).toMatch(/\bedit\b/);
+		expect(byRole.implementer[2]).toMatch(/\bwrite\b/);
+		expect(byRole.implementer[3]).toContain("test-driven-development");
+		for (const role of ["scout", "spec reviewer", "plan reviewer", "task reviewer", "verifier"]) {
+			expect(byRole[role][2], `${role} tools`).not.toMatch(/\b(edit|write)\b/);
+		}
+		expect(byRole.verifier[3]).toContain("verification-before-completion");
+		for (const role of ["implementer", "task reviewer", "plan reviewer"]) {
+			expect(byRole[role][3], `${role} skills`).toMatch(/`coding-standards` \(optional\)/);
+		}
 	});
 
 	it("Lazy tool activation", () => {
@@ -144,8 +160,15 @@ describe("subagent routing reference", () => {
 		]) {
 			expect(text).toMatch(field);
 		}
+		expect(text).toMatch(/^- report destination:/im);
 		expect(text).not.toMatch(/`output`/);
 		expect(text).toMatch(/Subagent integration paragraph/);
+	});
+
+	it("Global no-model rule", () => {
+		const text = `${section("Handoff")}\n${section("Authority")}`;
+		expect(text).toMatch(/every dispatch[^.]*(no|never|omit)[^.]*model|(no|never|omit)[^.]*model[^.]*every dispatch/i);
+		expect(text).toMatch(/thinking[^.]*(only|sole)[^.]*difficulty|difficulty[^.]*only[^.]*thinking/i);
 	});
 
 	it("Report kept as scratch artifact", () => {
@@ -164,6 +187,7 @@ describe("subagent routing reference", () => {
 	});
 
 	it("Incomplete report", () => {
+		expect(section("Failures")).toContain("Record the gap and treat the task as not complete");
 		const text = section("Authority");
 		expect(text).toMatch(/missing (?:required )?(?:evidence|section)/i);
 		expect(text).toMatch(/incomplete/i);
@@ -227,8 +251,25 @@ describe("subagent routing reference", () => {
 	describe("Lanes", () => {
 		const lanes = () => section("Lanes");
 
-		it("Independent tasks ready together / Blocked task waits", () => {
+		it("Independent tasks ready together", () => {
 			expect(lanes()).toMatch(/ready[^.]*every[^.]*Blocked by[^.]*merged/i);
+			expect(lanes()).toMatch(/`Blocked by: none`|no `Blocked by`[^.]*ready/i);
+		});
+
+		it("Blocked task waits", () => {
+			expect(lanes()).toMatch(/ready[^.]*every[^.]*Blocked by[^.]*merged/i);
+			expect(lanes()).toMatch(/not (yet )?merged[^.]*(not started|waits)/i);
+		});
+
+		it("Lanes recorded in apply.md", () => {
+			const text = lanes();
+			expect(text).toContain("apply.md");
+			expect(text).toContain("## Lanes");
+			for (const field of [/task ID/i, /lane branch or `sequential`/i, /lane commit range/i, /task review verdict/i, /merge commit/i]) {
+				expect(text).toMatch(field);
+			}
+			expect(text).toMatch(/one commit range[^.]*<change-name>[^.]*merges/i);
+			expect(text).toMatch(/finalize[^.]*code review gate[^.]*read/i);
 		});
 
 		it("One lane per group", () => {
