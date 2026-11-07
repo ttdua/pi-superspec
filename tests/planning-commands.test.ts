@@ -681,9 +681,12 @@ describe("planning specialist routing", () => {
 
 	it("docs/workflow.md names specialist seats as advisory, beside unchanged gates", () => {
 		const wf = read("docs/workflow.md");
-		for (const a of ["superspec.scout", "superspec.spec-reviewer", "superspec.plan-reviewer"]) {
-			expect(wf).toContain(a);
+		const seats = wf.slice(wf.indexOf("Optional specialist seats"), wf.indexOf("After a PR is open"));
+		for (const role of ["scout role", "spec reviewer role", "plan reviewer role"]) {
+			expect(seats).toContain(role);
 		}
+		expect(seats).toMatch(/bundled `superspec\.\*` agents are bundled candidates[^;]*no precedence/);
+		expect(wf).not.toMatch(/`superspec\.(scout|spec-reviewer|plan-reviewer)`/);
 		expect(wf).toMatch(/advisory[^.\n]*not (a )?human approval/i);
 		expect(wf).toMatch(/two (planned )?(ff )?stops/i);
 	});

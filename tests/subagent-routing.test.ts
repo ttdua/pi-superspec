@@ -339,11 +339,42 @@ describe("subagent routing reference", () => {
 describe("architecture compatibility note", () => {
 	const architecture = readFileSync(new URL("docs/architecture.md", root), "utf8");
 
-	it("records the inspected reference build without a proven minimum", () => {
+	const compatibility = (): string => {
+		const start = architecture.indexOf("### Subagent compatibility");
+		expect(start).toBeGreaterThanOrEqual(0);
+		const rest = architecture.slice(start);
+		const next = rest.slice(3).search(/\n#{1,3} /);
+		return next < 0 ? rest : rest.slice(0, next + 3);
+	};
+	const row = (plugin: string): string => {
+		const found = compatibility()
+			.split("\n")
+			.find((l) => l.startsWith("|") && l.includes(`\`${plugin}\``));
+		expect(found, `${plugin} row`).toBeDefined();
+		return found ?? "";
+	};
+
+	it("links the routing reference and states no proven minimum", () => {
 		expect(architecture).toMatch(/skills\/references\/subagent-routing\.md/);
-		expect(architecture).toMatch(/0\.84\.0/);
-		expect(architecture).toMatch(/d9f8f8c9a709a23adf5f323bb046f3fa91517d4c/);
-		expect(architecture).toMatch(/inspected, not smoke-tested/i);
-		expect(architecture).toMatch(/not a proven minimum/i);
+		expect(compatibility()).toMatch(/not a proven minimum/i);
+	});
+
+	it("records pi-subagents as smoke-tested at its commit", () => {
+		const r = row("pi-subagents");
+		expect(r).toContain("d9f8f8c9a709a23adf5f323bb046f3fa91517d4c");
+		expect(r).toContain("smoke-tested");
+	});
+
+	it("records @tintinweb/pi-subagents as inspected at its commit", () => {
+		const r = row("@tintinweb/pi-subagents");
+		expect(r).toContain("50460b5df6934c4237983a504808a04ee0f8a0a0");
+		expect(r).toContain("inspected");
+	});
+
+	it("records @gotgenes/pi-subagents 25.0.5 as inspected at its commit", () => {
+		const r = row("@gotgenes/pi-subagents");
+		expect(r).toContain("25.0.5");
+		expect(r).toContain("52854c12d590142e61a4f6a6947be9084035300d");
+		expect(r).toContain("inspected");
 	});
 });
