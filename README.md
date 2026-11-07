@@ -14,6 +14,7 @@ You install the dependencies yourself; the package does not install them.
 
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.16 or newer.
 - [Superpowers](https://github.com/obra/superpowers) for pi.
+- A `coding-standards` skill that you write or install yourself, under `~/.agents/skills/` or the project's `.agents/skills/`. The bundled implementer and reviewers apply it. Without it they fall back to project conventions and the workflow does not stop; pi shows a warning at session start.
 - pi, the coding agent this package extends.
 - Git is not required to run `/opsx-init` (outside a git repository it only warns), but the later workflow uses git: `/opsx-apply` creates a worktree and branch, and finalize closes out the branch.
 - Finalize uses the GitHub CLI (`gh`) to detect, create and comment on PRs. It is optional: without it, finalize treats the branch as having no PR and records the reviewer comment as skipped or failed; the merge and push are not rolled back.

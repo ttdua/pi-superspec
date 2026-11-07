@@ -38,6 +38,7 @@ Optional specialist seats (bundled agents, invoked through
 completed plan, both inside `/opsx-continue` and `/opsx-ff` before the existing human gate. These
 internal reviews are advisory, not human approval, and add no stop: ff keeps its two planned stops
 (brainstorm and final). Without the integration the parent does the same check inline.
+The implementer, task reviewer and plan reviewer apply the user's `coding-standards` skill when one is installed; if it is missing they fall back to project conventions and nothing stops.
 
 After a PR is open, review feedback is handled with Superpowers
 `receiving-code-review` on the feature branch in the main checkout (TDD per fix);

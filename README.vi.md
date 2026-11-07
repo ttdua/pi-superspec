@@ -14,6 +14,7 @@ Bạn tự cài các dependency; package không cài chúng.
 
 - [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.16 trở lên.
 - [Superpowers](https://github.com/obra/superpowers) cho pi.
+- Một skill `coding-standards` do bạn tự viết hoặc cài, đặt ở `~/.agents/skills/` hoặc `.agents/skills/` của project. Implementer và các reviewer đi kèm áp dụng nó. Nếu thiếu, chúng dùng convention của project và workflow không dừng; pi hiện cảnh báo khi bắt đầu session.
 - pi, coding agent mà package này mở rộng.
 - Chạy `/opsx-init` không cần Git (ngoài git repository nó chỉ cảnh báo), nhưng workflow phía sau có dùng git: `/opsx-apply` tạo worktree và branch, còn finalize đóng branch lại.
 - Finalize dùng GitHub CLI (`gh`) để phát hiện, tạo và comment trên PR. Nó là tùy chọn: nếu thiếu, finalize coi branch như chưa có PR và ghi reviewer comment là skipped hoặc failed; merge và push không bị rollback.
