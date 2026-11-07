@@ -5,8 +5,11 @@ const root = new URL("..", import.meta.url);
 const referenceUrl = new URL("skills/references/subagent-routing.md", root);
 
 const SECTIONS = [
+	"Roles",
 	"Availability",
+	"Selection",
 	"Handoff",
+	"Lanes",
 	"Authority",
 	"Failures",
 	"Compatibility",
@@ -26,7 +29,7 @@ function section(name: (typeof SECTIONS)[number]): string {
 }
 
 describe("subagent routing reference", () => {
-	it("SA-R00 exists as a plain reference with five sections and no registration", () => {
+	it("SA-R00 exists as a plain reference with eight sections and no registration", () => {
 		expect(existsSync(referenceUrl)).toBe(true);
 		expect(existsSync(new URL("skills/references/SKILL.md", root))).toBe(false);
 		const text = reference();
@@ -58,52 +61,57 @@ describe("subagent routing reference", () => {
 		expect(existsSync(new URL(link![1], skillUrl))).toBe(true);
 	});
 
-	it("SA-R01 pins helper-only enable, next-turn re-evaluation, then management and role check", () => {
-		const text = section("Availability");
-		const enable = text.search(/subagents_enable/);
-		const next = text.search(/next model turn/i);
-		const inspect = text.search(/list|inspect/i);
-		const canonical = text.search(/canonical/i);
-		expect(enable).toBeGreaterThanOrEqual(0);
-		expect(enable).toBeLessThan(next);
-		expect(next).toBeLessThan(inspect);
-		expect(inspect).toBeLessThan(canonical);
-		expect(text).toMatch(/helper-only|only `subagents_enable`/i);
-		expect(text).toMatch(/not disabled/i);
-		expect(text).toMatch(/only the roles (?:the|this) (?:current )?stage requires|required roles for the current stage/i);
+	it("Plugin-neutral reference", () => {
+		expect(reference()).not.toMatch(
+			/pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|ask_parent|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./,
+		);
 	});
 
-	it("SA-R02 pins announced inline fallback only for absent integration", () => {
+	it("Role requirements listed", () => {
+		const rows = section("Roles")
+			.split("\n")
+			.filter((line) => line.trim().startsWith("|"))
+			.map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()));
+		expect(rows[0]).toEqual(["Role", "Access", "Required tools", "Skills", "Report"]);
+		const body = rows.slice(2);
+		expect(body).toHaveLength(6);
+		const access = Object.fromEntries(body.map((row) => [row[0].toLowerCase(), row[1]]));
+		for (const role of ["scout", "spec reviewer", "plan reviewer", "task reviewer", "verifier"]) {
+			expect(access[role]).toBe("read-only");
+		}
+		expect(access.implementer).toBe("writer");
+	});
+
+	it("Lazy tool activation", () => {
 		const text = section("Availability");
-		expect(text).toMatch(/neither the tool nor (?:its|the) (?:activation )?helper/i);
-		expect(text).toMatch(/announce[^.]*once/i);
-		expect(text).toMatch(/existing inline path/i);
+		expect(text).toMatch(/Subagent integration paragraph[^.]*activat[^.]*next (model )?turn/i);
+		expect(text).toMatch(/list[^.]*agents[^.]*before[^.]*dispatch/i);
+	});
+
+	it("Optional integration absent", () => {
+		const text = section("Availability");
+		expect(text).toMatch(/unavailable[^.]*inline/i);
+		expect(text).toMatch(/announce/i);
 		expect(text).toMatch(/gates[^.]*evidence/i);
 		expect(text).toMatch(/do not (?:invent|fabricate)[^.]*(?:call|dispatch)/i);
-		expect(text).toMatch(/absent[^.]*distinct[^.]*(?:unsupported|incompatible)|(?:unsupported|incompatible)[^.]*distinct[^.]*absent/i);
 	});
 
-	it("SA-R03 stops on disabled, missing or incompatible roles without bypass", () => {
-		const text = section("Failures");
-		for (const cause of [
-			/disabled/i,
-			/missing/i,
-			/discovery/i,
-			/skills?/i,
-			/tools?/i,
-		]) {
-			expect(text).toMatch(cause);
-		}
-		expect(text).toMatch(/named cause/i);
+	it("Selection by requirements", () => {
+		const text = section("Selection");
+		expect(text).toMatch(/no precedence/i);
+		expect(text).toMatch(/announce[^.]*(chosen|agent)/i);
+	});
+
+	it("Disabled or incompatible agent", () => {
+		const text = section("Selection");
+		expect(text).toMatch(/known tool set[^.]*no (edit|write)/i);
+		expect(text).toMatch(/report[^.]*role[^.]*missing requirement/i);
+		expect(text).toMatch(/stop/i);
+		expect(text).toMatch(/(no|never|without)[^.]*(settings|bypass)/i);
 		expect(text).toMatch(/never chooses[^.]*silently[^.]*user decides/i);
-		expect(text).toMatch(/stop the affected (?:delegated )?stage/i);
-		expect(text).toMatch(/do not (?:rewrite|write)[^.]*settings/i);
-		expect(text).toMatch(/generic agent/i);
-		expect(text).toMatch(/CLI/);
-		expect(text).toMatch(/inline/i);
 	});
 
-	it("SA-R09 treats coding-standards as the only optional role skill", () => {
+	it("Optional skill missing", () => {
 		const avail = section("Availability");
 		expect(avail).toMatch(/optional/i);
 		expect(avail).toContain("`coding-standards`");
@@ -117,17 +125,7 @@ describe("subagent routing reference", () => {
 		expect(section("Failures")).toMatch(/optional skill[^.]*does not stop/i);
 	});
 
-	it("SA-R04 retains exact failure state and stops the lane", () => {
-		const text = section("Failures");
-		expect(text).toMatch(/exact error/i);
-		expect(text).toMatch(/run (?:id|identity)/i);
-		expect(text).toMatch(/cwd|worktree/i);
-		expect(text).toMatch(/partial state/i);
-		expect(text).toMatch(/stop the lane/i);
-		expect(text).toMatch(/no (?:alternate|hidden)|do not (?:retry|switch)/i);
-	});
-
-	it("SA-R05 pins every handoff field and output binding", () => {
+	it("Recoverable bounded handoff", () => {
 		const text = section("Handoff");
 		for (const field of [
 			/goal/i,
@@ -142,22 +140,30 @@ describe("subagent routing reference", () => {
 			/validation/i,
 			/stop conditions/i,
 			/report contract/i,
-			/`output`/,
+			/escalation/i,
 		]) {
 			expect(text).toMatch(field);
 		}
-		expect(text).toMatch(/run-managed|scratch/i);
-		expect(text).toMatch(/path in prose[^.]*(?:does not|not)[^.]*bind/i);
-		expect(text).toMatch(/installed pi-subagents guidance/i);
-		expect(text).toMatch(/agent:\s*"superspec\./);
-		expect(text).toMatch(/context:\s*"fresh"/);
-		expect(text).toMatch(/cwd:/);
-		expect(text).toMatch(/output:/);
-		const example = /```[\s\S]*?```/.exec(text)?.[0] ?? "";
-		expect(example).not.toMatch(/model|thinking/i);
+		expect(text).not.toMatch(/`output`/);
+		expect(text).toMatch(/Subagent integration paragraph/);
 	});
 
-	it("SA-R06 treats missing evidence as incomplete", () => {
+	it("Report kept as scratch artifact", () => {
+		const text = section("Handoff");
+		expect(text).toMatch(/scratch/i);
+		expect(text).toMatch(/write[^.]*itself/i);
+	});
+
+	it("Escalation answered", () => {
+		const text = section("Handoff");
+		expect(text).toMatch(/escalat[^.]*(waiting|not[^.]*complete)/i);
+		expect(text).toMatch(/not (merge|tick)/i);
+		expect(text).toMatch(
+			/answer[^.]*(paragraph's answer mechanism|as the paragraph describes)[^.]*or ask the user/i,
+		);
+	});
+
+	it("Incomplete report", () => {
 		const text = section("Authority");
 		expect(text).toMatch(/missing (?:required )?(?:evidence|section)/i);
 		expect(text).toMatch(/incomplete/i);
@@ -165,21 +171,38 @@ describe("subagent routing reference", () => {
 		expect(text).toMatch(/headings alone/i);
 	});
 
-	it("SA-R07 pins writer, context, nesting, model and review-seat rules", () => {
-		const text = reference();
+	it("Failed child lane", () => {
+		const text = section("Failures");
+		for (const cause of [/disabled/i, /missing/i, /discovery/i, /skills?/i, /tools?/i]) {
+			expect(text).toMatch(cause);
+		}
+		expect(text).toMatch(/named cause/i);
+		expect(text).toMatch(/stop the affected (?:delegated )?stage/i);
+		expect(text).toMatch(/do not (?:rewrite|write)[^.]*settings/i);
+		expect(text).toMatch(/generic agent/i);
+		expect(text).toMatch(/CLI/);
+		expect(text).toMatch(/inline/i);
+		expect(text).toMatch(/exact error/i);
+		expect(text).toMatch(/run (?:id|identity)/i);
+		expect(text).toMatch(/cwd|worktree/i);
+		expect(text).toMatch(/partial state/i);
+		expect(text).toMatch(/stop the lane/i);
+		expect(text).toMatch(/no (?:alternate|hidden)|do not (?:retry|switch)/i);
+	});
+
+	it("One review seat and one writer", () => {
+		const text = section("Authority");
 		expect(text).toMatch(/one implementation writer per worktree/i);
 		expect(text).toMatch(/fresh (?:child )?context/i);
 		expect(text).toMatch(/no nested/i);
-		expect(text).toMatch(/model[^.]*thinking[^.]*override|override[^.]*model/i);
 		expect(text).toMatch(/existing review seats?/i);
 		expect(text).toMatch(/generic Superpowers reviewer/i);
 		expect(text).toMatch(/parallel[^.]*independent/i);
-		expect(text).toMatch(/wakes the parent/i);
-		expect(text).toMatch(/no (?:short )?polling|do not poll/i);
-		expect(text).toMatch(/bg_wait/);
+		expect(text).toMatch(/wait[^.]*as the Subagent integration paragraph describes/i);
+		expect(text).toMatch(/(no|do not)[^.]*(short )?poll/i);
 	});
 
-	it("SA-R08 keeps official authority with the parent", () => {
+	it("Report is not authority", () => {
 		const text = section("Authority");
 		for (const owned of [
 			/official artifact/i,
@@ -195,15 +218,80 @@ describe("subagent routing reference", () => {
 		expect(text).toMatch(/availability[^.]*not[^.]*permission|does not authorize/i);
 	});
 
+	it("Parallel writers isolated", () => {
+		const text = section("Authority");
+		expect(text).toMatch(/one implementation writer per worktree/i);
+		expect(text).toMatch(/separate worktrees?/i);
+	});
+
+	describe("Lanes", () => {
+		const lanes = () => section("Lanes");
+
+		it("Independent tasks ready together / Blocked task waits", () => {
+			expect(lanes()).toMatch(/ready[^.]*every[^.]*Blocked by[^.]*merged/i);
+		});
+
+		it("One lane per group", () => {
+			expect(lanes()).toMatch(/one lane[^.]*(whole )?(task )?group/i);
+			expect(lanes()).toMatch(/same (implementer|agent)[^.]*in order/i);
+			expect(lanes()).toMatch(/(not|never)[^.]*separate lanes/i);
+		});
+
+		it("Overlapping files", () => {
+			expect(lanes()).toMatch(/files overlap[^.]*(not|never)[^.]*same time/i);
+		});
+
+		it("Two parallel writers", () => {
+			expect(lanes()).toMatch(/own (child )?worktree[^.]*<change-name>--task-<N>/);
+		});
+
+		it("Lane cap", () => {
+			expect(lanes()).toMatch(/at most three writer lanes/i);
+		});
+
+		it("Review gates the merge", () => {
+			expect(lanes()).toMatch(/merge[^.]*only after[^.]*review/i);
+		});
+
+		it("Final review covers merges", () => {
+			expect(lanes()).toMatch(/final whole-branch review[^.]*merges/i);
+		});
+
+		it("Conflict re-run", () => {
+			expect(lanes()).toMatch(/abort[^.]*merge[^.]*alone[^.]*new HEAD/i);
+		});
+
+		it("Second conflict", () => {
+			expect(lanes()).toMatch(/second conflict[^.]*(stop|ask)/i);
+		});
+
+		it("Hard task", () => {
+			for (const row of ["Easy | low", "Normal | medium", "Hard | high", "Very Hard | xhigh"]) {
+				expect(lanes()).toContain(row);
+			}
+			expect(lanes()).toMatch(/implementer and (the )?task reviewer/i);
+			expect(lanes()).toMatch(/no model/i);
+		});
+
+		it("Adapter without per-call thinking", () => {
+			expect(lanes()).toMatch(/paragraph says[^.]*no thinking[^.]*(pass|send) none/i);
+		});
+
+		it("Legacy plan", () => {
+			expect(lanes()).toMatch(/without[^.]*Blocked by[^.]*one after another/i);
+			expect(lanes()).toMatch(/plan[^.]*governs/i);
+		});
+
+		it("Escalated lane waits", () => {
+			expect(lanes()).toMatch(/escalat[^.]*(neither|not)[^.]*(merge|tick)/i);
+		});
+	});
+
 	it("documents compatibility truthfully", () => {
 		const text = section("Compatibility");
-		for (const capability of [/discovery/i, /namespace/i, /override/i, /selected[- ]skill/i, /`output`/]) {
-			expect(text).toMatch(capability);
-		}
-		expect(text).toMatch(/0\.84\.0/);
-		expect(text).toMatch(/d9f8f8c9a709a23adf5f323bb046f3fa91517d4c/);
-		expect(text).toMatch(/not smoke-tested/i);
-		expect(text).toMatch(/not a proven minimum/i);
+		expect(text).toContain("docs/architecture.md");
+		expect(text).toContain("docs/e2e-checklist.md");
+		expect(text).toMatch(/not claim[^.]*untested/i);
 	});
 });
 
