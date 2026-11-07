@@ -14,7 +14,7 @@ Explore, continue, ff, apply, verify, and generate-specs SHALL read one packaged
 - **THEN** it loads the same packaged reference and follows stage-specific instructions without modifying schema or settings
 
 ### Requirement: Availability and failure handling
-The parent SHALL resolve lazy tool activation and canonical role availability before dispatch. It SHALL distinguish absent integration from incompatible/disabled agents and child failures. Only absence SHALL select the announced inline fallback; incompatibility and failures MUST stop the affected delegated stage without changing operator settings or silently choosing a generic agent, CLI, or inline recovery.
+The parent SHALL resolve lazy tool activation and canonical role availability before dispatch. It SHALL distinguish absent integration from incompatible/disabled agents and child failures. Only absence SHALL select the announced inline fallback; incompatibility and failures MUST stop the affected delegated stage without changing operator settings or silently choosing a generic agent, CLI, or inline recovery. Role skills SHALL be either required or optional; `coding-standards` is the only optional role skill. The parent SHALL treat `coding-standards` as missing when the agent management surface reports it not found for the role or `skill:coding-standards` is not discoverable. A missing optional skill MUST NOT stop the stage: the parent SHALL announce once per stage that the coding standard is unavailable and that agents fall back to project conventions, and SHALL dispatch as usual. A missing required skill SHALL be handled as an unavailable role skill.
 
 #### Scenario: Lazy tool activation
 - **WHEN** only `subagents_enable` is visible
@@ -31,6 +31,10 @@ The parent SHALL resolve lazy tool activation and canonical role availability be
 #### Scenario: Failed child lane
 - **WHEN** a child launch or runtime fails
 - **THEN** the parent reports the exact failure and known run/worktree/partial state and does not silently switch execution mechanisms
+
+#### Scenario: Optional skill missing
+- **WHEN** a role's `coding-standards` skill is unavailable and its other requirements are met
+- **THEN** the parent announces once that the coding standard is unavailable, dispatches the role, and neither stops the stage nor writes settings
 
 ### Requirement: Bounded handoff and reports
 Each child handoff SHALL identify the goal, authoritative cwd/change root, resolved input paths, task or criterion IDs, edit boundary, relevant constraints and refs, acceptance criteria, validation, stop conditions, and report contract. Reports SHALL be routed using the subagent `output` parameter to run-managed or explicit scratch artifacts. The parent MUST check returned evidence before accepting a report and MUST treat missing required evidence as incomplete rather than success.
