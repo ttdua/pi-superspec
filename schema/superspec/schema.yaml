@@ -201,6 +201,9 @@ artifacts:
         `none` or a list of plan tasks (`Task 1, Task 2`). This
         metadata is used to choose task order, parallel execution,
         agent and effort.
+      - Every plan task lists the files it creates or modifies; a
+        task without a file list is treated as overlapping every
+        other task.
       - Plan dependencies MUST carry the tasks.md dependencies of the
         tasks the plan implements over to the plan, and dropping a
         dependency needs a stated reason. A plan MAY add dependencies.
@@ -831,12 +834,15 @@ apply:
        **Parallel lanes**: plan tasks (one task group each) whose
        dependencies are all merged into `<change-name>`, and whose
        files do not overlap, MAY run at the same time. Use one writer
-       per worktree: each running task gets its own worktree on branch
+       per worktree: each writer lane that runs beside another writer
+       lane gets its own worktree on branch
        `<change-name>--task-<N>`, cut from the current
-       `<change-name>` HEAD. A lane is merged back after its task
-       review passes, in task order. On a merge conflict, abort the
-       merge, discard the lane and run that task again alone on the
-       new HEAD. A plan without dependency metadata runs its tasks one
+       `<change-name>` HEAD. At most three writer lanes run at once
+       unless project instructions set a lower limit. A lane is merged
+       back after its task review passes, in task order. On a merge
+       conflict, abort the merge, discard the lane and run that task
+       again alone on the new HEAD; a second conflict for the same
+       task stops apply and asks the user. A plan without dependency metadata runs its tasks one
        after another, in plan order.
 
        IMPORTANT — transitive skill activation:

@@ -279,7 +279,8 @@ describe("subagent routing reference", () => {
 		});
 
 		it("Overlapping files", () => {
-			expect(lanes()).toMatch(/files overlap[^.]*(not|never)[^.]*same time/i);
+			expect(lanes()).toMatch(/files of two ready tasks overlap[^.]*(not|never)[^.]*same time/i);
+			expect(lanes()).toMatch(/no (declared )?file list[^.]*overlaps every other task/i);
 		});
 
 		it("Two parallel writers", () => {

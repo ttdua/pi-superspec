@@ -145,6 +145,12 @@ run("bundled schema", () => {
 			expect(text).toContain("authoritative");
 		});
 
+		const planInstruction = (): string => {
+			const out = project.openspec(["instructions", "plan", "--change", "x", "--json"]);
+			expect(out.status, out.stdout + out.stderr).toBe(0);
+			return JSON.parse(out.stdout).instruction as string;
+		};
+
 		it("parallel rule present", () => {
 			const text = applyInstruction().replace(/\s+/g, " ");
 			expect(text).toMatch(/one writer per worktree/i);
@@ -157,6 +163,19 @@ run("bundled schema", () => {
 			expect(text).toMatch(/dependencies are all merged/i);
 			expect(text).toMatch(/files do not overlap/i);
 			expect(text).toMatch(/worktree on branch `<change-name>--task-<N>`, cut from the current `<change-name>` HEAD/);
+		});
+
+		it("lane rules: own worktree, cap, second conflict", () => {
+			const text = applyInstruction().replace(/\s+/g, " ");
+			expect(text).toMatch(/each writer lane that runs beside another writer lane gets its own worktree/i);
+			expect(text).toMatch(/at most three writer lanes run at once unless project instructions set a lower limit/i);
+			expect(text).toMatch(/second conflict for the same task stops apply and asks the user/i);
+		});
+
+		it("plan tasks list files; no list overlaps everything", () => {
+			const text = planInstruction().replace(/\s+/g, " ");
+			expect(text).toMatch(/lists the files it creates or modifies/i);
+			expect(text).toMatch(/without a file list is treated as overlapping every other task/i);
 		});
 
 		it("lanes table is recorded per plan task", () => {

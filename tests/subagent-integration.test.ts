@@ -38,6 +38,9 @@ describe("detectSubagentAdapter", () => {
 	it("Several plugins active", () => {
 		expect(detectSubagentAdapter([piSubagents(), tintinweb()])).toBe("tintinweb");
 	});
+	it("extra task parameter with subagent_type is not pi-subagents", () => {
+		expect(detectSubagentAdapter([tool("subagent", ["subagent_type", "prompt", "task"])])).toBe("gotgenes");
+	});
 	it("Nothing detected", () => {
 		expect(detectSubagentAdapter([])).toBe("none");
 	});

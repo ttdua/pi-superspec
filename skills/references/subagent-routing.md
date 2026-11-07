@@ -60,7 +60,7 @@ A child that escalated is waiting for an answer, not complete. Answer it through
 
 Apply schedules by plan task. A plan task is one group of the tasks list; one lane runs one whole group, so the same implementer does its checkboxes in order, and they are never dispatched as separate lanes.
 
-- **Ready.** A plan task is ready when every task named in its `Blocked by` is merged into the `<change-name>` branch. A task with `Blocked by: none` is ready at the start of apply; a task whose blockers are not yet merged waits and is not started. If two ready tasks have files overlap in their declared files, they do not run at the same time; run them one after another.
+- **Ready.** A plan task is ready when every task named in its `Blocked by` is merged into the `<change-name>` branch. A task with `Blocked by: none` is ready at the start of apply; a task whose blockers are not yet merged waits and is not started. If the declared files of two ready tasks overlap, they do not run at the same time; run them one after another. A task with no declared file list overlaps every other task.
 - **Legacy plan.** A plan without `Blocked by` metadata runs its tasks one after another in plan order. When the plan has metadata, the plan governs scheduling whatever the tasks list holds.
 - **Isolation.** A writer lane that runs while another writer lane is active gets its own child worktree on branch `<change-name>--task-<N>`, cut from the current `<change-name>` HEAD and created through the worktree mechanism apply already uses. Each worktree keeps exactly one writer. Read-only and review lanes may run in parallel without a child worktree.
 - **Cap.** Run at most three writer lanes at once unless project instructions set a lower limit; the remaining ready tasks wait.

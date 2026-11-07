@@ -28,7 +28,7 @@ const SPAWN_RULES: readonly SpawnRule[] = [
 		adapter: "pi-subagents",
 		toolName: "subagent",
 		packageName: "pi-subagents",
-		matches: (keys) => keys.has("agent") || keys.has("task"),
+		matches: (keys) => (keys.has("agent") || keys.has("task")) && !keys.has("subagent_type"),
 	},
 	{
 		adapter: "gotgenes",
@@ -55,7 +55,7 @@ function candidates(tools: readonly SubagentToolInfo[], rule: SpawnRule): Subage
 	return tools.filter((tool) => hasName(tool, rule.toolName) && rule.matches(paramKeys(tool.parameters)));
 }
 
-/** The spawn tool of an adapter; among several matches, prefers one whose source names the adapter's package. */
+/** Resolves the provenance tie-break; kept for paragraphs that vary per tool. The spawn tool of an adapter; among several matches, prefers one whose source names the adapter's package. */
 export function pickSpawnTool(
 	tools: readonly SubagentToolInfo[],
 	adapter: SubagentAdapter,

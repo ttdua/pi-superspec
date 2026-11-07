@@ -136,6 +136,12 @@ describe("execution commands", () => {
 		expect(text).toContain("subagent-driven-development");
 	});
 
+	it("apply overrides the sequential-only rule of SDD for child worktree lanes", () => {
+		const text = skill("apply").replace(/\s+/g, " ");
+		expect(text).toMatch(/parallel writer lanes[^.]*only in separate child worktrees/i);
+		expect(text).toMatch(/inside one worktree[^.]*sequential rule stands/i);
+	});
+
 	it("apply falls back to executing-plans with a whole-branch review", () => {
 		const text = skill("apply");
 		expect(text).toContain("executing-plans");
@@ -474,7 +480,7 @@ describe("execution specialist routing", () => {
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
 		const g = read("docs/usage-guide.md");
 		const executors = g.slice(g.indexOf("## Executors"), g.indexOf("## Existing schemas"));
-		expect(executors).toMatch(/bundled `superspec\.\*` agents are bundled candidates for the implementer, task reviewer and verifier roles but get no precedence/);
+		expect(executors).toMatch(/bundled `superspec\.\*` agents are bundled candidates for every role, including the implementer and task reviewer apply uses, but get no precedence/);
 		expect(g).not.toMatch(/`superspec\.(implementer|task-reviewer|verifier)`/);
 		expect(g).toMatch(/absent[^.\n]*inline/i);
 		expect(g).toMatch(/(disabled|incompatible)[^.\n]*stop/i);
