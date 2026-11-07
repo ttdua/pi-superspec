@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { channelParagraph } from "../extensions/interaction-channel.ts";
+import { subagentParagraph } from "../extensions/subagent-integration.ts";
 import { ROUTING_NOTE, ROUTING_NOTE_MARKER, routingNote } from "../extensions/routing-note.ts";
 import { hashTree } from "../extensions/init/schema-install.ts";
 import superspec, { createInitIO } from "../extensions/superspec.ts";
@@ -151,7 +152,7 @@ describe("context handler", () => {
 		it("adds the language paragraph when config.yaml sets a language", () => {
 			const { dir } = project("schema: superspec\nlanguage: vi\n");
 			const message = context(dir, [BOOTSTRAP, PROMPT])?.messages[1] as { content: { text: string }[] };
-			expect(message.content[0].text).toBe(routingNote("vi", channelParagraph(["plain"])));
+			expect(message.content[0].text).toBe(routingNote("vi", channelParagraph(["plain"]), subagentParagraph("none")));
 		});
 
 		it("picks up a config edit on the next event without reload", () => {
@@ -171,25 +172,25 @@ describe("context handler", () => {
 
 		it("names en when config.yaml has no language", () => {
 			const { dir } = project("schema: superspec\n");
-			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"]), subagentParagraph("none")));
 			expect(injected(dir)).toContain('"en"');
 			expect(injected(dir)).not.toBe(ROUTING_NOTE);
 		});
 
 		it("names en when config.yaml is missing", () => {
 			const { dir } = project();
-			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"]), subagentParagraph("none")));
 		});
 
 		it("names en and does not throw when config.yaml is unreadable", () => {
 			const { dir } = project();
 			mkdirSync(join(dir, "openspec", "config.yaml"), { recursive: true });
-			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"]), subagentParagraph("none")));
 		});
 
 		it("names en for an invalid on-disk language", () => {
 			const { dir } = project(`language: ${"x".repeat(100)}\n`);
-			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"])));
+			expect(injected(dir)).toBe(routingNote("en", channelParagraph(["plain"]), subagentParagraph("none")));
 		});
 	});
 });
@@ -410,6 +411,18 @@ describe("interaction channel wiring", () => {
 		const { note } = setup({ getActiveTools: () => sets.shift() });
 		expect(note()).toContain("Interaction channel: plain.");
 		expect(note()).toContain("Interaction channel: inbox.");
+	});
+
+	it("picks up a lazily registered subagent tool", () => {
+		const sets = [[], ["Agent"]];
+		const all = [{ name: "Agent", parameters: { type: "object", properties: { subagent_type: {}, prompt: {} } } }];
+		const { note } = setup({ getActiveTools: () => sets.shift(), getAllTools: () => all });
+		expect(note()).toContain("Subagent integration: none.");
+		expect(note()).toContain("Subagent integration: tintinweb.");
+	});
+
+	it("reports none when getAllTools is missing", () => {
+		expect(setup({ getActiveTools: () => ["Agent"] }).note()).toContain("Subagent integration: none.");
 	});
 
 	it("does not add a second note after the channel changes", () => {
