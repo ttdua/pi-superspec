@@ -7,7 +7,7 @@
 
 ## 2. Routing policy
 
-- [ ] 2.1 Split role skills into required and optional in `skills/references/subagent-routing.md` (Availability and Failures): `coding-standards` is the only optional skill; how the parent detects it missing; announce once per stage and dispatch; required skills still stop the stage. Update `tests/subagent-routing.test.ts`
+- [x] 2.1 Split role skills into required and optional in `skills/references/subagent-routing.md` (Availability and Failures): `coding-standards` is the only optional skill; how the parent detects it missing; announce once per stage and dispatch; required skills still stop the stage. Update `tests/subagent-routing.test.ts`
 
 ## 3. Missing coding standard warning
 
