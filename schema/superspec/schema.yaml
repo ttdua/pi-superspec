@@ -152,7 +152,7 @@ artifacts:
       Guidelines:
       - Group related tasks under ## numbered headings
       - Each task MUST be a checkbox: `- [ ] X.Y Task description`
-      - A task group (a `## N` heading) is the unit handed to one agent;
+      - A task group (`## N. <name>`) is the unit handed to one agent;
         that agent does its checkboxes in order. Work that should run
         independently MUST be its own group, not a checkbox in another
         group. Size groups by independence, not by checkbox count.

@@ -152,6 +152,13 @@ run("bundled schema", () => {
 			expect(text).toMatch(/without dependency metadata[^.]*one after another/i);
 		});
 
+		it("parallel readiness: dependencies merged, files disjoint, lane cut from the change branch", () => {
+			const text = applyInstruction().replace(/\s+/g, " ");
+			expect(text).toMatch(/dependencies are all merged/i);
+			expect(text).toMatch(/files do not overlap/i);
+			expect(text).toMatch(/worktree on branch `<change-name>--task-<N>`, cut from the current `<change-name>` HEAD/);
+		});
+
 		it("lanes table is recorded per plan task", () => {
 			const text = applyInstruction().replace(/\s+/g, " ");
 			expect(text).toMatch(/Lanes[^.]*each (plan )?task/i);
@@ -615,8 +622,28 @@ run("bundled schema", () => {
 
 		it("tasks instruction states the unit of work", () => {
 			const text = instructionFor("tasks");
-			expect(text).toMatch(/group[^.]*unit[^.]*one agent/i);
+			expect(text).toContain("`## N. <name>`");
+			expect(text).toMatch(/group/i);
+			expect(text).toMatch(/unit handed to one agent/i);
 			expect(text).toMatch(/independent[^.]*own group/i);
+			expect(text).toMatch(/checkboxes in order/i);
+			expect(text).toMatch(/that agent does its checkboxes/i);
+		});
+
+		it("plan task N implements exactly group N", () => {
+			const text = instructionFor("plan");
+			expect(text).toContain("Plan task N implements exactly group N.");
+			expect(text).toContain("`**Covers:**`");
+		});
+
+		it("plan metadata purpose and dropped-dependency reporting", () => {
+			const text = instructionFor("plan");
+			expect(text).toContain(
+				"used to choose task order, parallel execution, agent and effort",
+			);
+			expect(text).toMatch(
+				/plan reviewer reports a dropped dependency without a reason/i,
+			);
 		});
 
 		it("tasks instruction allows group numbers only", () => {
