@@ -356,10 +356,10 @@ describe("execution specialist routing", () => {
 		const t = skill("apply");
 		expect(t).toContain(REF);
 		expect(t).toMatch(/shared (routing )?(policy|reference)[^.\n]*before (choosing|selecting) the executor/i);
-		expect(t).toContain("superspec.implementer");
-		expect(t).toContain("superspec.task-reviewer");
-		expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*superspec\.task-reviewer/i);
-		expect(t).toMatch(/final whole-branch[^.\n]*superspec\.task-reviewer|superspec\.task-reviewer[^.\n]*final whole-branch/i);
+		expect(t).toContain("implementer role");
+		expect(t).toContain("task reviewer role");
+		expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*task reviewer role/i);
+		expect(t).toMatch(/final whole-branch[^.\n]*task reviewer role/i);
 		expect(t).toMatch(/no duplicate generic reviewer|never[^.\n]*generic (Superpowers )?reviewer/i);
 		expect(t).toMatch(/one implementation writer per worktree/i);
 		expect(t).toMatch(/configured model/i);
@@ -376,24 +376,23 @@ describe("execution specialist routing", () => {
 
 	it("SA-E02 apply uses inline execution with whole-branch review when integration is absent", () => {
 		const t = skill("apply");
-		expect(t).toMatch(/neither[^.\n]*subagent[^.\n]*(activation )?helper[^.\n]*executing-plans|executing-plans[^.\n]*neither/i);
+		expect(t).toMatch(/Subagent integration paragraph[^.]*unavailable[^.]*executing-plans/i);
 		expect(t).toContain("whole-branch review");
 		expect(t).toMatch(/never invent subagent calls/i);
 	});
 
 	it("SA-E03 apply stops on a missing, disabled or failed canonical role without a replacement", () => {
 		const t = skill("apply");
-		expect(t).toMatch(/(role|agent)[^\n]*(disabled|missing)[^\n]*fail[^\n]*STOP/i);
+		expect(t).toMatch(/no available agent meets[^.]*stop/i);
 		expect(t).toMatch(/launch (or|and) runtime failure|runtime failure/i);
 		expect(t).toMatch(/mid-run/i);
-		expect(t).toMatch(/no (generic )?(replacement|substitute)/i);
-		expect(t).toMatch(/not (silently )?(go|fall)[^.\n]*inline|never[^.\n]*silently[^.\n]*inline/i);
+		expect(t).toMatch(/(no|never)[^.]*(generic replacement|silently go inline)/i);
 	});
 
 	it("SA-E04 verify loads shared policy and delegates collection to the verifier in the authoritative cwd", () => {
 		const t = skill("verify");
 		expect(t).toContain(REF);
-		expect(t).toContain("superspec.verifier");
+		expect(t).toContain("verifier role");
 		expect(t).toMatch(/authoritative (worktree|cwd)/i);
 		expect(t).toMatch(/six checks/i);
 		expect(t).toMatch(/only the parent writes[^\n]*receipt/i);
@@ -430,6 +429,30 @@ describe("execution specialist routing", () => {
 		const v = skill("verify");
 		expect(v).toContain("Stop after 5 iterations");
 		expect(v).toContain("`PASS_WITH_WARNINGS`");
+	});
+
+	it("Delegation through the paragraph: no plugin or tool names in skills and prompts", () => {
+		const banned =
+			/pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
+		const allowed =
+			/Subagent integration paragraph|subagent-driven-development|subagent routing|subagent-routing\.md|subagent calls/g;
+		for (const c of COMMANDS) {
+			for (const text of [skill(c), read(`prompts/opsx-${c}.md`)]) {
+				expect(text, c).not.toMatch(banned);
+				expect(text.replace(allowed, ""), c).not.toMatch(/subagent/i);
+			}
+		}
+	});
+
+	it("apply schedules plan tasks in lanes", () => {
+		const t = skill("apply");
+		const flat = t.replace(/\s+/g, " ");
+		expect(t).toMatch(/one lane per plan task/i);
+		expect(t).toMatch(/Lanes/);
+		expect(t).toContain("## Lanes");
+		expect(t).toMatch(/merge[^.]*after[^.]*review/i);
+		expect(flat).toMatch(/without[^.]*Blocked by[^.]*one after another/i);
+		expect(flat).toMatch(/escalat[^.]*(neither|not)[^.]*(merge|tick)/i);
 	});
 
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
