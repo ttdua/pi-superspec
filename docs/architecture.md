@@ -88,9 +88,9 @@ only to develop pi-superspec itself and is never edited by a change.
 |---|---|
 | Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; probes once per session start whether the `plannotator` CLI exists; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid, and an Interaction channel paragraph for the channel detected from the active tools and the probe result. At `session_start` it only reads the project schema and may show a one-line notice; it never writes (see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
-| Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`) declared by top-level `pi-subagents.agents: ["./agents"]` and by `pi.subagents.agents`. A compatible plugin discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. The implementer, task reviewer and plan reviewer select a user-provided `coding-standards` skill; it is optional (missing: warning, fallback to project conventions). |
+| Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`), bundled candidates for the scout, spec reviewer, plan reviewer, implementer, task reviewer and verifier roles (no precedence over other qualifying agents), declared by top-level `pi-subagents.agents: ["./agents"]` and by `pi.subagents.agents`. A compatible plugin discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. The implementer, task reviewer and plan reviewer select a user-provided `coding-standards` skill; it is optional (missing: warning, fallback to project conventions). |
 | Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
-| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then gathers evidence per capability with evidence-only `superspec.scout` agents (one map scout before confirmation on configured models, then one per confirmed capability; sequentially inline when the integration is absent). The parent alone writes the delta specs in a `bootstrap-specs` change, has them reviewed by `superspec.spec-reviewer` and strict-validates them, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
+| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then gathers evidence per capability with evidence-only scouts (the scout role; one map scout before confirmation on configured models, then one per confirmed capability; sequentially inline when the integration is absent). The parent alone writes the delta specs in a `bootstrap-specs` change, has them reviewed by the spec reviewer role and strict-validates them, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
 
 ## Runtime flow
 
@@ -216,8 +216,9 @@ otherwise.
 | Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
 | Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
 
-Pi-specific tool names live only in the package's skills and prompts, never in the
-schema.
+Plugin-specific tool names live only in `extensions/subagent-integration.ts`, which
+supplies them through the Subagent integration paragraph; skills and prompts name roles
+and never the schema.
 
 ### Subagent compatibility
 
@@ -225,8 +226,8 @@ The skills name roles only. Plugin mechanics (spawn call, listing, thinking, rep
 collection, escalation) come from the Subagent integration paragraph that the extension
 injects each turn; detection is a pure function of the active tools (see
 `extensions/subagent-integration.ts`). The bundled agents are plugin-neutral: they use the
-`superspec.<role>` identity, built-in tools only, and carry both escalation dialects in their
-handoff. Availability, handoff, lanes, authority and failure rules are in
+`superspec.<role>` identity, built-in tools only, and their frontmatter works with both discovering
+plugins. The escalation channel is not in the agent: the parent supplies it in the handoff. Availability, handoff, lanes, authority and failure rules are in
 `skills/references/subagent-routing.md`.
 
 | Plugin | Reference build | Status |

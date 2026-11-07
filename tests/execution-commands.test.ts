@@ -473,11 +473,9 @@ describe("execution specialist routing", () => {
 
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
 		const g = read("docs/usage-guide.md");
-		for (const role of ["implementer", "task reviewer", "verifier"]) {
-			expect(g.toLowerCase()).toContain(role);
-		}
-		// Bundled agent names appear only as candidates for a role.
-		expect(g).toMatch(/bundled candidates?/i);
+		const executors = g.slice(g.indexOf("## Executors"), g.indexOf("## Existing schemas"));
+		expect(executors).toMatch(/bundled `superspec\.\*` agents are bundled candidates for the implementer, task reviewer and verifier roles but get no precedence/);
+		expect(g).not.toMatch(/`superspec\.(implementer|task-reviewer|verifier)`/);
 		expect(g).toMatch(/absent[^.\n]*inline/i);
 		expect(g).toMatch(/(disabled|incompatible)[^.\n]*stop/i);
 		expect(g).toMatch(/runtime failure[^.\n]*mid-run|mid-run[^.\n]*runtime failure/i);

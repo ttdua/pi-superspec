@@ -18,82 +18,124 @@ const PLUGINS = ["@tintinweb/pi-subagents", "pi-subagents", "@gotgenes/pi-subage
 
 describe("usage guide", () => {
 	const guide = read("docs/usage-guide.md");
+	const executors = section(guide, "## Executors");
 
 	it("Both executors described", () => {
-		expect(guide).toMatch(/executing-plans/);
-		expect(guide).toMatch(/whole-branch review/);
+		const without = executors.split("\n").find((l) => l.includes("executing-plans")) ?? "";
+		expect(without).toMatch(/Without a subagent plugin/);
+		expect(without).toMatch(/whole-branch review/);
+		const withPlugin = executors.split("\n").find((l) => l.includes("With a subagent plugin")) ?? "";
+		expect(withPlugin).toMatch(/subagent-driven development/);
 	});
 
 	it("Parallel lanes described", () => {
-		expect(guide).toMatch(/Blocked by/);
-		expect(guide).toMatch(/Difficulty/);
-		expect(guide).toMatch(/lane/i);
-		expect(guide).toMatch(/worktree/i);
-		expect(guide).toMatch(/Very Hard[^\n]*xhigh/);
-		expect(guide).toMatch(/merge[^.\n]*after[^.\n]*review|after[^.\n]*review[^.\n]*merge/i);
+		const lanes = executors.split("\n").find((l) => l.includes("**Parallel lanes.**")) ?? "";
+		expect(lanes).toMatch(/Blocked by/);
+		expect(lanes).toMatch(/at most three writer lanes/);
+		expect(lanes).toContain("`<name>--task-<N>`");
+		expect(lanes).toMatch(/merge after review/);
+		expect(lanes).toMatch(/second conflict stops apply/);
+		expect(executors).toMatch(/Difficulty/);
+		for (const [difficulty, thinking] of [["Easy", "low"], ["Normal", "medium"], ["Hard", "high"], ["Very Hard", "xhigh"]]) {
+			expect(executors, difficulty).toMatch(new RegExp(`\\| ${difficulty} \\| ${thinking} \\|`));
+		}
+	});
+
+	it("states the apply merge boundary", () => {
+		const stop = section(guide, "### 7. Apply").split("\n").find((l) => l.startsWith("- Stop:")) ?? "";
+		expect(stop).toMatch(/merges reviewed lane branches into `<name>`/);
+		expect(stop).toMatch(/never merges `<name>`/);
+		expect(stop).toMatch(/never pushes/);
 	});
 
 	it("Bootstrap path covered", () => {
-		expect(guide).toMatch(/scouts?[^.]*(detected|subagent plugin)/i);
-		expect(guide).toContain("openspec/changes/bootstrap-specs/");
 		const bootstrap = section(guide, "## Existing codebase: bootstrap specs");
+		expect(bootstrap).toMatch(/scouts are delegated when a subagent plugin is detected/i);
+		expect(bootstrap).toContain("openspec/changes/bootstrap-specs/");
+		expect(bootstrap).toMatch(/No capability scout runs before you answer/);
 		const order = ["/opsx-init --generate", "/opsx-generate-specs", "/opsx-ff bootstrap-specs", "/opsx-apply"].map(
 			(c) => bootstrap.indexOf(c),
 		);
-		expect([...order].sort((a, b) => a - b)).toEqual(order);
 		expect(order[0]).toBeGreaterThanOrEqual(0);
+		expect([...order].sort((a, b) => a - b)).toEqual(order);
 	});
 
 	it("Inferred label explained", () => {
-		expect(guide).toMatch(/Confidence: inferred[^.]*review/i);
+		const bootstrap = section(guide, "## Existing codebase: bootstrap specs");
+		expect(bootstrap).toMatch(/Confidence: inferred[^.]*review/i);
 	});
 
 	it("names the optional tool fallbacks", () => {
-		expect(guide).toContain("rpiv-ask-user-question");
-		expect(guide).toContain("rpiv-todo");
+		expect(executors).toMatch(/Without `rpiv-ask-user-question`[^.]*numbered options/);
+		expect(executors).toMatch(/without `rpiv-todo`[^.]*checklist/);
 	});
 });
 
 describe("e2e checklist", () => {
 	const checklist = read("docs/e2e-checklist.md");
+	const RUNS = {
+		tintinweb: /^## Run [A-Z] — with @tintinweb\/pi-subagents[^\n]*/m,
+		"pi-subagents": /^## Run [A-Z] — with pi-subagents[^\n]*/m,
+		none: /^## Run [A-Z] — without a subagent plugin[^\n]*/m,
+	};
+	const run = (key: keyof typeof RUNS): string => section(checklist, checklist.match(RUNS[key])?.[0] ?? "");
+	const STEPS = ["/opsx-init", "brainstorm", "proposal", "design", "specs", "tasks", "plan", "apply", "verify", "finalize", "archive"];
 
 	it("Both runs covered", () => {
-		expect(checklist).toMatch(/^## Run [A-Z] — with @tintinweb\/pi-subagents/m);
-		expect(checklist).toMatch(/^## Run [A-Z] — with pi-subagents/m);
-		expect(checklist).toMatch(/^## Run [A-Z] — without a subagent plugin/m);
-		for (const run of ["with @tintinweb/pi-subagents", "with pi-subagents", "without a subagent plugin"]) {
-			const body = section(checklist, checklist.match(new RegExp(`^## Run [A-Z] — ${run}`, "m"))?.[0] ?? "");
-			for (const step of ["/opsx-init", "/opsx-apply", "/opsx-verify", "/opsx-archive"]) {
-				expect(body, `${run} ${step}`).toContain(step);
+		for (const key of Object.keys(RUNS) as (keyof typeof RUNS)[]) {
+			const body = run(key).toLowerCase();
+			for (const step of STEPS) expect(body, `${key} ${step}`).toContain(step);
+			for (const command of ["/opsx-new", "/opsx-continue", "/opsx-apply", "/opsx-verify", "/opsx-archive"]) {
+				expect(body, `${key} ${command}`).toContain(command);
 			}
 		}
 	});
 
 	it("gotgenes smoke", () => {
 		const smoke = section(checklist, checklist.match(/^## [^\n]*@gotgenes\/pi-subagents[^\n]*/m)?.[0] ?? "");
+		expect(smoke).toContain("Subagent integration: gotgenes.");
+		expect(smoke).toMatch(/announces once per stage which one it chose/);
 		expect(smoke).toContain("ask_parent");
-		expect(smoke).toContain("resume");
-		expect(smoke).toMatch(/detect/i);
-		expect(smoke).toMatch(/agent (choice|selection)|announce/i);
+		expect(smoke).toContain("subagent({ resume, prompt })");
 	});
 
 	it("Parallel lanes observed", () => {
-		const run = section(checklist, checklist.match(/^## Run [A-Z] — with @tintinweb\/pi-subagents/m)?.[0] ?? "");
-		expect(run).toContain("## Lanes");
-		expect(run).toMatch(/two (independent tasks|lane worktrees)/i);
-		expect(run).toMatch(/merge[^\n]*after[^\n]*review|after[^\n]*review[^\n]*merge/i);
+		const body = run("tintinweb");
+		expect(body).toMatch(/two independent tasks/);
+		expect(body).toContain("`e2e-a--task-1`");
+		expect(body).toContain("`e2e-a--task-2`");
+		expect(body).toMatch(/merge commit only after its task review passes/);
+		expect(body).toContain("## Lanes");
+	});
+
+	it("keeps SM cases consistent with the adapters", () => {
+		const sm03 = checklist.split("\n").find((l) => l.includes("**SM-03")) ?? "";
+		expect(sm03).toMatch(/no subagent plugin and no activation helper/);
+		expect(sm03).not.toMatch(/without `pi-subagents`/);
+		const sm06 = checklist.split("\n").find((l) => l.includes("**SM-06")) ?? "";
+		expect(sm06).toMatch(/meets the implementer role/);
+		expect(sm06).not.toMatch(/namespaced implementer|no parallel writers/);
 	});
 
 	it("Expected results stated", () => {
 		const items = checklist.split("\n").filter((l) => l.trimStart().startsWith("- [ ]"));
-		expect(items.length).toBeGreaterThan(0);
-		for (const item of items) {
-			expect(item).toContain("Expected:");
-		}
+		expect(items.length).toBeGreaterThan(40);
+		for (const item of items) expect(item).toContain("Expected:");
 	});
 });
 
 describe("architecture", () => {
+	it("describes roles, bundled candidates and where plugin mechanics live", () => {
+		const arch = read("docs/architecture.md");
+		const agents = arch.split("\n").find((l) => l.startsWith("| Package agents")) ?? "";
+		expect(agents).toMatch(/bundled candidates/);
+		const generate = arch.split("\n").find((l) => l.startsWith("| `opsx-generate-specs`")) ?? "";
+		expect(generate).not.toContain("superspec.");
+		expect(arch).toContain("Plugin-specific tool names live only in `extensions/subagent-integration.ts`");
+		expect(arch).toMatch(/The escalation channel is not in the agent: the parent supplies it in the handoff/);
+		expect(arch).not.toMatch(/both escalation dialects/);
+	});
+
 	it("Subagent compatibility names each plugin with its test status", () => {
 		const text = section(read("docs/architecture.md"), "### Subagent compatibility");
 		for (const plugin of PLUGINS) {

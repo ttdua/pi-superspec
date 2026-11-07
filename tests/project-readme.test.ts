@@ -54,20 +54,63 @@ describe("README install and optional packages", () => {
 	});
 
 	it("Optional packages explained", () => {
+		const fallbacks: Record<string, RegExp> = {
+			"@tintinweb/pi-subagents": /executing-plans/,
+			"pi-subagents": /executing-plans/,
+			"@gotgenes/pi-subagents": /executing-plans/,
+			"rpiv-ask-user-question": /(plain question|câu hỏi thường)[^|]*(numbered|đánh số)/,
+			"rpiv-todo": /(checklist)/,
+		};
 		for (const [name, text] of [["README.md", en], ["README.vi.md", vi]] as const) {
-			for (const pkg of ["@tintinweb/pi-subagents", "pi-subagents", "@gotgenes/pi-subagents", "rpiv-ask-user-question", "rpiv-todo"]) {
-				expect(text, `${name} ${pkg}`).toContain(pkg);
+			for (const [pkg, fallback] of Object.entries(fallbacks)) {
+				const row = text.split("\n").find((l) => l.startsWith(`| \`${pkg}\``));
+				expect(row, `${name} ${pkg} row`).toBeDefined();
+				expect(row, `${name} ${pkg} fallback`).toMatch(fallback);
 			}
 		}
 	});
 
 	it("Subagent plugin support stated", () => {
+		const rowOf = (text: string, pkg: string): string => text.split("\n").find((l) => l.startsWith(`| \`${pkg}\``)) ?? "";
+		expect(rowOf(en, "@tintinweb/pi-subagents")).toMatch(/bundled agents are supplied/);
+		expect(rowOf(en, "pi-subagents")).toMatch(/bundled agents are supplied/);
+		expect(rowOf(en, "@gotgenes/pi-subagents")).toMatch(/no bundled agents[^|]*own agents/i);
+		expect(rowOf(vi, "@tintinweb/pi-subagents")).toMatch(/agent đi kèm được cấp/);
+		expect(rowOf(vi, "pi-subagents")).toMatch(/agent đi kèm được cấp/);
+		expect(rowOf(vi, "@gotgenes/pi-subagents")).toMatch(/không nhận agent đi kèm[^|]*agent riêng/i);
 		expect(en).toMatch(/gotgenes[^\n]*own agents/i);
 		expect(vi).toMatch(/gotgenes[^\n]*agent (riêng|của nó)/i);
 	});
 
-	it("READMEs keep the same section headings in the same order", () => {
-		const headings = (text: string): number => text.split("\n").filter((l) => l.startsWith("## ")).length;
-		expect(headings(vi)).toBe(headings(en));
+	it("inline fallback follows the integration paragraph, not the subagent tool", () => {
+		for (const text of [en, vi]) {
+			const absent = text.split("\n").find((l) => l.startsWith("- **Absent versus")) ?? text.split("\n").find((l) => l.startsWith("- **Vắng mặt")) ?? "";
+			expect(absent).toContain("Subagent integration");
+			expect(absent).not.toMatch(/`subagent` tool/);
+		}
+	});
+
+	it("no doc sentence makes the bundled agents required", () => {
+		for (const file of ["README.md", "README.vi.md", "docs/usage-guide.md", "docs/workflow.md"]) {
+			for (const line of read(file).split("\n")) {
+				expect(line, file).not.toMatch(/\b(requires?|required|must (use|have))\b[^.\n]*`superspec\.(scout|spec-reviewer|plan-reviewer|implementer|task-reviewer|verifier)`/i);
+			}
+		}
+	});
+
+	it("READMEs keep the same headings in the same order", () => {
+		const headings = (text: string): string[] => text.split("\n").filter((l) => /^#{1,6} /.test(l));
+		const map: Record<string, string> = {
+			"# pi-superspec": "# pi-superspec",
+			"## What it is": "## Giới thiệu",
+			"## Prerequisites": "## Yêu cầu",
+			"## Install": "## Cài đặt",
+			"## Optional subagent integration": "## Tích hợp subagent tùy chọn",
+			"## Quick start": "## Bắt đầu nhanh",
+			"## Commands": "## Các lệnh",
+			"## Uninstall": "## Gỡ cài đặt",
+			"## Credits and license": "## Ghi công và giấy phép",
+		};
+		expect(headings(vi)).toEqual(headings(en).map((h) => map[h] ?? `unmapped: ${h}`));
 	});
 });
