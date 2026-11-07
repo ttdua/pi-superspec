@@ -11,6 +11,7 @@ describe("package manifest", () => {
 	});
 
 	it("declares extensions only in the pi block", () => {
+		expect(Object.keys(pkg.pi).sort()).toEqual(["extensions", "subagents"]);
 		expect(pkg.pi.extensions).toEqual(["./extensions/superspec.ts"]);
 		expect(pkg.pi.skills).toBeUndefined();
 		expect(pkg.pi.prompts).toBeUndefined();
@@ -33,11 +34,18 @@ describe("package manifest", () => {
 	});
 
 	it("SA-M01 declares optional package-agent discovery without changing pi resources", () => {
-		expect(pkg["pi-subagents"]).toEqual({ agents: ["./agents"] });
+		expect(pkg["pi-subagents"].agents).toEqual(["./agents"]);
+		expect(pkg.pi.subagents.agents).toEqual(["./agents"]);
 		expect(pkg.pi.extensions).toEqual(["./extensions/superspec.ts"]);
 		expect(pkg.pi.skills).toBeUndefined();
 		expect(pkg.pi.prompts).toBeUndefined();
 		expect(pkg.pi.themes).toBeUndefined();
+	});
+
+	it("Metadata added only", () => {
+		expect(pkg.scripts).toEqual({ test: "vitest run", typecheck: "tsc --noEmit" });
+		expect(pkg.dependencies).toBeUndefined();
+		expect(pkg.files).toEqual(["extensions", "skills", "prompts", "schema", "agents"]);
 	});
 
 	it("SA-M02 publishes the agents directory and keeps zero runtime dependencies", () => {
