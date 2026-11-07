@@ -660,6 +660,15 @@ describe("planning specialist routing", () => {
 		}
 	});
 
+	it("Delegation routes through the Subagent integration paragraph", () => {
+		for (const c of ["continue", "ff", "explore"] as const) {
+			expect(skill(c), c).toMatch(/as the Subagent integration paragraph describes/);
+		}
+		const recon = skill("explore");
+		const section = recon.slice(recon.indexOf("Before any delegation"));
+		expect(section).toMatch(/collect the report as the paragraph describes/);
+	});
+
 	it("links the shared reference from the three current planning consumers without copying policy", () => {
 		for (const c of ["explore", "continue", "ff"] as const) {
 			const t = skill(c);

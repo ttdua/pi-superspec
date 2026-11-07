@@ -186,6 +186,8 @@ describe("generate-specs evidence-only scouts", () => {
 		expect(text).toContain("scout role");
 		expect(text).toMatch(/one map scout/i);
 		expect(text).toMatch(/configured model/i);
+		expect(text).toMatch(/as the Subagent integration paragraph describes/);
+		expect(text).toMatch(/collect the report as the paragraph describes/);
 		expect(text).toMatch(/no (per-(call|dispatch) )?model\/thinking override|without (a )?(per-(call|dispatch) )?model\/thinking override/i);
 		expect(text).not.toMatch(/fast model/i);
 		expect(skill()).not.toMatch(/fast model/i);
@@ -212,7 +214,7 @@ describe("generate-specs evidence-only scouts", () => {
 		expect(text).toMatch(/one evidence-only scout per confirmed capability[^.\n]*missing/i);
 		expect(text).toMatch(/parent (alone )?writes[^.\n]*(official|spec)/i);
 		expect(text).toMatch(/scouts? (never|must never|do not|must not) write[^.\n]*spec/i);
-		expect(text).toMatch(/collect[^.]*report/i);
+		expect(text).toMatch(/collect[^.]*report as the paragraph describes/i);
 		expect(text).toMatch(/scratch|run-managed/i);
 		expect(text).not.toMatch(/Scouts write their own files/i);
 		expect(text).not.toMatch(/output path `openspec\/changes\/bootstrap-specs\/specs/);
