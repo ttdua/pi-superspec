@@ -17,7 +17,7 @@ The package SHALL provide `opsx-generate-specs` as a skill `skills/opsx-generate
 - **THEN** it names `opsx-generate-specs`, references `$@`, and contains no step-by-step logic
 
 ### Requirement: No Claude tool names
-The skill and prompt SHALL NOT contain `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` or `plannotator`. Where a decision is needed the text MUST direct the agent to ask as the routing note's Interaction channel paragraph describes, and where subagents are dispatched it MUST use the `subagent` tool from `pi-subagents`, with a plain fallback when that tool is unavailable.
+The skill and prompt SHALL NOT contain `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` or `plannotator`. Where a decision is needed the text MUST direct the agent to ask as the routing note's Interaction channel paragraph describes, and where subagents are dispatched it MUST direct the agent to delegate as the routing note's Subagent integration paragraph describes, with the inline path when that paragraph reports delegation unavailable. It MUST NOT name a subagent plugin, plugin tool or plugin parameter.
 
 #### Scenario: Forbidden names absent
 - **WHEN** the skill and prompt are searched for `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` and `plannotator`
@@ -27,6 +27,10 @@ The skill and prompt SHALL NOT contain `AskUserQuestion`, `TodoWrite`, `Task too
 - **WHEN** the skill asks the user to confirm the candidate list
 - **THEN** it directs the agent to ask as the Interaction channel paragraph describes, which on the `plain` channel is plain text with numbered options, recommended first, then wait
 
+#### Scenario: Delegation through the paragraph
+- **WHEN** the skill and prompt are searched for `pi-subagents`, `tintinweb`, `gotgenes`, `contact_supervisor`, `subagents_enable`, `Agent(` and `subagent(`
+- **THEN** there are no matches, and delegation steps refer to the Subagent integration paragraph
+
 ### Requirement: Activation and project precondition
 The skill SHALL run only in an activated project. When the project has no source code to scan (no files outside ignored directories), it MUST stop, say so, and create no change.
 
@@ -35,7 +39,7 @@ The skill SHALL run only in an activated project. When the project has no source
 - **THEN** it reports that there is no code to scan and creates no change
 
 ### Requirement: Map stage
-The skill SHALL first map the codebase with one `superspec.scout` through the shared integration policy, or map it inline when the optional integration is absent. It MUST use configured model settings rather than selecting a fast model per dispatch. The map MUST read the directory tree, package manifests, README and entry points, skip `node_modules`, `dist`, `build`, `vendor`, `.git` and generated files, and return a list of at most 12 capability candidates, each with a kebab-case name of at least two words, a one-line purpose and the directories it covers.
+The skill SHALL first map the codebase with one agent meeting the scout role through the shared integration policy, or map it inline when the optional integration is absent. It MUST NOT set a model or thinking level per dispatch. The map MUST read the directory tree, package manifests, README and entry points, skip `node_modules`, `dist`, `build`, `vendor`, `.git` and generated files, and return a list of at most 12 capability candidates, each with a kebab-case name of at least two words, a one-line purpose and the directories it covers.
 
 #### Scenario: Candidate list shape
 - **WHEN** the map stage finishes
@@ -47,7 +51,7 @@ The skill SHALL first map the codebase with one `superspec.scout` through the sh
 
 #### Scenario: Map respects configured model
 - **WHEN** the map is delegated
-- **THEN** it uses `superspec.scout` without a per-call model/thinking override or artifact-edit authority
+- **THEN** it uses an agent meeting the scout role without a per-call model/thinking override or artifact-edit authority
 
 ### Requirement: Existing specs untouched
 A candidate whose name matches an existing directory under `openspec/specs/` SHALL be dropped from the list and reported to the user. The skill MUST NOT modify or replace any file under `openspec/specs/`.
@@ -79,11 +83,11 @@ After confirmation the skill SHALL create the change `bootstrap-specs` with `ope
 - **THEN** the user is asked whether to continue and the `proposal` file is not rewritten
 
 ### Requirement: Scout dispatch
-The skill SHALL run one evidence-only scout per confirmed capability whose spec file is still missing, reapplying existing-name filtering after user edits. When the compatible integration is available it SHALL dispatch `superspec.scout`, using configured models and parallel independent reads where useful. Otherwise it SHALL scout capabilities sequentially inline, writing each parent-authored spec before the next. Scouts MUST NOT write official specs; the parent SHALL consume their reports and write only the missing files, never overwrite existing specs or completed artifacts, and never fabricate child calls.
+The skill SHALL run one evidence-only scout per confirmed capability whose spec file is still missing, reapplying existing-name filtering after user edits. When a subagent plugin is detected it SHALL dispatch agents meeting the scout role, using configured models and parallel independent reads where useful. Otherwise it SHALL scout capabilities sequentially inline, writing each parent-authored spec before the next. Scouts MUST NOT write official specs; the parent SHALL consume their reports and write only the missing files, never overwrite existing specs or completed artifacts, and never fabricate child calls.
 
 #### Scenario: With pi-subagents
-- **WHEN** the compatible integration exists and three confirmed capabilities have missing specs
-- **THEN** three evidence-only namespaced scouts are dispatched and the parent writes the three official delta specs
+- **WHEN** a subagent plugin is detected and three confirmed capabilities have missing specs
+- **THEN** three evidence-only scouts are dispatched and the parent writes the three official delta specs
 
 #### Scenario: Without pi-subagents
 - **WHEN** the optional integration is absent
@@ -94,7 +98,7 @@ The skill SHALL run one evidence-only scout per confirmed capability whose spec 
 - **THEN** that file is not rewritten or re-scouted and only the still-missing confirmed capabilities are processed
 
 ### Requirement: Spec output format
-The parent SHALL write `specs/<capability>/spec.md` inside the `bootstrap-specs` change from scout evidence, containing only a `## ADDED Requirements` section. Every requirement MUST contain `SHALL` or `MUST` on its first body line, have at least one `#### Scenario:` with `WHEN` and `THEN` lines, and carry an `Evidence:` line after its normative statement. Scouts MUST read tests and documentation as well as source. A `superspec.spec-reviewer` SHALL check the completed drafts before final strict validation when available; otherwise the parent SHALL check them inline, without a new human gate.
+The parent SHALL write `specs/<capability>/spec.md` inside the `bootstrap-specs` change from scout evidence, containing only a `## ADDED Requirements` section. Every requirement MUST contain `SHALL` or `MUST` on its first body line, have at least one `#### Scenario:` with `WHEN` and `THEN` lines, and carry an `Evidence:` line after its normative statement. Scouts MUST read tests and documentation as well as source. An agent meeting the spec reviewer role SHALL check the completed drafts before final strict validation when available; otherwise the parent SHALL check them inline, without a new human gate.
 
 #### Scenario: Evidence on every requirement
 - **WHEN** a generated spec file is read
