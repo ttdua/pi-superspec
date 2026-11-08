@@ -6,9 +6,9 @@
 > Failed checks must be fixed in the corresponding artifact, then re-run verify.
 
 **Change**: `subagent-adapters`
-**Verified at**: `2026-11-08 01:54` (UTC, `2026-11-08T01:54:12Z`)
-**Iteration**: `1`
-**Verifier**: the parent session ran checks 1, 2, 4 (fresh suite) and 6. The `code-reviewer` agent, selected for the verifier role on `@gotgenes/pi-subagents`, collected evidence for checks 3–5 read-only (431 focused tests, 13 files, exit 0). The parent inspected the cited files.
+**Verified at**: `2026-11-08 02:13` (UTC, `2026-11-08T02:13:28Z`)
+**Iteration**: `2`
+**Verifier**: iteration 2 was run by the parent session. Checks 1, 2, 4 (fresh suite) and 6 ran fresh in this run; W1–W4 were re-checked against the code. Checks 3–5 carry the iteration-1 evidence, which the `code-reviewer` agent collected for the verifier role. The parent re-inspected the files that iteration 2 changed. The iteration-2 diff was reviewed by `code-reviewer` (approved after 2 fix rounds).
 
 ---
 
@@ -44,7 +44,7 @@ exit 0
 - [x] REMOVED: not applicable (the change has no REMOVED section)
 - [x] RENAMED: not applicable (the change has no RENAMED section)
 
-43 requirements (17 ADDED, 26 MODIFIED) across 13 capabilities. Result: 42 Pass, 1 Pass with a recorded warning (W1). For that one, the observable behaviour holds but one SHALL clause is not wired into the runtime path.
+43 requirements (17 ADDED, 26 MODIFIED) across 13 capabilities. Result: 43 Pass. Iteration 1's W1 is resolved.
 
 | Requirement | Operation | Status | Evidence (file:line) or reason |
 |---|---|---|---|
@@ -77,7 +77,7 @@ exit 0
 | release-metadata / Manual end-to-end checklist | MODIFIED | Pass | `docs/e2e-checklist.md:18–112,153–160` (see W3) |
 | routing-note / Routing note content | MODIFIED | Pass | `extensions/routing-note.ts:4–22`, `extensions/superspec.ts:58–73` |
 | subagent-integration-paragraph / Subagent plugin detection | ADDED | Pass | `extensions/subagent-integration.ts:20–44,70–73`, `extensions/superspec.ts:58–71` |
-| subagent-integration-paragraph / Detection is schema-based and side-effect free | ADDED | Pass (warning W1) | Schema-based, pure: `extensions/subagent-integration.ts:20–74`. The provenance tie-break exists only in `pickSpawnTool` (:59–66), whose only caller is a test. `detectSubagentAdapter` (:70–73) and the runtime (`extensions/superspec.ts:70`) never consult `sourceInfo`. |
+| subagent-integration-paragraph / Detection is schema-based and side-effect free | ADDED | Pass | Schema-based, pure: `extensions/subagent-integration.ts:20–84`. `resolveSubagentIntegration` (:76–79) picks the spawn tool through `pickSpawnTool` (provenance tie-break), and the runtime uses it at `extensions/superspec.ts:65`. |
 | subagent-integration-paragraph / Subagent integration paragraph content | ADDED | Pass | `extensions/subagent-integration.ts:76–104` |
 | subagent-integration-paragraph / Paragraph for helper, absent and agent-less plugins | ADDED | Pass | `extensions/subagent-integration.ts:99–112` |
 | subagent-integration-paragraph / Paragraph module is pure and tested | ADDED | Pass | `extensions/subagent-integration.ts:47–74,115–118`, `tests/subagent-integration.test.ts` |
@@ -96,24 +96,24 @@ exit 0
 
 ## 4. Scenario Coverage
 
-- [ ] Every scenario maps to a test: 130 of 136 are covered. Two have weak tests (W1, W2) and four are not verified (W4).
+- [ ] Every scenario maps to a test: 135 of 136 are covered. "Optional discovery metadata" is not verified because it needs a real discovering plugin (W4).
 - [x] The project test command was run fresh in this step
 
-**Test command**: `npm test` (cwd: worktree, 2026-11-08 08:40 local), plus `npm run typecheck`.
-**Result**: `Test Files 27 passed (27)`, `Tests 662 passed (662)`, exit 0; typecheck exit 0.
+**Test command**: `npm test` (cwd: worktree, 2026-11-08 09:12 local), plus `npm run typecheck`.
+**Result**: `Tests 667 passed (667)`, exit 0; typecheck exit 0.
 
 | Scenario | Test |
 |---|---|
 | bundled-schema (17) | `tests/schema.test.ts` (identity, validate, credit, artifact IDs, templates, unit, Blocked by, progress, plan fields, dropped dependency, parallel rule); "Dropped without a reason" also `tests/agents.test.ts:207` |
 | execution-commands (9) | `tests/execution-commands.test.ts` (forbidden names, ask fallback, delegation through the paragraph, SA-E01..E07) |
 | generate-specs-command (16) | `tests/generate-specs-command.test.ts` (SA-G01..G15, forbidden names, required rules), `tests/planning-commands.test.ts:655` |
-| package-manifest (4) | `tests/manifest.test.ts:9,13,36`. "Optional discovery metadata" is not verified (W4). |
+| package-manifest (4) | `tests/manifest.test.ts:9,13,36`. "Optional discovery metadata" is not verified (W4, e2e). |
 | parallel-apply-lanes (14) | `tests/subagent-routing.test.ts:254–322` (Lanes section), `tests/execution-commands.test.ts:454`, `tests/schema.test.ts:168,181,187` |
 | planning-commands (8) | `tests/planning-commands.test.ts:601–655` (SA-P01..P06) |
 | project-readme (4) | `tests/project-readme.test.ts:17,56,67,85` |
-| release-metadata (5) | `tests/docs-subagents.test.ts:84,94,102,120`. "Metadata added only" (`tests/manifest.test.ts:45`) is not verified (W4). |
+| release-metadata (5) | `tests/docs-subagents.test.ts`; "Metadata added only" compares semantically against the baseline fixture `tests/fixtures/package-baseline.json` (`tests/manifest.test.ts:45–58`). |
 | routing-note (7) | `tests/routing-note.test.ts:100–183`, `tests/extension.test.ts:137,157` |
-| subagent-integration-paragraph (18) | `tests/subagent-integration.test.ts:26–150`, `tests/extension.test.ts:421`. Weak: "Same name and schema, provenance decides" (W1), "Thinking on pi-subagents" (W2). Not verified: "Report collection per adapter", "gotgenes has no bundled agents" (W4). |
+| subagent-integration-paragraph (18) | `tests/subagent-integration.test.ts`, including provenance :51–60, thinking reason :118–123, report and wait :124–134, gotgenes agent choice :155–158; `tests/extension.test.ts:421`; and the public-path provenance test `tests/extension.test.ts:429–437` |
 | subagent-routing (16) | `tests/subagent-routing.test.ts:47–245` (section-scoped) |
 | usage-guide (4) | `tests/docs-subagents.test.ts:23,31,51,63` |
 | workflow-agents (14) | `tests/agents.test.ts:62–274`, `tests/plugin-neutral.test.ts:39,45` |
@@ -124,7 +124,7 @@ These are text-contract tests of agent instructions. They show that the packaged
 
 ## 5. Design and Contract Coherence (warning only)
 
-- [ ] Decisions in design.md match the code: D2–D10 match; D1 matches except the provenance tie-break (W1)
+- [x] Decisions in design.md match the code: D1–D10 match (iteration 2 wired the D1 provenance tie-break)
 - [x] Contracts in plan.md, with the Contract deviations recorded in apply.md, match the code
 
 Contracts: 16 of 16 rows match:
@@ -136,11 +136,16 @@ Contracts: 16 of 16 rows match:
 - the tasks/plan/apply formats in `schema/superspec/templates/*` and this change's artifacts;
 - schema version 8.
 
-Contract deviation (`detectSubagentAdapter`: the pi-subagents rule requires no `subagent_type`) matches: `extensions/subagent-integration.ts:31`, `tests/subagent-integration.test.ts:41–42`, `plan.md` Contracts row.
+Contract deviations match:
+- `detectSubagentAdapter`, no `subagent_type`: `extensions/subagent-integration.ts:31`.
+- `resolveSubagentIntegration` / `SubagentIntegration`: `extensions/subagent-integration.ts:69–84`, `extensions/superspec.ts:65`.
+- `subagentParagraph` `toolName`: `extensions/subagent-integration.ts:140` and its rename tests.
+
+All are recorded in `plan.md` Contracts and `apply.md`.
 
 **Drift warnings** (non-blocking):
 
-- W1 (D1): the provenance tie-break is not used by detection or rendering.
+None.
 
 ---
 
@@ -148,7 +153,7 @@ Contract deviation (`detectSubagentAdapter`: the pi-subagents rule requires no `
 
 - [x] Working tree is clean (`git status --porcelain` → 0 lines before writing this file)
 
-**Commit range**: `dd3b63c..e80ac96` (29 commits). `apply.md` records `dd3b63c..980ca3d`; `980ca3d..e80ac96` adds only `apply.md` and the amended `plan.md`. `openspec/schemas/superspec/` has no diff.
+**Commit range**: `dd3b63c..d0caa62` (36 commits). `apply.md` iteration 2 records `dd3b63c..44b569b`; `44b569b..d0caa62` adds only receipts. `openspec/schemas/superspec/` has no diff. The plugin-name grep over `skills/`, `prompts/` and `schema/` finds nothing.
 
 ---
 
@@ -160,20 +165,13 @@ None.
 
 ### WARNING
 
-- **W1 — provenance tie-break not wired.**
-  - Spec: subagent-integration-paragraph "Detection is schema-based and side-effect free" says provenance SHALL break a same-name tie, and the scenario "Same name and schema, provenance decides" requires the paragraph to describe that tool's mechanics.
-  - Today two same-name, same-schema tools always map to the same adapter, and the paragraph is fixed per adapter, so the observable result is identical. However, `sourceInfo` is never read at runtime, and the test calls `pickSpawnTool` directly.
-  - Recommendation: either route detection through `pickSpawnTool` and test the public `context` path, or reword the requirement to apply only when paragraphs vary per tool. I classified this as a warning, not critical, because no observable output differs (verify rule: when uncertain, prefer WARNING).
-- **W2 — the "Thinking on pi-subagents" reason is missing.**
-  - The scenario THEN requires the reason: thinking is only a model suffix and the model is not pinned. `extensions/subagent-integration.ts:92` states only "no thinking level per call", and `tests/subagent-integration.test.ts:90–91` asserts only that.
-  - Recommendation: add the reason to the pi-subagents paragraph and assert it.
-- **W3 — stale e2e extra check.** `docs/e2e-checklist.md:60` still expects the routing note to say that "behaviour-changing work is first proposed with `/opsx-new`". That contradicts the current four-path note in `extensions/routing-note.ts:8–11`, and the line predates this change (commit `7dd4385`). Recommendation: update the expectation to the four paths and pin it in `tests/docs-subagents.test.ts`.
-- **W4 — four scenarios are not verified by tests.**
-  - "Optional discovery metadata": needs a real discovering plugin in an unmarked project.
-  - "Metadata added only": the test pins current values, not a baseline diff; a manual `git diff` matched.
-  - "Report collection per adapter": the wait arguments and the gotgenes result tool are not asserted.
-  - "gotgenes has no bundled agents": choosing from plugin-provided agents is in the text (`extensions/subagent-integration.ts:99`) but not asserted.
-  - Recommendation: add the three textual assertions, and run the e2e discovery smoke for the first.
+- **W4 (remaining).** "Optional discovery metadata" is not verified. Checking that a discovering plugin finds the bundled agents in a project without the Superspec marker needs a live tintinweb or pi-subagents session. Recommendation: run `docs/e2e-checklist.md` Run A and Run B before release.
+
+Resolved in iteration 2:
+- **W1:** the provenance tie-break is wired through `resolveSubagentIntegration` and tested on the public `context` path.
+- **W2:** the pi-subagents thinking reason is in the text and asserted.
+- **W3:** the e2e line 60 expectation now lists the four paths, and the obsolete sentence is guarded.
+- **W4, textual parts:** report and wait per adapter, gotgenes registered-agent choice, and a semantic metadata baseline.
 
 ### SUGGESTION
 
@@ -187,16 +185,15 @@ None.
 - [ ] PASS: proceed with `/opsx-continue` to finalize
 - [x] PASS_WITH_WARNINGS: proceed, noting:
   - no CRITICAL issue;
-  - fresh `npm test` 662/662 and typecheck clean;
-  - warnings W1–W4 remain;
-  - four scenarios are not verified, which caps the outcome at PASS_WITH_WARNINGS.
+  - fresh `npm test` 667/667 and typecheck clean;
+  - one scenario ("Optional discovery metadata") is not verified and needs a live plugin, which caps the outcome at PASS_WITH_WARNINGS.
 - [ ] FAIL: fix the cause, then re-apply (iteration N+1)
 
 Any check recorded as Not verified caps the outcome at PASS_WITH_WARNINGS.
 
 **Next step**:
 
-Run `/opsx-continue subagent-adapters` with the worktree as the working directory to create the finalize artifact, then `/opsx-archive`. To clear W1–W3 first, run `/opsx-apply` for a fix iteration; it is small (paragraph text, one wiring or spec reword, and one checklist line).
+Run `/opsx-continue subagent-adapters` with the worktree as the working directory to create the finalize artifact, then `/opsx-archive`. Run the e2e checklist before release.
 
 > **Convergence loop reminder**:
 > - PASS / PASS_WITH_WARNINGS: `/opsx-continue` advances to the finalize artifact.
