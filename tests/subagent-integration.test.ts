@@ -66,6 +66,20 @@ describe("detectSubagentAdapter", () => {
 		expect(subagentParagraph("pi-subagents", "subagent")).toBe(subagentParagraph("pi-subagents"));
 		expect(subagentParagraph("tintinweb", "Agent")).toBe(subagentParagraph("tintinweb"));
 	});
+	it("renames the selected tool in spawn, list and resume for tintinweb and gotgenes", () => {
+		const cases = [
+			["tintinweb", "Agent", "mcp__x__Agent"],
+			["gotgenes", "subagent", "mcp__y__subagent"],
+		] as const;
+		for (const [adapter, def, selected] of cases) {
+			const text = subagentParagraph(adapter, selected);
+			expect(text).toContain(`\`${selected}({ subagent_type`);
+			expect(text).toContain(`listed in the \`${selected}\` tool description`);
+			expect(text).toContain(`\`${selected}({ resume, prompt })\``);
+			expect(text).not.toContain(`\`${def}(`);
+			expect(text).not.toContain(`\`${def}\``);
+		}
+	});
 	it("No side effects", () => {
 		const here = dirname(fileURLToPath(import.meta.url));
 		const source = readFileSync(join(here, "..", "extensions", "subagent-integration.ts"), "utf8");

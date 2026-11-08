@@ -137,5 +137,5 @@ export function subagentParagraph(adapter: SubagentAdapter, toolName?: string): 
 	const text = PARAGRAPHS[adapter];
 	const base = DEFAULT_TOOL_NAME[adapter];
 	if (!toolName || !base || toolName === base) return text;
-	return text.replaceAll(`\`${base}(`, `\`${toolName}(`);
+	return text.replaceAll(`\`${base}(`, `\`${toolName}(`).replaceAll(`\`${base}\` tool`, `\`${toolName}\` tool`);
 }

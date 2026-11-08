@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
@@ -44,9 +43,8 @@ describe("package manifest", () => {
 	});
 
 	it("Metadata added only", () => {
-		const base = JSON.parse(
-			execFileSync("git", ["show", "dd3b63c:package.json"], { cwd: new URL("..", import.meta.url), encoding: "utf8" }),
-		);
+		// Baseline: `git show dd3b63c:package.json`, stored so the test needs no git history.
+		const base = JSON.parse(readFileSync(new URL("./fixtures/package-baseline.json", import.meta.url), "utf8"));
 		const differing = Object.keys({ ...base, ...pkg }).filter(
 			(k) => JSON.stringify(base[k]) !== JSON.stringify(pkg[k]),
 		);
