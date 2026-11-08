@@ -38,8 +38,8 @@ function bool(value: unknown): boolean | undefined {
 	return undefined;
 }
 
-const RECON_TOOLS = ["read", "grep", "find", "ls", "bash", "contact_supervisor"];
-const REVIEW_TOOLS = ["read", "grep", "find", "ls", "contact_supervisor"];
+const RECON_TOOLS = ["read", "grep", "find", "ls", "bash"];
+const REVIEW_TOOLS = ["read", "grep", "find", "ls"];
 const IMPLEMENT_TOOLS = [
 	"read",
 	"grep",
@@ -48,7 +48,6 @@ const IMPLEMENT_TOOLS = [
 	"bash",
 	"edit",
 	"write",
-	"contact_supervisor",
 ];
 const TOOLS: Record<AgentName, string[]> = {
 	scout: RECON_TOOLS,
@@ -67,10 +66,10 @@ describe("bundled agent identities (SA-A01)", () => {
 		expect(files).toEqual(AGENTS.map((n) => `${n}.md`).sort());
 	});
 
-	it.each(AGENTS)("%s has local name, superspec package, description, no alias", (name) => {
+	it.each(AGENTS)("%s has namespaced name, no package, description, no alias", (name) => {
 		const { frontmatter } = load(name);
-		expect(frontmatter.name).toBe(name);
-		expect(frontmatter.package).toBe("superspec");
+		expect(frontmatter.name).toBe(`superspec.${name}`);
+		expect(frontmatter.package).toBeUndefined();
 		expect(String(frontmatter.description ?? "").trim()).not.toBe("");
 		expect(bool(frontmatter.advertise)).toBe(false);
 		expect(frontmatter.alias).toBeUndefined();
@@ -82,6 +81,8 @@ describe("bundled agent defaults and tools (SA-A02)", () => {
 	it.each(AGENTS)("%s has exact shared flags and tool set", (name) => {
 		const { frontmatter: f } = load(name);
 		expect(f.systemPromptMode).toBe("replace");
+		expect(f.prompt_mode).toBe("append");
+		expect(bool(f.advertise)).toBe(false);
 		expect(f.defaultContext).toBe("fresh");
 		expect(bool(f.inheritProjectContext)).toBe(true);
 		expect(bool(f.inheritGlobalContext)).toBe(true);
@@ -101,6 +102,8 @@ describe("bundled agent defaults and tools (SA-A02)", () => {
 		}
 		expect(list(f.tools).sort()).toEqual([...TOOLS[name]].sort());
 		expect(list(f.tools)).not.toContain("subagent");
+		const BUILTIN = ["read", "grep", "find", "ls", "bash", "edit", "write"];
+		for (const tool of list(f.tools)) expect(BUILTIN, tool).toContain(tool);
 	});
 
 	it("selects explicit skills per role", () => {
@@ -188,6 +191,28 @@ describe("coding standard in code-facing roles", () => {
 	});
 });
 
+describe("plugin-neutral bodies", () => {
+	it.each(AGENTS)("%s names no plugin tool", (name) => {
+		expect(load(name).body).not.toMatch(
+			/contact_supervisor|subagents_enable|ask_parent|notify_parent|get_subagent_result|steer_subagent|Agent\(|subagent\(/,
+		);
+	});
+
+	it.each(AGENTS)("%s escalates through the handoff", (name) => {
+		const { body } = load(name);
+		expect(body).toMatch(/escalation channel[^.]*handoff/i);
+		expect(body).toMatch(/Blockers/);
+	});
+
+	it("plan-reviewer checks task metadata", () => {
+		const { body } = load("plan-reviewer");
+		expect(body).toMatch(/Difficulty/);
+		expect(body).toMatch(/Blocked by/);
+		expect(body).toMatch(/cycle/i);
+		expect(body).toMatch(/tasks\.md[^.]*dependenc[^.]*reason/i);
+	});
+});
+
 describe("scout contract (SA-A03)", () => {
 	const { body } = load("scout");
 	it("requires the scout report headings", () => {
@@ -208,7 +233,7 @@ describe("scout contract (SA-A03)", () => {
 		expect(body).toMatch(/inspection/i);
 		expect(body).toMatch(/not a sandbox/i);
 		expect(body).toMatch(/path[^.]*line/i);
-		expect(body).toMatch(/contact_supervisor/);
+		expect(body).toMatch(/escalation channel[^.]*handoff/i);
 	});
 });
 
@@ -281,7 +306,7 @@ describe("implementer contract (SA-A05)", () => {
 		expect(body).toMatch(/exit/i);
 	});
 	it("escalates and refuses publication and official artifact edits", () => {
-		expect(body).toMatch(/contact_supervisor/);
+		expect(body).toMatch(/escalation channel[^.]*handoff/i);
 		expect(body).toMatch(/unapproved/i);
 		expect(body).toMatch(/do not (push|publish)/i);
 		expect(body).toMatch(/official[^.]*(artifact|planning|progress|receipt)/i);

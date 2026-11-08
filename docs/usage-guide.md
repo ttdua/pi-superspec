@@ -79,14 +79,14 @@ For free-form thinking before a change exists, use `/opsx-explore [topic]`. It n
 ### 5. Tasks
 
 - You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
-- The agent produces: a coarse checklist of tasks that apply, verify and archive track.
+- The agent produces: a coarse checklist of numbered task groups that apply, verify and archive track. A group may carry a `Blocked by:` line naming the groups that must be merged first (`none` when independent); apply uses it to decide which groups can run side by side.
 - Output: `openspec/changes/<name>/tasks.md`.
 - Gate: review the checklist.
 
 ### 6. Plan
 
 - You type: nothing, normally; the run continues after the previous gate. (`/opsx-continue` if it stopped.)
-- The agent produces: 2 to 5 minute TDD micro-steps with exact files, test commands and commit points, using the Superpowers `writing-plans` skill redirected into the change. Every plan task names the `tasks.md` ID it implements, and the plan lists the test that covers each scenario. The plan opens with a `## Contracts` section listing the shapes the tasks introduce or change. The skill's execution handoff is skipped; `/opsx-apply` chooses the executor.
+- The agent produces: 2 to 5 minute TDD micro-steps with exact files, test commands and commit points, using the Superpowers `writing-plans` skill redirected into the change. Every plan task `Covers` the `tasks.md` IDs it implements and carries a `Difficulty` (`Easy`, `Normal`, `Hard` or `Very Hard`) and a `Blocked by` line, and the plan lists the test that covers each scenario. The plan opens with a `## Contracts` section listing the shapes the tasks introduce or change. The skill's execution handoff is skipped; `/opsx-apply` chooses the executor.
 - Output: `openspec/changes/<name>/plan.md`.
 - Gate: review the plan. This is the last artifact before code. When `apply` becomes the next ready artifact, `/opsx-continue` does not create it; it points you to `/opsx-apply`.
 
@@ -98,10 +98,10 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 - The agent does, in order:
   1. Pre-flight (step 0): if `openspec/changes/<name>/` has uncommitted changes, it stages and commits only that directory (`docs(openspec): scaffold <name> change`). It records the branch you are on as the feature branch and the integration branch as the base branch.
   2. Creates a worktree on a new branch named `<name>`, from the feature branch.
-  3. Runs the executor (see [Executors](#executors)), ticking `tasks.md` boxes as tasks pass review.
+  3. Runs the executor (see [Executors](#executors)), ticking `tasks.md` boxes as tasks pass review. With a subagent plugin, unblocked tasks may run in parallel lanes.
   4. After the final whole-branch review, writes and commits `apply.md` in the worktree.
-- Output: the implementation in the worktree and `apply.md` (worktree path, worktree branch, feature branch, base branch, commit range, iteration, executor, tasks X of Y, and a cumulative list of contract deviations) in `openspec/changes/<name>/` inside the worktree. If a task needs a contract to change, the executor stops: it asks you for a public contract and records the deviation itself for an internal one.
-- Stop: apply stops after the final review. It never merges, pushes or runs `finishing-a-development-branch`. It tells you to run `/opsx-verify`.
+- Output: the implementation in the worktree and `apply.md` (worktree path, worktree branch, feature branch, base branch, commit range, iteration, executor, tasks X of Y, a `## Lanes` table and a cumulative list of contract deviations) in `openspec/changes/<name>/` inside the worktree. If a task needs a contract to change, the executor stops: it asks you for a public contract and records the deviation itself for an internal one.
+- Stop: apply stops after the final review. It merges reviewed lane branches into `<name>`, but never merges `<name>` into the feature or base branch, never pushes and never runs `finishing-a-development-branch`. It tells you to run `/opsx-verify`.
 - Working directory: from here until finalize, the worktree copy of the change directory is authoritative. `tasks.md` ticks, `apply.md` and `verify.md` are written and committed there.
 - If `/opsx-apply` reports that artifacts are missing, run `/opsx-continue` first; it makes no code changes in that state.
 
@@ -109,7 +109,7 @@ Commit the artifacts on your feature branch if you like. If you do not, `/opsx-a
 
 - You type: `/opsx-verify`. It finds the worktree itself, so it works from the worktree or the main checkout. It needs `apply.md`; without it the command stops and tells you to run `/opsx-apply`.
 - The agent produces: six checks (structural validation, task completion, requirement evidence, scenario coverage with a fresh run of the project test command, design and contract coherence, clean tree), and an outcome under Overall Decision.
-- With `pi-subagents`, the parent may have `superspec.verifier` collect evidence for the six checks in the worktree. Only a report with command, cwd, exit status and counts from this invocation counts; old `apply.md` or `verify.md` results are rejected. The parent inspects the files, runs the missing checks, and alone writes `verify.md`; the verifier never fixes code. Failing tests mean `FAIL`; a check that cannot run is "not verified" and the outcome is at most `PASS_WITH_WARNINGS`. A contract mismatch alone stays a warning. Without the integration the parent runs the same checks inline.
+- With a subagent plugin, the parent may have the verifier role collect evidence for the six checks in the worktree. Only a report with command, cwd, exit status and counts from this invocation counts; old `apply.md` or `verify.md` results are rejected. The parent inspects the files, runs the missing checks, and alone writes `verify.md`; the verifier never fixes code. Failing tests mean `FAIL`; a check that cannot run is "not verified" and the outcome is at most `PASS_WITH_WARNINGS`. A contract mismatch alone stays a warning. Without a plugin the parent runs the same checks inline.
 - Output: `openspec/changes/<name>/verify.md` in the worktree, with exactly one of `PASS`, `PASS_WITH_WARNINGS` or `FAIL`. It is overwritten on each run.
 - On `PASS` or `PASS_WITH_WARNINGS`: warnings are recorded but do not block. Go on to finalize.
 - On `FAIL`: run `/opsx-apply` again for a fix iteration (it finds the failing `verify.md`, fixes the cause, raises `Iteration:` by one and rewrites `apply.md`), then run `/opsx-verify` again. For artifact-level failures such as spec drift, the offending artifact is fixed first. After 5 iterations apply stops and reports the remaining critical items to you.
@@ -201,22 +201,35 @@ For a project that already has code but no specs, draft a first set from the cod
 ```
 
 - `/opsx-init --generate` initialises the project as usual and then only prints the next step. It does no agent work.
-- `/opsx-generate-specs` maps the code into at most 12 capability candidates, drops any whose name already exists in `openspec/specs/`, and asks one confirmation question: keep, drop or rename candidates. No scout runs before you answer, and cancelling creates nothing.
-- One map scout (`superspec.scout`, on your configured model settings) runs before the confirmation; it is not a capability scout. After you confirm, one evidence-only `superspec.scout` per confirmed capability whose spec is still missing returns a report, in parallel where useful. Scouts never write specs: the parent writes every `specs/<capability>/spec.md` from the evidence, `superspec.spec-reviewer` checks the drafts, and then `openspec validate bootstrap-specs --strict` runs. Without the optional integration (neither the `subagent` tool nor its activation helper) the parent maps and scouts one capability after another in the current session, writing each spec before the next, which is slower and fills context. A disabled or missing role stops with the named cause.
+- `/opsx-generate-specs` maps the code into at most 12 capability candidates, drops any whose name already exists in `openspec/specs/`, and asks one confirmation question: keep, drop or rename candidates. No capability scout runs before you answer (the map scout runs first), and cancelling creates nothing.
+- One map scout (the scout role, on your configured model settings) runs before the confirmation; it is not a capability scout. After you confirm, one evidence-only scout per confirmed capability whose spec is still missing returns a report, in parallel where useful. Scouts never write specs: the parent writes every `specs/<capability>/spec.md` from the evidence, the spec reviewer role checks the drafts, and then `openspec validate bootstrap-specs --strict` runs. Scouts are delegated when a subagent plugin is detected. Without one (no spawn tool and no activation helper) the parent maps and scouts one capability after another in the current session, writing each spec before the next, which is slower and fills context. A role that no agent meets stops with the named cause.
 - The drafts are written to `openspec/changes/bootstrap-specs/` (`specs/<capability>/spec.md`, plus `brainstorm.md`, `proposal.md` and a `design.md` stub). The command stops there and does not write `tasks.md` or `plan.md`.
-- Every requirement has an `Evidence:` line. `Confidence: inferred` means only the code backs the requirement: no test or document states that behaviour. Treat it as a guess about intent. The review gate in `/opsx-ff bootstrap-specs` is where you confirm each one or remove it.
+- Every requirement has an `Evidence:` line. `Confidence: inferred` marks a requirement that only the code backs, with no test or document stating that behaviour, so treat it as a guess about intent and use the review gate in `/opsx-ff bootstrap-specs` to confirm each one or remove it.
 - Existing specs are never overwritten: `openspec/specs/` is not touched, and the delta specs are merged only by `/opsx-archive` (or `/opsx-sync`).
 - Then run `/opsx-ff bootstrap-specs` and continue from [step 7](#7-apply).
 
 ## Executors
 
-`/opsx-apply` picks the executor for the plan:
+`/opsx-apply` picks the executor for the plan. Workflows ask for roles; the extension tells the agent how to delegate with the detected subagent plugin (`@tintinweb/pi-subagents`, `pi-subagents` or `@gotgenes/pi-subagents`).
 
-- With compatible `pi-subagents` and the canonical roles available: subagent-driven development. `superspec.implementer` runs each task with TDD as the single writer per worktree, `superspec.task-reviewer` gives one combined spec and quality review per task and again for the final whole-branch review, and there is no extra generic reviewer. The parent keeps progress, ticks `tasks.md`, and hands reviewers the exact BASE..HEAD range. Models come from your configuration. Fix-iteration and post-PR work use the same seats.
-- Without it (neither the `subagent` tool nor its activation helper): Superpowers `executing-plans`, in the current session. The agent tells you that TDD and review are not enforced for it, follows TDD manually, and still requests a whole-branch review over the full commit range with `requesting-code-review` before writing `apply.md`. It never invents subagent calls.
-- Absent integration selects inline execution. A disabled or missing role, an incompatible integration, a failed child launch, or a child runtime failure mid-run is different: the affected lane stops with the named cause and any partial state, and there is no generic substitute or silent inline run.
+- **With a subagent plugin:** subagent-driven development. The agent picks, per role, an available agent whose tools and skills meet the role's requirements and announces the choice once. The bundled `superspec.*` agents are bundled candidates for every role, including the implementer and task reviewer apply uses, but get no precedence; `@gotgenes/pi-subagents` has none and uses its own agents. The implementer runs each task with TDD as the single writer per worktree, the task reviewer gives one combined spec and quality review per task and again for the final whole-branch review, and there is no extra generic reviewer. The parent keeps progress, ticks `tasks.md`, and hands reviewers the exact BASE..HEAD range. Models come from your configuration. Fix-iteration and post-PR work use the same seats.
+- **Parallel lanes.** One lane runs one whole plan task. A task is ready when every task in its `Blocked by` is merged into the `<name>` branch; ready tasks that declare overlapping files run one after another, and at most three writer lanes run at once. A writer lane that runs beside another gets its own child worktree on branch `<name>--task-<N>`. After the task reviewer passes a lane, the parent merges it into `<name>` with a merge commit (merge after review) and removes the lane worktree. A merge conflict discards the lane and runs that task alone on the new HEAD; a second conflict stops apply and asks you. A plan without `Blocked by` runs its tasks one after another.
+- **Difficulty and thinking.** Each task's `Difficulty` sets the thinking level for its implementer and task reviewer, where the plugin accepts one per call:
 
-The parent writes `apply.md` and `verify.md` receipts; the next commands (`/opsx-verify`, `/opsx-continue`) are unchanged, and no seat has authority to merge or push.
+  | Difficulty | Thinking |
+  |---|---|
+  | Easy | low |
+  | Normal | medium |
+  | Hard | high |
+  | Very Hard | xhigh |
+
+  No model is ever set per call, and an agent definition that locks thinking wins. `pi-subagents` accepts no per-call thinking, so none is passed.
+- **Without a subagent plugin** (no spawn tool and no activation helper): Superpowers `executing-plans`, in the current session, one task after another. The agent tells you that TDD and review are not enforced for it, follows TDD manually, and still requests a whole-branch review over the full commit range with `requesting-code-review` before writing `apply.md`. It never invents subagent calls.
+- Absent integration selects inline execution. A disabled or incompatible integration, a role no agent meets, a failed child launch, or a child runtime failure mid-run is different: the affected lane stops with the named cause and any partial state, and there is no generic substitute or silent inline run.
+- **Escalation.** A child that asks a question is waiting, not done. The parent answers it (or asks you) and neither merges nor ticks that lane until it finishes.
+- **Optional tools.** Without `rpiv-ask-user-question` the agent asks a plain question with numbered options; without `rpiv-todo` it states a checklist in its reply.
+
+The parent writes `apply.md` (including its `## Lanes` table) and `verify.md` receipts, the parent owning every receipt; the next commands (`/opsx-verify`, `/opsx-continue`) are unchanged, and no seat has authority to merge or push.
 
 Either way, `apply.md` records the executor actually used.
 

@@ -21,7 +21,7 @@ The package SHALL provide `opsx-apply`, `opsx-verify`, `opsx-sync` and `opsx-arc
 - **THEN** no `opsx-propose` or `opsx-bulk-archive` skill or prompt exists
 
 ### Requirement: No Claude tool names in execution commands
-The execution skills and prompts SHALL NOT contain `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` or `plannotator`. Where the OpenSpec source skill asked the user, the text MUST direct the agent to ask as the routing note's Interaction channel paragraph describes. Where it tracked todos, dispatched a subagent or loaded a skill, the text MUST use the `todo` tool, the `subagent` tool from `pi-subagents`, or reading `SKILL.md`, each with a plain fallback when the tool is unavailable.
+The execution skills and prompts SHALL NOT contain `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` or `plannotator`. Where the OpenSpec source skill asked the user, the text MUST direct the agent to ask as the routing note's Interaction channel paragraph describes. Where it tracked todos or loaded a skill, the text MUST use the `todo` tool or reading `SKILL.md`, each with a plain fallback when the tool is unavailable. Where it dispatched a subagent, the text MUST direct the agent to delegate as the routing note's Subagent integration paragraph describes, and MUST NOT name a subagent plugin, plugin tool or plugin parameter.
 
 #### Scenario: Forbidden names absent
 - **WHEN** the files of `opsx-apply`, `opsx-verify`, `opsx-sync` and `opsx-archive` under `skills/` and `prompts/` are searched for `AskUserQuestion`, `TodoWrite`, `Task tool`, `ask_user_question` and `plannotator`
@@ -30,6 +30,10 @@ The execution skills and prompts SHALL NOT contain `AskUserQuestion`, `TodoWrite
 #### Scenario: Ask fallback
 - **WHEN** an execution skill needs a decision from the user
 - **THEN** it directs the agent to ask as the Interaction channel paragraph describes, which on the `plain` channel is plain text with numbered options, recommended first, then wait
+
+#### Scenario: Delegation through the paragraph
+- **WHEN** the execution skills are searched for `pi-subagents`, `tintinweb`, `gotgenes`, `contact_supervisor`, `subagents_enable`, `get_subagent_result`, `steer_subagent`, `Agent(` and `subagent(`
+- **THEN** there are no matches, and delegation steps refer to the Subagent integration paragraph
 
 ### Requirement: Apply follows the schema apply block
 The `opsx-apply` skill SHALL read the change's apply instruction with `openspec instructions apply --change <name> --json` and follow it, handling `blocked` by cause (missing artifacts: `/opsx-continue`; missing tracking file: repaired per "Apply pauses on scope changes") and `all_done` by pointing to `/opsx-verify` and `/opsx-archive`. It MUST stop after the final whole-branch review and the `apply.md` receipt and MUST NOT invoke `finishing-a-development-branch`.
@@ -47,19 +51,19 @@ The `opsx-apply` skill SHALL read the change's apply instruction with `openspec 
 - **THEN** `apply.md` is written and committed in the worktree and the agent points to `/opsx-verify` without merging, pushing or finishing the branch
 
 ### Requirement: Executor depends on subagent availability
-The `opsx-apply` skill SHALL use the compatible `pi-subagents` integration with Superpowers `subagent-driven-development`, resolving lazy tool activation and canonical role availability through the shared integration reference. It SHALL use `superspec.implementer` for each task and `superspec.task-reviewer` for the existing task and final whole-branch review seats, with no duplicate generic reviewer pipeline. It MUST preserve one implementation writer per worktree and configured model selection. If the optional tool and activation helper are absent it SHALL use Superpowers `executing-plans` in-session and request a whole-branch review over the full commit range before writing `apply.md`. It MUST NOT fabricate calls, bypass disabled/missing roles or failed launches, or omit the executor actually used from `apply.md`.
+The `opsx-apply` skill SHALL use the detected subagent integration with Superpowers `subagent-driven-development`, resolving availability and selecting agents by role requirements through the shared integration reference. It SHALL use an agent meeting the implementer role for each task and an agent meeting the task reviewer role for the existing task and final whole-branch review seats, with no duplicate generic reviewer pipeline. It MUST keep one implementation writer per worktree, SHALL schedule unblocked independent tasks into parallel lanes as the parallel apply lanes capability defines, and MUST NOT set a model. If the Subagent integration paragraph reports that delegation is unavailable, it SHALL use Superpowers `executing-plans` in-session, run tasks one after another, and request a whole-branch review over the full commit range before writing `apply.md`. It MUST NOT fabricate calls, bypass a role no agent meets or a failed launch, or omit the executor actually used from `apply.md`.
 
 #### Scenario: With pi-subagents
-- **WHEN** the compatible integration and required canonical roles are available
-- **THEN** apply executes the plan through SDD with the namespaced implementer and existing namespaced task/final-review seats and records that executor
+- **WHEN** a subagent plugin is detected and agents meeting the implementer and task reviewer roles are available
+- **THEN** apply executes the plan through SDD with the selected implementer and task/final-review seats, announces the chosen agents, and records that executor
 
 #### Scenario: Without pi-subagents
-- **WHEN** neither the subagent tool nor its activation helper is available
+- **WHEN** the Subagent integration paragraph reports that delegation is unavailable
 - **THEN** apply uses `executing-plans`, follows TDD manually, requests a whole-branch review, and records `executing-plans` in `apply.md`
 
 #### Scenario: Unusable delegated executor
-- **WHEN** a canonical role is disabled/missing or a child launch fails
-- **THEN** apply reports and stops the affected lane without dispatching a generic substitute or silently going inline
+- **WHEN** no available agent meets a role or a child launch fails
+- **THEN** apply reports and stops the affected lane without silently going inline
 
 ### Requirement: Post-PR feedback loop
 The `opsx-apply` skill SHALL support post-PR review feedback: it MUST load `receiving-code-review`, apply fixes on the feature branch in the main checkout with TDD, append a "post-PR iteration N+1" entry with the new commit range to `apply.md`, direct the agent to re-run `/opsx-verify`, and update `finalize.md`. Pushing and the reviewer comment MUST follow the finalize policy, which a project `AGENTS.md` policy overrides.
@@ -254,7 +258,7 @@ The `opsx-verify` skill SHALL follow check 5 of the verify instruction by compar
 - **THEN** `verify.md` marks it not verified with the reason
 
 ### Requirement: Delegated verify evidence with parent receipt
-Verify SHALL use `superspec.verifier` through the shared policy to collect independent evidence for the existing six checks, or verify inline when the integration is absent. Only commands run in the authoritative worktree during this invocation SHALL count as fresh. The parent MUST inspect evidence, perform remaining available checks, apply existing outcome rules, and write/commit `verify.md`; the child MUST NOT fix code or write the receipt.
+Verify SHALL use an agent meeting the verifier role through the shared policy to collect independent evidence for the existing six checks, or verify inline when the integration is absent. Only commands run in the authoritative worktree during this invocation SHALL count as fresh. The parent MUST inspect evidence, perform remaining available checks, apply existing outcome rules, and write/commit `verify.md`; the child MUST NOT fix code or write the receipt.
 
 #### Scenario: Fresh delegated evidence
 - **WHEN** the verifier runs project tests during this verify invocation in the authoritative worktree

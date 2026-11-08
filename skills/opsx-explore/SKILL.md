@@ -76,7 +76,7 @@ Diagrams use ASCII characters only.
 
 ## Bounded Reconnaissance
 
-Before any delegation, read [subagent routing](../references/subagent-routing.md) and follow it. Use `superspec.scout` only when a non-trivial repository investigation earns its overhead: bound the paths, bind its report with `output`, and treat it as an evidence-only, read-only recon that must never write code, schema, or official artifacts, so explore's no-implement boundary holds. Small conceptual exploration stays inline, and scout availability alone does not trigger a call. The user conversation stays with the parent, which judges the returned evidence. When the integration is absent, explore inline as usual.
+Before any delegation, read [subagent routing](../references/subagent-routing.md) and follow it. Use an agent meeting the scout role, as the Subagent integration paragraph describes, only when a non-trivial repository investigation earns its overhead: bound the paths, collect the report as the paragraph describes, and treat it as an evidence-only, read-only recon that must never write code, schema, or official artifacts, so explore's no-implement boundary holds. Small conceptual exploration stays inline, and scout availability alone does not trigger a call. The user conversation stays with the parent, which judges the returned evidence. When the integration is absent, explore inline as usual.
 
 ---
 

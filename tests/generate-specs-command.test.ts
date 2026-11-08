@@ -51,7 +51,7 @@ describe("opsx-generate-specs command", () => {
 			"Evidence:",
 			"Confidence: inferred",
 			"No design needed:",
-			"pi-subagents",
+			"Subagent integration paragraph",
 			"Interaction channel",
 			"openspec/specs/",
 			"node_modules",
@@ -181,11 +181,13 @@ describe("generate-specs evidence-only scouts", () => {
 		expect(text).toMatch(/No candidate covers an ignored directory/);
 	});
 
-	it("SA-G02 map scout is one superspec.scout on configured settings without model or thinking override", () => {
+	it("SA-G02 map scout is one scout role on configured settings without model or thinking override", () => {
 		const text = map();
-		expect(text).toContain("superspec.scout");
-		expect(text).toMatch(/one `?superspec\.scout`?|one map scout/i);
+		expect(text).toContain("scout role");
+		expect(text).toMatch(/one map scout/i);
 		expect(text).toMatch(/configured model/i);
+		expect(text).toMatch(/as the Subagent integration paragraph describes/);
+		expect(text).toMatch(/collect the report as the paragraph describes/);
 		expect(text).toMatch(/no (per-(call|dispatch) )?model\/thinking override|without (a )?(per-(call|dispatch) )?model\/thinking override/i);
 		expect(text).not.toMatch(/fast model/i);
 		expect(skill()).not.toMatch(/fast model/i);
@@ -209,10 +211,10 @@ describe("generate-specs evidence-only scouts", () => {
 
 	it("SA-G04 dispatches one evidence-only scout per confirmed missing capability and the parent writes official files", () => {
 		const text = dispatch();
-		expect(text).toMatch(/one evidence-only `?superspec\.scout`? per confirmed capability[^.\n]*missing/i);
+		expect(text).toMatch(/one evidence-only scout per confirmed capability[^.\n]*missing/i);
 		expect(text).toMatch(/parent (alone )?writes[^.\n]*(official|spec)/i);
 		expect(text).toMatch(/scouts? (never|must never|do not|must not) write[^.\n]*spec/i);
-		expect(text).toMatch(/`output`/);
+		expect(text).toMatch(/collect[^.]*report as the paragraph describes/i);
 		expect(text).toMatch(/scratch|run-managed/i);
 		expect(text).not.toMatch(/Scouts write their own files/i);
 		expect(text).not.toMatch(/output path `openspec\/changes\/bootstrap-specs\/specs/);
@@ -247,7 +249,7 @@ describe("generate-specs evidence-only scouts", () => {
 
 	it("SA-G12 reviews drafts internally, then strict-validates, fixes and reruns, and keeps the ff handoff", () => {
 		const text = skill();
-		const review = text.search(/superspec\.spec-reviewer/);
+		const review = text.search(/spec reviewer role/);
 		const validate = text.indexOf("openspec validate bootstrap-specs --strict");
 		const handoff = text.indexOf("/opsx-ff bootstrap-specs`.\"");
 		expect(review).toBeGreaterThan(text.indexOf("**SCOUT each capability**"));

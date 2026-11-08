@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { channelParagraph } from "../extensions/interaction-channel.ts";
+import { subagentParagraph } from "../extensions/subagent-integration.ts";
 import {
 	BOOTSTRAP_MARKER,
 	CODING_STANDARDS_MISSING_WARNING,
@@ -165,6 +167,17 @@ describe("routingNote", () => {
 		for (const part of ['"vi"', "WHEN", "SHALL", "openspec/config.yaml", "language:"]) {
 			expect(text).toContain(part);
 		}
+	});
+
+	it("appends the subagent paragraph after the channel paragraph", () => {
+		expect(routingNote("en", "C", "S").endsWith("\n\nC\n\nS")).toBe(true);
+		expect(routingNote("en", "C")).toBe(`${routingNote("en")}\n\nC`);
+	});
+
+	it("puts real paragraphs in order, subagent last", () => {
+		const text = routingNote("en", channelParagraph(["plain"]), subagentParagraph("none"));
+		expect(text).toContain("Interaction channel:");
+		expect(text.indexOf("Subagent integration:")).toBeGreaterThan(text.indexOf("Interaction channel:"));
 	});
 
 	it("puts the language paragraph before the channel paragraph", () => {

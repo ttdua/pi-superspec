@@ -136,6 +136,12 @@ describe("execution commands", () => {
 		expect(text).toContain("subagent-driven-development");
 	});
 
+	it("apply overrides the sequential-only rule of SDD for child worktree lanes", () => {
+		const text = skill("apply").replace(/\s+/g, " ");
+		expect(text).toMatch(/parallel writer lanes[^.]*only in separate child worktrees/i);
+		expect(text).toMatch(/inside one worktree[^.]*sequential rule stands/i);
+	});
+
 	it("apply falls back to executing-plans with a whole-branch review", () => {
 		const text = skill("apply");
 		expect(text).toContain("executing-plans");
@@ -356,10 +362,10 @@ describe("execution specialist routing", () => {
 		const t = skill("apply");
 		expect(t).toContain(REF);
 		expect(t).toMatch(/shared (routing )?(policy|reference)[^.\n]*before (choosing|selecting) the executor/i);
-		expect(t).toContain("superspec.implementer");
-		expect(t).toContain("superspec.task-reviewer");
-		expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*superspec\.task-reviewer/i);
-		expect(t).toMatch(/final whole-branch[^.\n]*superspec\.task-reviewer|superspec\.task-reviewer[^.\n]*final whole-branch/i);
+		expect(t).toContain("implementer role");
+		expect(t).toContain("task reviewer role");
+		expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*task reviewer role/i);
+		expect(t).toMatch(/final whole-branch[^.\n]*task reviewer role/i);
 		expect(t).toMatch(/no duplicate generic reviewer|never[^.\n]*generic (Superpowers )?reviewer/i);
 		expect(t).toMatch(/one implementation writer per worktree/i);
 		expect(t).toMatch(/configured model/i);
@@ -376,24 +382,24 @@ describe("execution specialist routing", () => {
 
 	it("SA-E02 apply uses inline execution with whole-branch review when integration is absent", () => {
 		const t = skill("apply");
-		expect(t).toMatch(/neither[^.\n]*subagent[^.\n]*(activation )?helper[^.\n]*executing-plans|executing-plans[^.\n]*neither/i);
+		expect(t).toMatch(/Subagent integration paragraph[^.]*unavailable[^.]*executing-plans/i);
 		expect(t).toContain("whole-branch review");
 		expect(t).toMatch(/never invent subagent calls/i);
 	});
 
 	it("SA-E03 apply stops on a missing, disabled or failed canonical role without a replacement", () => {
 		const t = skill("apply");
-		expect(t).toMatch(/(role|agent)[^\n]*(disabled|missing)[^\n]*fail[^\n]*STOP/i);
+		expect(t).toMatch(/no available agent meets[^.]*stop/i);
 		expect(t).toMatch(/launch (or|and) runtime failure|runtime failure/i);
 		expect(t).toMatch(/mid-run/i);
-		expect(t).toMatch(/no (generic )?(replacement|substitute)/i);
-		expect(t).toMatch(/not (silently )?(go|fall)[^.\n]*inline|never[^.\n]*silently[^.\n]*inline/i);
+		expect(t).toMatch(/no generic replacement or substitute/i);
+		expect(t).toMatch(/never silently go inline/i);
 	});
 
 	it("SA-E04 verify loads shared policy and delegates collection to the verifier in the authoritative cwd", () => {
 		const t = skill("verify");
 		expect(t).toContain(REF);
-		expect(t).toContain("superspec.verifier");
+		expect(t).toContain("verifier role");
 		expect(t).toMatch(/authoritative (worktree|cwd)/i);
 		expect(t).toMatch(/six checks/i);
 		expect(t).toMatch(/only the parent writes[^\n]*receipt/i);
@@ -432,11 +438,50 @@ describe("execution specialist routing", () => {
 		expect(v).toContain("`PASS_WITH_WARNINGS`");
 	});
 
+	it("Delegation through the paragraph: no plugin or tool names in skills and prompts", () => {
+		const banned =
+			/pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
+		const allowed =
+			/Subagent integration paragraph|subagent-driven-development|subagent routing|subagent-routing\.md|subagent calls/g;
+		for (const c of COMMANDS) {
+			for (const text of [skill(c), read(`prompts/opsx-${c}.md`)]) {
+				expect(text, c).not.toMatch(banned);
+				expect(text.replace(allowed, ""), c).not.toMatch(/subagent/i);
+			}
+		}
+	});
+
+	it("apply schedules plan tasks in lanes", () => {
+		const t = skill("apply");
+		const flat = t.replace(/\s+/g, " ");
+		expect(t).toMatch(/one lane per plan task/i);
+		expect(t).toMatch(/Lanes/);
+		expect(t).toContain("## Lanes");
+		expect(t).toMatch(/merge[^.]*after[^.]*review/i);
+		expect(flat).toMatch(/without[^.]*Blocked by[^.]*one after another/i);
+		expect(flat).toMatch(/every task in its `Blocked by` is merged/i);
+		expect(flat).toMatch(/plan[^.]*metadata[^.]*governs? scheduling/i);
+		expect(flat).toMatch(/escalated lane waits[^.]*does neither merge/i);
+		expect(flat).toMatch(/escalated lane waits[^.]*nor tick it/i);
+	});
+
+	it("apply and verify refer delegation to the Subagent integration paragraph", () => {
+		const apply = skill("apply").replace(/\s+/g, " ");
+		const step5 = apply.slice(apply.indexOf("5. **Choose the executor**"), apply.indexOf("6. **Write the receipt"));
+		expect(step5).toMatch(/through the Subagent integration paragraph/);
+		expect(step5).toMatch(/If delegation is available through the Subagent integration paragraph/);
+		expect(step5).toMatch(/If the Subagent integration paragraph says delegation is unavailable/);
+		const verify = skill("verify").replace(/\s+/g, " ");
+		const ev = verify.slice(verify.indexOf("**Delegated evidence:**"), verify.indexOf("Beyond the instruction"));
+		expect(ev).toMatch(/Delegate as the Subagent integration paragraph describes/);
+		expect(ev).toMatch(/When the Subagent integration paragraph says delegation is absent/);
+	});
+
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {
 		const g = read("docs/usage-guide.md");
-		for (const a of ["superspec.implementer", "superspec.task-reviewer", "superspec.verifier"]) {
-			expect(g).toContain(a);
-		}
+		const executors = g.slice(g.indexOf("## Executors"), g.indexOf("## Existing schemas"));
+		expect(executors).toMatch(/bundled `superspec\.\*` agents are bundled candidates for every role, including the implementer and task reviewer apply uses, but get no precedence/);
+		expect(g).not.toMatch(/`superspec\.(implementer|task-reviewer|verifier)`/);
 		expect(g).toMatch(/absent[^.\n]*inline/i);
 		expect(g).toMatch(/(disabled|incompatible)[^.\n]*stop/i);
 		expect(g).toMatch(/runtime failure[^.\n]*mid-run|mid-run[^.\n]*runtime failure/i);

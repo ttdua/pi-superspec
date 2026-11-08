@@ -15,11 +15,11 @@ Before starting, state the path you chose and a one-line reason.
 Do NOT write design docs or plans to docs/superpowers/; they live in the change directory instead.`;
 
 /** The routing note, with the document language paragraph. */
-export function routingNote(language: string, channelText = ""): string {
+export function routingNote(language: string, channelText = "", subagentText = ""): string {
 	const base = `${ROUTING_NOTE}
 
 Document language: write the prose of OpenSpec documents (change artifacts and main specs) in ${JSON.stringify(language)}. Keep headings, requirement and scenario names, WHEN/THEN/SHALL/MUST, checkbox syntax, delta operation headers, and file and capability names in English. Code, code comments and commit messages are not affected. If the user asks to change the document language, update \`language:\` in openspec/config.yaml.`;
-	return channelText === "" ? base : `${base}\n\n${channelText}`;
+	return [base, channelText, subagentText].filter((part) => part !== "").join("\n\n");
 }
 
 function role(message: unknown): unknown {
@@ -71,12 +71,13 @@ export function insertRoutingNote<T>(messages: T[], note: T): T[] | undefined {
 export function createRoutingNoteMessage(
 	language: string,
 	channelText = "",
+	subagentText = "",
 ): {
 	role: "user";
 	content: { type: "text"; text: string }[];
 	timestamp: number;
 } {
-	return { role: "user", content: [{ type: "text", text: routingNote(language, channelText) }], timestamp: Date.now() };
+	return { role: "user", content: [{ type: "text", text: routingNote(language, channelText, subagentText) }], timestamp: Date.now() };
 }
 
 /** True when the Superpowers plugin is installed (it registers a `skill:brainstorming` command). */

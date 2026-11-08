@@ -26,6 +26,10 @@ First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) f
 - Routing note injected into the session context that directs the agent to the path that fits the work.
 - Warning at session start when Superpowers is not installed.
 - Baseline spec awareness: brainstorm, proposal and specs read the living specs under `openspec/specs/` where they decide; the spec reviewer compares deltas with those main specs; the routing note confirms specified behaviour before the fix path. Schema version 7; run `/opsx-init` to upgrade an installed v6 schema.
+- Subagent adapters: the extension detects `@tintinweb/pi-subagents`, `pi-subagents`, `@gotgenes/pi-subagents`, the `pi-subagents` activation helper or no plugin, and injects a Subagent integration paragraph with the spawn, thinking, report and escalation mechanics. Skills name roles only.
+- Plugin-neutral bundled agents with `superspec.<role>` identities, declared by both `pi-subagents.agents` and `pi.subagents.agents`; `@gotgenes/pi-subagents` supplies no bundled agents and uses only its own.
+- Parallel apply lanes: schema v8 adds task groups with `Blocked by`, plan `Covers`, `Difficulty` and `Blocked by`, and a `## Lanes` table in `apply.md`. Independent tasks run in their own child worktrees and merge after review; `Difficulty` maps to the thinking level. Run `/opsx-init` to upgrade an installed v7 schema.
+- Docs: compatibility table (`pi-subagents` smoke-tested; the other two inspected, not a proven minimum), three e2e runs, a `@gotgenes/pi-subagents` smoke and a lanes observation.
 - Optional `language` key in `openspec/config.yaml` for the language of OpenSpec document prose.
   - `/opsx-init --lang <value>` writes it.
   - `/opsx-init` asks for it once per run when it is missing or invalid and a UI is available.

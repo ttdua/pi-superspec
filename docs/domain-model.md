@@ -106,6 +106,19 @@ A file the DAG tracks. `done` when its file exists.
 new / modified, exact shape, public flag), the reviewed source of truth for
 contract shapes.
 
+## Task group, `Blocked by`, `Difficulty` and lanes
+
+`tasks.md` is a list of numbered **task groups** (`## 1. Name`) with checkboxes `1.1`, `1.2`.
+A group may carry a `Blocked by:` line naming the groups that must be merged first (`none` when
+independent). `plan.md` has one plan task per group with `Covers` (the checkbox IDs),
+`Difficulty` (`Easy`, `Normal`, `Hard` or `Very Hard`) and `Blocked by`.
+
+A **lane** is one run of one whole plan task. Ready tasks may run in parallel lanes, each writer in
+its own child worktree on branch `<change-name>--task-<N>`; a lane merges into `<change-name>` only
+after its task review passes. Difficulty maps to the thinking level (Easy low, Normal medium, Hard
+high, Very Hard xhigh). A plan without `Blocked by` runs its tasks one after another. The outcome is
+recorded in the `## Lanes` table of `apply.md` (see ApplyReceipt).
+
 ## ApplyReceipt (`apply.md`)
 
 | Field | Meaning |
@@ -116,6 +129,7 @@ contract shapes.
 | `baseBranch` | Integration branch, typically `main`. |
 | `commitRange` | Commits produced this iteration. |
 | `executor` | `subagent-driven-development` or `executing-plans`. |
+| `lanes` | `## Lanes` table, one row per plan task: task ID, lane branch or `sequential`, lane commit range, task review verdict, merge commit. |
 | `tasksDone` / `tasksTotal` | From `tasks.md`. |
 | `contractDeviations` | Cumulative `## Contract deviations` list: contract name, what changed and why; `none` when empty. |
 

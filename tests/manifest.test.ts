@@ -11,6 +11,7 @@ describe("package manifest", () => {
 	});
 
 	it("declares extensions only in the pi block", () => {
+		expect(Object.keys(pkg.pi).sort()).toEqual(["extensions", "subagents"]);
 		expect(pkg.pi.extensions).toEqual(["./extensions/superspec.ts"]);
 		expect(pkg.pi.skills).toBeUndefined();
 		expect(pkg.pi.prompts).toBeUndefined();
@@ -33,11 +34,31 @@ describe("package manifest", () => {
 	});
 
 	it("SA-M01 declares optional package-agent discovery without changing pi resources", () => {
-		expect(pkg["pi-subagents"]).toEqual({ agents: ["./agents"] });
+		expect(pkg["pi-subagents"].agents).toEqual(["./agents"]);
+		expect(pkg.pi.subagents.agents).toEqual(["./agents"]);
 		expect(pkg.pi.extensions).toEqual(["./extensions/superspec.ts"]);
 		expect(pkg.pi.skills).toBeUndefined();
 		expect(pkg.pi.prompts).toBeUndefined();
 		expect(pkg.pi.themes).toBeUndefined();
+	});
+
+	it("Metadata added only", () => {
+		// Baseline: `git show dd3b63c:package.json`, stored so the test needs no git history.
+		const base = JSON.parse(readFileSync(new URL("./fixtures/package-baseline.json", import.meta.url), "utf8"));
+		expect(Object.keys(pkg).sort()).toEqual(Object.keys(base).sort());
+		for (const k of Object.keys(base)) {
+			if (k === "pi") continue;
+			expect(pkg[k]).toEqual(base[k]);
+		}
+		const { subagents, ...piWithoutSubagents } = pkg.pi;
+		expect(subagents).toEqual({ agents: ["./agents"] });
+		expect(piWithoutSubagents).toEqual(base.pi);
+		expect(pkg.repository).toEqual(base.repository);
+		expect(pkg.homepage).toBe(base.homepage);
+		expect(pkg.bugs).toEqual(base.bugs);
+		expect(pkg.scripts).toEqual({ test: "vitest run", typecheck: "tsc --noEmit" });
+		expect(pkg.dependencies).toBeUndefined();
+		expect(pkg.files).toEqual(["extensions", "skills", "prompts", "schema", "agents"]);
 	});
 
 	it("SA-M02 publishes the agents directory and keeps zero runtime dependencies", () => {
