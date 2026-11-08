@@ -5,8 +5,8 @@
 > Overwritten on each apply iteration; iteration counter grows.
 
 **Change**: `subagent-adapters`
-**Iteration**: `1`
-**Applied at**: `2026-11-07 19:54` (UTC, `2026-11-07T19:53:53Z`)
+**Iteration**: `2`
+**Applied at**: `2026-11-08 02:11` (UTC, `2026-11-08T02:11:16Z`)
 **Executor**: `subagent-driven-development` with parallel lanes (plugin `@gotgenes/pi-subagents` 25.0.5; agents selected by role requirements: implementer `general-purpose`, or `easy-worker` for the Easy task; per-task, fix-round and whole-branch review `code-reviewer`; thinking from task difficulty, no model override)
 
 ---
@@ -22,8 +22,8 @@
 
 ## Commits
 
-- **Range**: `dd3b63c..980ca3d` (covers the lane merges)
-- **Count**: `28`
+- **Range**: `dd3b63c..44b569b` (covers the lane merges and iteration 2)
+- **Count**: `35`
 
 ---
 
@@ -40,6 +40,8 @@
 > keep entries from earlier iterations. Write `none` if there are none.
 
 - `detectSubagentAdapter` (internal): the pi-subagents rule is `agent` or `task`, and now also requires no `subagent_type` parameter (design D1 named only `agent` or `task`). Reason: the final review found that a gotgenes-style `subagent` tool with an extra `task` parameter would otherwise be read as pi-subagents. The signature is unchanged.
+- `resolveSubagentIntegration` and `SubagentIntegration` (internal, iteration 2): new export that detects the adapter and picks the spawn tool through the provenance tie-break; `extensions/superspec.ts` now uses it. Reason: verify W1, the provenance SHALL did not reach runtime.
+- `subagentParagraph` (internal, iteration 2): optional `toolName` that renames every reference to the selected spawn tool (spawn, list, resume) when it differs from the default; with no `toolName` the text is unchanged except the pi-subagents thinking line, which now gives its reason (verify W2).
 
 ---
 
@@ -63,8 +65,14 @@ Whole-branch review over `dd3b63c..0ddb253`: no Critical, 1 Important (apply did
 
 Validation on `980ca3d`: `npm test` 662/662 passed, `npm run typecheck` clean, `openspec validate subagent-adapters --strict` valid.
 
+Iteration 2 (user decision after verify PASS_WITH_WARNINGS): fixes W1–W3 and the textual W4 assertions in the change worktree, one writer, `sequential` (no lanes). The range is `3b14505..44b569b`, 5 commits.
+- Review seat `code-reviewer`. First review: 2 Important (metadata test depended on git history; MCP-prefixed name not renamed in listing lines) and 1 Minor (contracts).
+- Fixed in 2 rounds, final re-review approved.
+
+Validation on `44b569b`: `npm test` 667/667 passed, `npm run typecheck` clean, `openspec validate subagent-adapters --strict` valid.
+
 ---
 
 ## Next step
 
-Run `/opsx-verify subagent-adapters`.
+Run `/opsx-verify subagent-adapters` (iteration 2).
