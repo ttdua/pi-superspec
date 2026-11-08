@@ -45,11 +45,14 @@ describe("package manifest", () => {
 	it("Metadata added only", () => {
 		// Baseline: `git show dd3b63c:package.json`, stored so the test needs no git history.
 		const base = JSON.parse(readFileSync(new URL("./fixtures/package-baseline.json", import.meta.url), "utf8"));
-		const differing = Object.keys({ ...base, ...pkg }).filter(
-			(k) => JSON.stringify(base[k]) !== JSON.stringify(pkg[k]),
-		);
-		expect(differing).toEqual(["pi"]);
-		expect({ ...pkg.pi, subagents: undefined }).toEqual({ ...base.pi, subagents: undefined });
+		expect(Object.keys(pkg).sort()).toEqual(Object.keys(base).sort());
+		for (const k of Object.keys(base)) {
+			if (k === "pi") continue;
+			expect(pkg[k]).toEqual(base[k]);
+		}
+		const { subagents, ...piWithoutSubagents } = pkg.pi;
+		expect(subagents).toEqual({ agents: ["./agents"] });
+		expect(piWithoutSubagents).toEqual(base.pi);
 		expect(pkg.repository).toEqual(base.repository);
 		expect(pkg.homepage).toBe(base.homepage);
 		expect(pkg.bugs).toEqual(base.bugs);
