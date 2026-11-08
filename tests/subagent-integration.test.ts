@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
 	detectSubagentAdapter,
 	pickSpawnTool,
+	resolveSubagentIntegration,
 	type SubagentAdapter,
 	subagentParagraph,
 	type SubagentToolInfo,
@@ -52,6 +53,19 @@ describe("detectSubagentAdapter", () => {
 		expect(detectSubagentAdapter(tools)).toBe("pi-subagents");
 		expect(pickSpawnTool(tools, "pi-subagents")?.sourceInfo?.source).toBe("npm:pi-subagents");
 	});
+	it("resolveSubagentIntegration returns the provenance-picked tool", () => {
+		const tools = [tool("mcp__x__subagent", ["agent", "task"], "npm:pi-subagents"), tool("subagent", ["agent", "task"], "local")];
+		const { adapter, tool: picked } = resolveSubagentIntegration(tools);
+		expect(adapter).toBe("pi-subagents");
+		expect(picked?.name).toBe("mcp__x__subagent");
+		expect(resolveSubagentIntegration([])).toEqual({ adapter: "none" });
+		expect(resolveSubagentIntegration([{ name: "subagents_enable" }])).toEqual({ adapter: "pi-subagents-helper" });
+	});
+	it("paragraph names a non-default tool name and is unchanged without one", () => {
+		expect(subagentParagraph("pi-subagents", "mcp__x__subagent")).toContain("`mcp__x__subagent({ agent");
+		expect(subagentParagraph("pi-subagents", "subagent")).toBe(subagentParagraph("pi-subagents"));
+		expect(subagentParagraph("tintinweb", "Agent")).toBe(subagentParagraph("tintinweb"));
+	});
 	it("No side effects", () => {
 		const here = dirname(fileURLToPath(import.meta.url));
 		const source = readFileSync(join(here, "..", "extensions", "subagent-integration.ts"), "utf8");
@@ -88,7 +102,10 @@ describe("subagentParagraph", () => {
 		}
 	});
 	it("Thinking on pi-subagents", () => {
-		expect(subagentParagraph("pi-subagents")).toMatch(/no thinking level/i);
+		const text = subagentParagraph("pi-subagents");
+		expect(text).toMatch(/no thinking level/i);
+		expect(text).toMatch(/model suffix/i);
+		expect(text).toMatch(/model is not pinned/i);
 	});
 	it("Report collection per adapter", () => {
 		expect(subagentParagraph("pi-subagents")).toMatch(/output[^.]*scratch/i);
@@ -96,6 +113,10 @@ describe("subagentParagraph", () => {
 			expect(subagentParagraph(adapter)).toMatch(/scratch file[^.]*before[^.]*evidence/i);
 		}
 		expect(subagentParagraph("tintinweb")).toContain("get_subagent_result");
+		for (const adapter of ["tintinweb", "gotgenes"] as const) {
+			expect(subagentParagraph(adapter)).toContain("get_subagent_result({ agent_id, wait: true })");
+		}
+		expect(subagentParagraph("pi-subagents")).toMatch(/status action[^.]*background/i);
 	});
 	it("Escalation channels", () => {
 		expect(subagentParagraph("pi-subagents")).toContain("contact_supervisor");
@@ -119,6 +140,7 @@ describe("subagentParagraph", () => {
 	});
 	it("gotgenes has no bundled agents", () => {
 		expect(subagentParagraph("gotgenes")).toMatch(/no bundled agents/i);
+		expect(subagentParagraph("gotgenes")).toMatch(/pick from the registered agent types/i);
 	});
 	it("gives bundled agents no default or precedence", () => {
 		for (const adapter of Object.keys(PARAGRAPH_ADAPTERS) as SubagentAdapter[]) {

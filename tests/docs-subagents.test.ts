@@ -73,6 +73,16 @@ describe("usage guide", () => {
 
 describe("e2e checklist", () => {
 	const checklist = read("docs/e2e-checklist.md");
+
+	it("Routing note expectation lists the current four paths", () => {
+		const line = checklist.split("\n").find((l) => l.includes("pi-superspec routing note")) ?? "";
+		expect(line).toMatch(/no spec change[^;.]*directly with TDD/i);
+		expect(line).toContain("/opsx-ff");
+		expect(line).toMatch(/\/opsx-new[^.]*\/opsx-continue/);
+		expect(line).toMatch(/questions[^.]*directly/i);
+		expect(line).toContain("docs/superpowers/");
+		expect(checklist).not.toContain("behaviour-changing work is first proposed with `/opsx-new`");
+	});
 	const RUNS = {
 		tintinweb: /^## Run [A-Z] — with @tintinweb\/pi-subagents[^\n]*/m,
 		"pi-subagents": /^## Run [A-Z] — with pi-subagents[^\n]*/m,

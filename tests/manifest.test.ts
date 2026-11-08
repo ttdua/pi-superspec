@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
@@ -43,6 +44,17 @@ describe("package manifest", () => {
 	});
 
 	it("Metadata added only", () => {
+		const base = JSON.parse(
+			execFileSync("git", ["show", "dd3b63c:package.json"], { cwd: new URL("..", import.meta.url), encoding: "utf8" }),
+		);
+		const differing = Object.keys({ ...base, ...pkg }).filter(
+			(k) => JSON.stringify(base[k]) !== JSON.stringify(pkg[k]),
+		);
+		expect(differing).toEqual(["pi"]);
+		expect({ ...pkg.pi, subagents: undefined }).toEqual({ ...base.pi, subagents: undefined });
+		expect(pkg.repository).toEqual(base.repository);
+		expect(pkg.homepage).toBe(base.homepage);
+		expect(pkg.bugs).toEqual(base.bugs);
 		expect(pkg.scripts).toEqual({ test: "vitest run", typecheck: "tsc --noEmit" });
 		expect(pkg.dependencies).toBeUndefined();
 		expect(pkg.files).toEqual(["extensions", "skills", "prompts", "schema", "agents"]);

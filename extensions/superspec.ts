@@ -8,7 +8,7 @@ import { resolveLanguage } from "./init/config.ts";
 import { runInit } from "./init/init.ts";
 import type { InitIO } from "./init/io.ts";
 import { schemaNotice } from "./schema-notice.ts";
-import { detectSubagentAdapter, subagentParagraph } from "./subagent-integration.ts";
+import { resolveSubagentIntegration, subagentParagraph } from "./subagent-integration.ts";
 import {
 	CODING_STANDARDS_MISSING_WARNING,
 	createRoutingNoteMessage,
@@ -62,12 +62,13 @@ export default function (pi: ExtensionAPI) {
 		const all = typeof pi.getAllTools === "function" ? pi.getAllTools() : [];
 		const subagentTools = all.filter((t) => tools.includes(t.name));
 		const channelText = channelParagraph(availableChannels(tools, cliAvailable));
+		const { adapter, tool } = resolveSubagentIntegration(subagentTools);
 		const messages = insertRoutingNote(
 			event.messages,
 			createRoutingNoteMessage(
 				resolveLanguage(root),
 				channelText,
-				subagentParagraph(detectSubagentAdapter(subagentTools)),
+				subagentParagraph(adapter, tool?.name),
 			),
 		);
 		return messages && { messages };

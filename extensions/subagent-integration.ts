@@ -66,11 +66,22 @@ export function pickSpawnTool(
 	return found.find((tool) => tool.sourceInfo?.source?.includes(rule.packageName)) ?? found[0];
 }
 
+export interface SubagentIntegration {
+	adapter: SubagentAdapter;
+	/** The spawn tool picked by provenance; absent for the helper and for none. */
+	tool?: SubagentToolInfo;
+}
+
+/** Detects the adapter in D1 order and, for a spawning adapter, the tool to name. */
+export function resolveSubagentIntegration(tools: readonly SubagentToolInfo[]): SubagentIntegration {
+	const rule = SPAWN_RULES.find((r) => candidates(tools, r).length > 0);
+	if (rule) return { adapter: rule.adapter, tool: pickSpawnTool(tools, rule.adapter) };
+	return { adapter: tools.some((tool) => hasName(tool, HELPER_TOOL)) ? "pi-subagents-helper" : "none" };
+}
+
 /** Which subagent plugin the active tools belong to, judged by parameter schema. */
 export function detectSubagentAdapter(tools: readonly SubagentToolInfo[]): SubagentAdapter {
-	const rule = SPAWN_RULES.find((r) => candidates(tools, r).length > 0);
-	if (rule) return rule.adapter;
-	return tools.some((tool) => hasName(tool, HELPER_TOOL)) ? "pi-subagents-helper" : "none";
+	return resolveSubagentIntegration(tools).adapter;
 }
 
 const SHARED_THINKING_AND_WAIT =
@@ -89,7 +100,7 @@ const PARAGRAPHS: Record<SubagentAdapter, string> = {
 		"Subagent integration: pi-subagents.",
 		'Spawn: `subagent({ agent, task, cwd, context: "fresh", output })`, with the agent you selected for the role.',
 		"List: list agents with the tool's documented management action; read the tool's own guide before using it. Read each candidate's tools and skills from that listing; when it lacks them, read the agent definition frontmatter via the management or guide action. An unknown tool set does not qualify for a read-only role.",
-		"Thinking: there is no thinking level per call; do not pass one.",
+		"Thinking: there is no thinking level per call; this plugin takes thinking only as a model suffix and the model is not pinned, so do not pass one.",
 		"Report: bind `output` to a scratch path and read the report from it before checking evidence.",
 		"Wait: the call returns when the child finishes; use the tool's own status action for background runs.",
 		'Escalation: the child calls `contact_supervisor` with `reason: "need_decision"`; reply on the supervisor channel. Treat an escalation as a pending question, not a completed report.',
@@ -112,7 +123,19 @@ const PARAGRAPHS: Record<SubagentAdapter, string> = {
 	].join("\n"),
 };
 
-/** Fixed mechanics text for one adapter; the first line is `Subagent integration: <adapter>.`. */
-export function subagentParagraph(adapter: SubagentAdapter): string {
-	return PARAGRAPHS[adapter];
+const DEFAULT_TOOL_NAME: Partial<Record<SubagentAdapter, string>> = {
+	tintinweb: "Agent",
+	"pi-subagents": "subagent",
+	gotgenes: "subagent",
+};
+
+/**
+ * Mechanics text for one adapter; the first line is `Subagent integration: <adapter>.`.
+ * With a `toolName` that differs from the default, the call shapes name that tool.
+ */
+export function subagentParagraph(adapter: SubagentAdapter, toolName?: string): string {
+	const text = PARAGRAPHS[adapter];
+	const base = DEFAULT_TOOL_NAME[adapter];
+	if (!toolName || !base || toolName === base) return text;
+	return text.replaceAll(`\`${base}(`, `\`${toolName}(`);
 }

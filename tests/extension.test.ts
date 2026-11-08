@@ -426,6 +426,16 @@ describe("interaction channel wiring", () => {
 		expect(note()).toContain("Subagent integration: tintinweb.");
 	});
 
+	it("names the provenance-picked tool when two tools share a schema", () => {
+		const schema = { type: "object", properties: { agent: {}, task: {} } };
+		const all = [
+			{ name: "subagent", parameters: schema, sourceInfo: { source: "local" } },
+			{ name: "mcp__x__subagent", parameters: schema, sourceInfo: { source: "npm:pi-subagents" } },
+		];
+		const { note } = setup({ getActiveTools: () => ["subagent", "mcp__x__subagent"], getAllTools: () => all });
+		expect(note()).toContain("mcp__x__subagent({ agent");
+	});
+
 	it("reports none when getAllTools is missing", () => {
 		expect(setup({ getActiveTools: () => ["Agent"] }).note()).toContain("Subagent integration: none.");
 	});
