@@ -16,7 +16,7 @@
 - **Branch**: `feat/subagent-adapters`
 - **Base branch**: `main`
 - **Final state**: `pr-open`
-- **PR URL**: `<filled after gh pr create>`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/22`
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## PR comment
 
-- **PR comment status**: `<filled after the comment subroutine>`
+- **PR comment status**: `posted` (https://github.com/ttdua/pi-superspec/pull/22#issuecomment-6716116527)
 
 ---
 
