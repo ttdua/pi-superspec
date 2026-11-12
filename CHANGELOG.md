@@ -8,9 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 First release of pi-superspec, the Superspec workflow (OpenSpec + Superpowers) for the pi coding agent.
 
+### Changed
+
+- **BREAKING:** requires OpenSpec 2.0 or newer, with a custom OpenSpec profile that selects the eight workflows explore, new, continue, ff, apply, verify, sync and archive (`openspec config profile`). The `/opsx-*` commands now run OpenSpec's own stock skills from `.agents/skills/` under `openspec/schemas/superspec/workflow.md`, which overrides a stock skill where they differ. The package no longer ships forked copies of those skills, and `skills/references/subagent-routing.md` moved to `schema/superspec/subagent-routing.md`.
+- **BREAKING:** the bundled schema is schema version 9 (adds `workflow.md`, moves the routing reference); run `/opsx-init` to upgrade an installed older schema.
+- `/opsx-init` installs the stock skills with `openspec init --tools pi` instead of `--tools none`; it stops with the exact commands when the profile lacks workflows, and never changes the global OpenSpec configuration.
+- Uninstall leaves the stock skills in `.agents/skills/`; they belong to OpenSpec.
+
+### Removed
+
+- **BREAKING:** the legacy cleanup of `.pi/prompts/opsx-*.md` and `.pi/skills/openspec-*` in `/opsx-init`; OpenSpec 2.0 handles its own old files.
+
 ### Added
 
-- `/opsx-init` command that sets up a repository for the Superspec workflow: checks the OpenSpec version, runs `openspec init --tools none` when needed, merges `schema: superspec` into `openspec/config.yaml`, installs the bundled schema, offers to remove legacy `.pi/` openspec files, and validates the schema.
+- Session-start warning when a required stock OpenSpec skill is missing from `.agents/skills/`, and a stock skills paragraph in the routing note.
+
+- `/opsx-init` command that sets up a repository for the Superspec workflow: checks the OpenSpec version, installs the stock OpenSpec skills when needed, merges `schema: superspec` into `openspec/config.yaml`, installs the bundled schema, and validates the schema.
 - Bundled `superspec` OpenSpec schema in `schema/superspec/`, installed to `openspec/schemas/superspec/` together with a lock file.
 - Schema install classification (absent, identical, foreign, older, newer, edited, upgradable).
 - Schema upgrade: `/opsx-init` replaces an older schema that is unchanged since install (decided from the lock file) after confirmation, or only reports the steps without a UI. A schema with local edits, a newer or a foreign schema is left unchanged until `/opsx-init --force`, which backs it up to `~/.pi/superspec-backups/` first and then replaces it. An activated project with a UI gets a session-start notice when the schema is outdated or edited. A test pins the bundled schema's version to a recorded checksum.

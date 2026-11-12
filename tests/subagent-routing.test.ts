@@ -355,7 +355,7 @@ describe("architecture compatibility note", () => {
 	};
 
 	it("links the routing reference and states no proven minimum", () => {
-		expect(architecture).toMatch(/skills\/references\/subagent-routing\.md/);
+		expect(architecture).toMatch(/schema\/superspec\/subagent-routing\.md/);
 		expect(compatibility()).toMatch(/not a proven minimum/i);
 	});
 

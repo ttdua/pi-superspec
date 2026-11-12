@@ -4,7 +4,7 @@ English | [Tiếng Việt](README.vi.md)
 
 ## What it is
 
-pi-superspec is a pi package that brings the Superspec workflow to pi: spec-driven changes managed by OpenSpec, with Superpowers skills doing the brainstorming, planning, implementation and review. It ships a bundled `superspec` OpenSpec schema, the `/opsx-*` commands and the skills behind them.
+pi-superspec is a pi package that brings the Superspec workflow to pi: spec-driven changes managed by OpenSpec, with Superpowers skills doing the brainstorming, planning, implementation and review. It ships a bundled `superspec` OpenSpec schema, the `/opsx-*` commands and the workflow rules (`workflow.md`) that adapt OpenSpec's own stock skills to Superspec.
 
 Only `/opsx-init` exists in a fresh repository. Once a project is initialised, the other commands appear automatically.
 
@@ -12,7 +12,8 @@ Only `/opsx-init` exists in a fresh repository. Once a project is initialised, t
 
 You install the dependencies yourself; the package does not install them.
 
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.16 or newer.
+- OpenSpec 2.0 or newer ([Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec)), with a custom profile that selects eight workflows. Run `openspec config profile` and select `explore`, `new`, `continue`, `ff`, `apply`, `verify`, `sync` and `archive`. Each `/opsx-*` command runs the stock OpenSpec skill of the same workflow from `.agents/skills/`. `openspec update` follows the profile and removes workflows it does not select, so keep all eight selected.
+- The stock skills `openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change` and `openspec-onboard` are not part of this workflow. They are not removed; use the matching `/opsx-*` commands instead.
 - [Superpowers](https://github.com/obra/superpowers) for pi.
 - A `coding-standards` skill that you write or install yourself, under `~/.agents/skills/` or the project's `.agents/skills/`. The bundled implementer and reviewers apply it. Without it they fall back to project conventions and the workflow does not stop; pi shows a warning at session start.
 - pi, the coding agent this package extends.
@@ -65,7 +66,7 @@ Workflows ask for roles, not agent names. The bundled candidates are `superspec.
 
 Run these in your repository, in order. The change commands stop for your review before the next step.
 
-1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It runs `openspec init --tools none` if `openspec/` does not exist yet. It needs OpenSpec 1.16 or newer, and only warns if the directory is not a git repository or Superpowers is missing.
+1. `/opsx-init`: installs the bundled schema into `openspec/schemas/superspec/`, sets `schema: superspec` in `openspec/config.yaml`, validates it and reloads pi by itself. It needs OpenSpec 2.0 or newer. If the eight stock skills are missing from `.agents/skills/`, it checks the OpenSpec profile, stops with the exact commands when workflows are not selected, and otherwise runs `openspec init --tools pi` to install them; commit `.agents/skills/` afterwards. It only warns if the directory is not a git repository or Superpowers is missing.
 2. `/opsx-new <name>`: creates the change and shows the first artifact instructions. It creates no artifact.
 3. `/opsx-continue`: creates the next artifact, one per run, runs a review gate on it and, once the gate is approved, goes on to the next artifact in the same run. It stops before `apply` and points you to `/opsx-apply`; `changes requested` revises the artifact and reopens its gate (nothing later is created until it is approved), and `dismissed` stops and asks you on the Interaction channel how to proceed. (`/opsx-ff` creates them all in one go; it gates `brainstorm.md`, runs the rest unattended, then runs one final review gate.)
 4. Create and switch to a feature branch (for example `feat/<name>`) if you are not on one yet. Commit the `/opsx-init` output (`openspec/config.yaml` and `openspec/schemas/superspec/`) on it, because `/opsx-apply` commits only the change directory and the worktree is created from the feature branch. Push the branch once with `git push -u origin feat/<name>`, because finalize runs a plain `git pull` on it and that fails on a branch with no upstream. Then run `/opsx-apply`. It creates a worktree on a branch named after the change, implements the tasks and writes `apply.md`.
@@ -90,15 +91,18 @@ The full walkthrough is in [docs/usage-guide.md](docs/usage-guide.md).
 | `/opsx-archive` | Syncs if needed, then archives a completed change. |
 | `/opsx-generate-specs` | For an existing codebase: maps the code into capabilities, asks you to confirm them once, then drafts a delta spec for each in a `bootstrap-specs` change. Stops before `/opsx-ff bootstrap-specs`. |
 
-All commands except `/opsx-init` exist only in an initialised project. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped.
+All commands except `/opsx-init` exist only in an initialised project. Each of the eight workflow commands maps to a stock skill (`/opsx-explore` → `openspec-explore`, `/opsx-new` → `openspec-new-change`, `/opsx-continue` → `openspec-continue-change`, `/opsx-ff` → `openspec-ff-change`, `/opsx-apply` → `openspec-apply-change`, `/opsx-verify` → `openspec-verify-change`, `/opsx-sync` → `openspec-sync-specs`, `/opsx-archive` → `openspec-archive-change`); where `workflow.md` differs from a stock skill, `workflow.md` wins. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped.
+
+Two things upgrade separately: `openspec update` upgrades the stock skills; a package update followed by `/opsx-init` upgrades the schema and `workflow.md`.
 
 If `openspec/schemas/superspec/` already exists and differs from the bundled schema, `/opsx-init` behaves as follows. If it is older and unchanged since install (the lock file `.pi-superspec.json` matches the files), `/opsx-init` asks you to confirm and then replaces it with the bundled one; commit `openspec/schemas/superspec/` afterwards. Without an interactive UI it only reports what to do. A schema with local edits, a newer schema or a foreign schema is left unchanged with a warning, and is replaced only with `/opsx-init --force`, which first copies the existing directory to `~/.pi/superspec-backups/`. At session start, an outdated or edited schema shows a one-line notice; nothing is written until you run `/opsx-init`.
 
 ## Uninstall
 
-Removing the package removes every command and skill, including `/opsx-init`. Your `openspec/` directory stays a valid OpenSpec project, with its changes, archive and specs. These files remain, and you may delete them:
+Removing the package removes every `/opsx-*` command, including `/opsx-init`, and the `opsx-generate-specs` skill. Your `openspec/` directory stays a valid OpenSpec project, with its changes, archive and specs. These files remain, and you may delete them:
 
 - `openspec/schemas/superspec/` (the copied schema) and its lock file `openspec/schemas/superspec/.pi-superspec.json`.
+- the stock OpenSpec skills in `.agents/skills/`; they belong to OpenSpec and stay until you remove them (or `openspec update` does, after a profile change).
 - the line `schema: superspec` in `openspec/config.yaml`.
 
 The package writes nothing under `.pi/`. Reinstalling it re-activates the project, because the schema marker is still present.

@@ -6,7 +6,7 @@ Tick each box only when you observed the result named after the item's marker. I
 
 ## Preconditions
 
-- [ ] OpenSpec 1.16 or newer is installed. Expected: `openspec --version` prints a version of 1.16 or higher.
+- [ ] OpenSpec 2.0 or newer is installed and its profile selects the eight workflows. Expected: `openspec --version` prints 2.0 or higher; `openspec config profile` has explore, new, continue, ff, apply, verify, sync and archive selected; `openspec config list --json` shows `"profile": "custom"` with those workflows.
 - [ ] pi and the Superpowers package are installed (see the [README](../README.md#install)). Expected: in a pi session in any directory, the Superpowers skills (for example `brainstorming`) are available.
 - [ ] The GitHub CLI is authenticated against a throwaway remote. Expected: `gh auth status` reports that you are logged in.
 - [ ] A scratch git repository exists with an initial commit and an `origin` remote you can push to. Expected: `git log --oneline` shows at least one commit and `git remote -v` lists `origin`.
@@ -66,7 +66,15 @@ Setup: install `@tintinweb/pi-subagents` (and no other subagent plugin) and pi-s
 - [ ] In that session run `/opsx-init`. Expected: a confirm dialog `Upgrade schema superspec?`; after you confirm, the output contains `Schema superspec upgraded from v6 to v<n>.` and `Commit openspec/schemas/superspec/.`, has no backup line, and pi reloads. Check that the marker version and the lock `schemaVersion` are the bundled version and that the files match `schema/superspec/` (see [Existing schemas](usage-guide.md#existing-schemas)).
 - [ ] Remove the project schema directory in the same scratch copy (`openspec/schemas/superspec/`) and run `/opsx-init` to restore a fresh install. Expected: the command ends with `Superspec is set up. Next: /opsx-new <name>` and the schema directory is back with its lock file.
 - [ ] Open a new pi session in a directory with no `openspec/` folder above it. Expected: only `/opsx-init` is listed among the `opsx-*` commands.
-- [ ] Remove pi-superspec (the package) and start a new pi session in the scratch repository (see the [README](../README.md#uninstall)). Expected: no `/opsx-*` command is listed, `openspec/` still holds the changes, archive and specs, and `openspec/schemas/superspec/` and `openspec/schemas/superspec/.pi-superspec.json` still exist.
+- [ ] Remove pi-superspec (the package) and start a new pi session in the scratch repository (see the [README](../README.md#uninstall)). Expected: no `/opsx-*` command is listed, `openspec/` still holds the changes, archive and specs, and `openspec/schemas/superspec/`, `openspec/schemas/superspec/.pi-superspec.json` and the stock skills in `.agents/skills/` still exist.
+
+### Shipped layout and OpenSpec 2.0
+
+- [ ] `/opsx-ff e2e-a-ff` stops at two planned points only. Expected: it stops at the `brainstorm.md` gate and at the final gate over proposal, design, specs, tasks and plan, and nothing else; it never starts apply.
+- [ ] `/opsx-apply` follows `workflow.md` rather than the stock apply loop. Expected: it creates a worktree on a branch named `<change-name>`, runs the executor chosen for the plugin set, and opens no code review gate (that gate belongs to finalize).
+- [ ] Delete `.agents/skills/openspec-apply-change/` in a scratch copy and start a session. Expected: pi warns once that `openspec-apply-change` is missing from `.agents/skills/`; `/opsx-apply` stops and names the missing skill instead of improvising.
+- [ ] Deselect a workflow with `openspec config profile` in a scratch copy, then run `/opsx-init` after removing its stock skill. Expected: the output names the missing workflow, prints `openspec config profile` and `/opsx-init`, and writes no file.
+- [ ] Manual legacy check: in a 1.x-initialised project (initialised with OpenSpec 1.x via `openspec init --tools pi`) that also holds `.pi/prompts/mine.md`, upgrade OpenSpec to 2.0 and run `/opsx-init`. Expected: `.pi/prompts/opsx-*.md` are removed by OpenSpec, `.pi/prompts/mine.md` still exists, and `/opsx-init` asks no legacy-cleanup question.
 
 ## Run B — with pi-subagents
 

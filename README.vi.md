@@ -4,7 +4,7 @@
 
 ## Giới thiệu
 
-pi-superspec là một pi package đưa workflow Superspec vào pi: các change theo hướng spec-driven do OpenSpec quản lý, còn các skill của Superpowers đảm nhận brainstorming, lập kế hoạch, triển khai và review. Package đi kèm schema `superspec` của OpenSpec, các lệnh `/opsx-*` và các skill phía sau chúng.
+pi-superspec là một pi package đưa workflow Superspec vào pi: các change theo hướng spec-driven do OpenSpec quản lý, còn các skill của Superpowers đảm nhận brainstorming, lập kế hoạch, triển khai và review. Package đi kèm schema `superspec` của OpenSpec, các lệnh `/opsx-*` và các quy tắc workflow (`workflow.md`) điều chỉnh stock skill của chính OpenSpec cho Superspec.
 
 Trong một repository mới chỉ có `/opsx-init`. Khi project đã được khởi tạo, các lệnh còn lại sẽ tự xuất hiện.
 
@@ -12,7 +12,8 @@ Trong một repository mới chỉ có `/opsx-init`. Khi project đã được k
 
 Bạn tự cài các dependency; package không cài chúng.
 
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec) 1.16 trở lên.
+- OpenSpec 2.0 trở lên ([Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec)), với profile tùy chỉnh chọn tám workflow. Chạy `openspec config profile` và chọn `explore`, `new`, `continue`, `ff`, `apply`, `verify`, `sync` và `archive`. Mỗi lệnh `/opsx-*` chạy stock skill OpenSpec cùng workflow từ `.agents/skills/`. `openspec update` theo profile và gỡ các workflow không được chọn, nên hãy giữ cả tám.
+- Các stock skill `openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change` và `openspec-onboard` không thuộc workflow này. Chúng không bị gỡ; hãy dùng các lệnh `/opsx-*` tương ứng.
 - [Superpowers](https://github.com/obra/superpowers) cho pi.
 - Một skill `coding-standards` do bạn tự viết hoặc cài, đặt ở `~/.agents/skills/` hoặc `.agents/skills/` của project. Implementer và các reviewer đi kèm áp dụng nó. Nếu thiếu, chúng dùng convention của project và workflow không dừng; pi hiện cảnh báo khi bắt đầu session.
 - pi, coding agent mà package này mở rộng.
@@ -65,7 +66,7 @@ Workflow yêu cầu role, không yêu cầu tên agent. Các ứng viên đi kè
 
 Chạy lần lượt các bước sau trong repository của bạn. Các lệnh của change sẽ dừng lại để bạn review trước bước kế tiếp.
 
-1. `/opsx-init`: cài schema đi kèm vào `openspec/schemas/superspec/`, đặt `schema: superspec` trong `openspec/config.yaml`, validate và tự reload pi. Nó chạy `openspec init --tools none` nếu `openspec/` chưa tồn tại. Cần OpenSpec 1.16 trở lên, và chỉ cảnh báo nếu thư mục không phải git repository hoặc thiếu Superpowers.
+1. `/opsx-init`: cài schema đi kèm vào `openspec/schemas/superspec/`, đặt `schema: superspec` trong `openspec/config.yaml`, validate và tự reload pi. Cần OpenSpec 2.0 trở lên. Nếu thiếu tám stock skill trong `.agents/skills/`, nó kiểm tra profile OpenSpec, dừng kèm các lệnh cần chạy khi workflow chưa được chọn, và nếu không thì chạy `openspec init --tools pi` để cài chúng; hãy commit `.agents/skills/` sau đó. Nó chỉ cảnh báo nếu thư mục không phải git repository hoặc thiếu Superpowers.
 2. `/opsx-new <name>`: tạo change và hiển thị hướng dẫn của artifact đầu tiên. Nó không tạo artifact nào.
 3. `/opsx-continue`: tạo artifact kế tiếp, mỗi lần chạy một artifact, chạy một review gate cho artifact đó và, khi gate được approve, tiếp tục sang artifact kế tiếp trong cùng lần chạy. Nó dừng trước `apply` và chỉ bạn sang `/opsx-apply`; `changes requested` thì sửa artifact và mở lại gate (không tạo artifact nào sau đó cho đến khi được approve), còn `dismissed` thì dừng và hỏi bạn trên Interaction channel cách tiếp tục. (`/opsx-ff` tạo tất cả trong một lần; nó chạy review gate cho `brainstorm.md`, tạo phần còn lại không dừng, rồi chạy một review gate cuối.)
 4. Tạo và chuyển sang một feature branch (ví dụ `feat/<name>`) nếu bạn chưa ở trên branch nào như vậy. Hãy commit output của `/opsx-init` (`openspec/config.yaml` và `openspec/schemas/superspec/`) lên branch đó, vì `/opsx-apply` chỉ commit thư mục của change và worktree được tạo từ feature branch. Hãy push branch một lần bằng `git push -u origin feat/<name>`, vì finalize chạy `git pull` thường trên branch đó và lệnh này lỗi nếu branch chưa có upstream. Sau đó chạy `/opsx-apply`. Nó tạo một worktree trên branch đặt theo tên change, triển khai các task và ghi `apply.md`.
@@ -90,16 +91,19 @@ Hướng dẫn đầy đủ nằm trong [docs/usage-guide.md](docs/usage-guide.m
 | `/opsx-archive` | Sync nếu cần, rồi archive một change đã hoàn thành. |
 | `/opsx-generate-specs` | Cho codebase có sẵn: map code thành các capability, hỏi bạn xác nhận một lần, rồi soạn delta spec cho từng capability trong change `bootstrap-specs`. Dừng trước `/opsx-ff bootstrap-specs`. |
 
-Mọi lệnh trừ `/opsx-init` chỉ tồn tại trong một project đã khởi tạo. Các lệnh `opsx-propose` và `opsx-bulk-archive` không được đi kèm.
+Mọi lệnh trừ `/opsx-init` chỉ tồn tại trong một project đã khởi tạo. Mỗi lệnh trong tám lệnh workflow ứng với một stock skill (`/opsx-explore` → `openspec-explore`, `/opsx-new` → `openspec-new-change`, `/opsx-continue` → `openspec-continue-change`, `/opsx-ff` → `openspec-ff-change`, `/opsx-apply` → `openspec-apply-change`, `/opsx-verify` → `openspec-verify-change`, `/opsx-sync` → `openspec-sync-specs`, `/opsx-archive` → `openspec-archive-change`); chỗ nào `workflow.md` khác stock skill thì `workflow.md` thắng. Các lệnh `opsx-propose` và `opsx-bulk-archive` không được đi kèm.
+
+Hai thứ nâng cấp riêng: `openspec update` nâng cấp các stock skill; cập nhật package rồi chạy `/opsx-init` nâng cấp schema và `workflow.md`.
 
 Nếu `openspec/schemas/superspec/` đã tồn tại và khác với schema đi kèm, `/opsx-init` xử lý như sau. Nếu nó cũ hơn và chưa bị sửa kể từ lúc cài (lock file `.pi-superspec.json` khớp với các file), `/opsx-init` hỏi bạn xác nhận rồi thay bằng schema đi kèm; hãy commit `openspec/schemas/superspec/` sau đó. Không có UI tương tác thì nó chỉ báo cần làm gì. Schema có chỉnh sửa cục bộ, schema mới hơn hoặc schema lạ được giữ nguyên kèm cảnh báo, và chỉ bị thay khi dùng `/opsx-init --force`, lệnh này trước tiên sao chép thư mục hiện có vào `~/.pi/superspec-backups/`. Khi bắt đầu session, schema cũ hoặc đã bị sửa hiện một dòng thông báo; không có gì được ghi cho đến khi bạn chạy `/opsx-init`.
 
 ## Gỡ cài đặt
 
-Gỡ package sẽ gỡ mọi command và skill, bao gồm `/opsx-init`. Thư mục `openspec/` của bạn vẫn là một project OpenSpec hợp lệ, với các change, archive và spec. Những file sau vẫn còn lại, và bạn có thể xóa chúng:
+Gỡ package sẽ gỡ mọi lệnh `/opsx-*`, bao gồm `/opsx-init`, và skill `opsx-generate-specs`. Thư mục `openspec/` của bạn vẫn là một project OpenSpec hợp lệ, với các change, archive và spec. Những file sau vẫn còn lại, và bạn có thể xóa chúng:
 
 - `openspec/schemas/superspec/` (schema đã được copy) và lock file của nó `openspec/schemas/superspec/.pi-superspec.json`.
 - dòng `schema: superspec` trong `openspec/config.yaml`.
+- các stock skill OpenSpec trong `.agents/skills/`; chúng thuộc về OpenSpec và còn lại cho đến khi bạn xóa (hoặc `openspec update` xóa sau khi đổi profile).
 
 Package không ghi gì dưới `.pi/`. Cài lại package sẽ kích hoạt lại project, vì schema marker vẫn còn.
 

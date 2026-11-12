@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -147,5 +147,145 @@ describe("README install and optional packages", () => {
 			"## Credits and license": "## Ghi công và giấy phép",
 		};
 		expect(headings(vi)).toEqual(headings(en).map((h) => map[h] ?? `unmapped: ${h}`));
+	});
+});
+
+const UNUSED_STOCK = ["openspec-propose", "openspec-update-change", "openspec-bulk-archive-change", "openspec-onboard"];
+const WORKFLOW_IDS = ["explore", "new", "continue", "ff", "apply", "verify", "sync", "archive"];
+
+describe("README OpenSpec 2.0 and stock skills", () => {
+	const docs = [
+		["README.md", read("README.md"), "## Prerequisites", "## Uninstall"],
+		["README.vi.md", read("README.vi.md"), "## Yêu cầu", "## Gỡ cài đặt"],
+	] as const;
+
+	it("OpenSpec profile explained", () => {
+		for (const [name, text, prereq] of docs.map((d) => [d[0], d[1], d[2]] as const)) {
+			const body = section(text, prereq);
+			expect(body, name).toContain("OpenSpec 2.0");
+			expect(body, name).toContain("openspec config profile");
+			for (const id of WORKFLOW_IDS) expect(body, `${name} ${id}`).toContain(id);
+			expect(body, name).toContain("openspec update");
+			expect(body, name).not.toContain("1.16");
+		}
+	});
+
+	it("Unused stock skills explained", () => {
+		for (const [name, text] of docs) {
+			for (const id of UNUSED_STOCK) expect(text, `${name} ${id}`).toContain(id);
+		}
+		expect(read("README.md")).toMatch(/not removed/i);
+		expect(read("README.vi.md")).toMatch(/không (bị )?(gỡ|xóa)/i);
+	});
+
+	it("Remaining files stated", () => {
+		for (const [name, text, , uninstall] of docs) {
+			expect(section(text, uninstall), name).toContain(".agents/skills/");
+		}
+	});
+
+	it("command table matches prompts plus /opsx-init", () => {
+		const prompts = readdirSync(resolve(root, "prompts"))
+			.map((f) => `/${f.replace(/\.md$/, "")}`)
+			.sort();
+		for (const [name, text] of docs) {
+			const rows = text
+				.split("\n")
+				.map((l) => l.match(/^\| `(\/opsx-[a-z-]+)`/)?.[1])
+				.filter((c): c is string => c !== undefined)
+				.sort();
+			expect(rows, name).toEqual([...prompts, "/opsx-init"].sort());
+		}
+	});
+});
+
+describe("usage guide", () => {
+	const guide = read("docs/usage-guide.md");
+
+	it("Commands not appearing", () => {
+		expect(guide).toMatch(/commands do not appear[\s\S]*?`\/opsx-init`[\s\S]*?reload/i);
+	});
+
+	it("Existing schema is not overwritten", () => {
+		expect(guide).toContain("--force");
+		expect(guide).toMatch(/backs? up|backup/i);
+	});
+
+	it("Upgrade after a package update", () => {
+		expect(guide).toMatch(/session[- ]start notice/i);
+		expect(guide).toContain("openspec/schemas/superspec/");
+		expect(guide).toMatch(/commit/i);
+	});
+
+	it("Profile missing workflows", () => {
+		const entry = section(guide, "**The OpenSpec profile is missing workflows.**");
+		expect(entry).toContain("openspec config profile");
+		for (const id of WORKFLOW_IDS) expect(entry, id).toContain(id);
+		expect(entry).toContain("/opsx-init");
+	});
+
+	it("OpenSpec version too old", () => {
+		expect(guide).toContain("Install or upgrade OpenSpec (>= 2.0)");
+		expect(guide).not.toContain("1.16");
+	});
+
+	it("Stock skills removed by an update", () => {
+		const entry = section(guide, "**Stock skills are missing after `openspec update`.**");
+		expect(entry).toMatch(/openspec update[^.]*profile/);
+		expect(entry).toContain("openspec config profile");
+	});
+
+	it("Two upgrade paths", () => {
+		const entry = section(guide, "## Upgrading");
+		expect(entry).toMatch(/`openspec update`[^.]*stock skills/);
+		expect(entry).toMatch(/package[^.]*`\/opsx-init`[^.]*`workflow\.md`/);
+	});
+
+	it("Restore from backup", () => {
+		expect(guide).toContain("~/.pi/superspec-backups/");
+		expect(guide).toMatch(/cp -R/);
+	});
+});
+
+describe("docs match the 2.0 skills model", () => {
+	it("no stale paths or legacy cleanup in docs", () => {
+		for (const file of ["README.md", "README.vi.md", "docs/architecture.md", "docs/workflow.md", "docs/usage-guide.md", "docs/e2e-checklist.md"]) {
+			const text = read(file);
+			expect(text, file).not.toContain("skills/references");
+			expect(text, file).not.toContain("--tools none");
+			expect(text, file).not.toContain("Delete legacy openspec files");
+		}
+	});
+
+	it("architecture records goals, version and reference path", () => {
+		const arch = read("docs/architecture.md");
+		expect(arch).toContain("Tested OpenSpec version: 2.0.0");
+		expect(arch).toContain("schema/superspec/subagent-routing.md");
+		expect(arch).toMatch(/stock (OpenSpec )?skills[^.]*\.agents\/skills\//);
+		expect(arch).toContain("Prompts + workflow rules");
+	});
+
+	it("workflow doc lists the stock skills, conflict 7 and 11", () => {
+		const wf = read("docs/workflow.md");
+		for (const id of ["openspec-explore", "openspec-new-change", "openspec-archive-change"]) expect(wf).toContain(id);
+		const conflicts = wf.slice(wf.indexOf("## Conflicts resolved"));
+		const row = (n: number): string => conflicts.split("\n").find((l) => l.startsWith(`| ${n} |`)) ?? "";
+		expect(row(7)).toMatch(/stock/i);
+		expect(row(11)).toMatch(/workflow\.md[^|]*(wins|overrides)/i);
+		expect(wf).toMatch(/stock skills paragraph/);
+	});
+
+	it("e2e checklist covers OpenSpec 2.0 and the shipped layout", () => {
+		const e2e = read("docs/e2e-checklist.md");
+		expect(e2e).toContain("OpenSpec 2.0 or newer");
+		expect(e2e).toContain("openspec config profile");
+		expect(e2e).toMatch(/1\.x-initialised/);
+		expect(e2e).toContain(".pi/prompts/mine.md");
+	});
+
+	it("changelog marks the breaking change", () => {
+		const log = read("CHANGELOG.md");
+		expect(log).toMatch(/BREAKING[^\n]*OpenSpec (>= |≥ )?2\.0/i);
+		expect(log).toContain("schema version 9");
 	});
 });

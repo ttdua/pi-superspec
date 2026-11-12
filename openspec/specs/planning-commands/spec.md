@@ -1,7 +1,7 @@
 # planning-commands Specification
 
 ## Purpose
-Defines the `/opsx-explore`, `/opsx-new`, `/opsx-continue` and `/opsx-ff` command and skill pairs that create and plan a change. They cover free-form exploration, change scaffolding, one artifact per review gate with continuation after approval up to apply, and fast-forward planning.
+Defines the `/opsx-explore`, `/opsx-new`, `/opsx-continue` and `/opsx-ff` commands, which run the stock OpenSpec skills under `workflow.md` to create and plan a change. They cover free-form exploration, change scaffolding, one artifact per review gate with continuation after approval up to apply, and fast-forward planning.
 
 ## Requirements
 

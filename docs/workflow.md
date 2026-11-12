@@ -32,7 +32,7 @@ completes and archive does not warn.
 | 10 | archive | change moved to `archive/` | OpenSpec `/opsx-archive` | Sync deltas into living specs; runs before the PR merges so the PR holds the full history. |
 
 Optional specialist seats (roles resolved through
-`skills/references/subagent-routing.md`; the bundled `superspec.*` agents are bundled candidates
+`schema/superspec/subagent-routing.md`; the bundled `superspec.*` agents are bundled candidates
 for them, with no precedence over other qualifying agents; parent keeps artifact writes and human gates):
 the scout role gives evidence-only recon for explore and brainstorm;
 the spec reviewer role checks completed specs and the plan reviewer role checks the
@@ -157,10 +157,11 @@ closed or dismissed review is not an approval: the agent asks on the Interaction
 | 4 | Two checklists plus the SDD ledger. | `tasks.md` authoritative; plan tasks carry its IDs; ledger is recovery only. |
 | 5 | Upstream verify's five checks differ from `openspec-verify-change`; its sync check belongs to archive. | One verify list (above); sync moved to archive. |
 | 6 | Finalize guesses the feature branch from `git log`. | `apply.md` records branch facts; finalize reads them. |
-| 7 | OpenSpec-generated skills name Claude tools (`AskUserQuestion`, `Task`). | Package skills use pi tools with fallbacks ([architecture.md](architecture.md#pi-tool-mapping)). |
+| 7 | Stock OpenSpec skills name Claude tools (`AskUserQuestion`, `Task`). | The skills are not forked: `workflow.md` states the pi tool mapping and fallbacks ([architecture.md](architecture.md#pi-tool-mapping)), and the prompt and routing note say it overrides the running skill. |
 | 8 | Upstream says `executing-plans` lacks TDD/review; Superpowers 7 requires TDD there. | `executing-plans` is the fallback without a subagent plugin; it must still request a whole-branch review before `apply.md`. |
 | 9 | `/opsx-ff` runs unattended but brainstorming is interactive. | ff gates `brainstorm.md`, runs proposal, design, specs, tasks and plan unattended, then runs one final review gate over those five, stopping before apply. |
 | 10 | The Superpowers bootstrap pushes brainstorming before any creative work, writing outside OpenSpec. | Routing note: four paths by kind of work (below). |
+| 11 | A stock OpenSpec skill (for example its own artifact loop, hand-off or tool names) differs from `workflow.md`. | `workflow.md` wins; the schema instructions begin with a pointer to it and every prompt repeats the rule. |
 
 ## Routing note (activated projects)
 
@@ -177,22 +178,26 @@ warns once per session start (including reload) with `pi install git:github.com/
 - The agent states the path it chose and a one-line reason before starting.
 - Never write design docs or plans to `docs/superpowers/`.
 
+The routing note also carries a stock skills paragraph: it maps each `/opsx-*` command to its stock skill, says `workflow.md` overrides a stock skill where they differ, and names the four unused stock skills (`openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change`, `openspec-onboard`) so the agent suggests the matching `/opsx-*` path instead. At session start an activated project with a UI is warned once if a required stock skill is missing.
+
 The same context carries the Interaction channel paragraph (see Review gates).
 
 ## Commands
 
-| Command | Behaviour |
-|---|---|
-| `/opsx-init` | Always available. Set up the project; an outdated pristine schema is upgraded after confirmation, any other non-identical schema is blocked unless you pass `--force`, which replaces it after a backup. |
-| `/opsx-explore [topic]` | Free-form thinking, no code. |
-| `/opsx-new <name>` | Create a change with the `superspec` schema. |
-| `/opsx-continue [name]` | Create the next ready artifact, run a review gate on it and, once approved, continue to the next; stops before `apply`. **Default path for changes needing close review.** |
-| `/opsx-ff <name or description>` | Brainstorm interactively and gate `brainstorm.md`, generate proposal → plan unattended, then run one final gate; stop before apply. |
-| `/opsx-apply [name]` | Run the schema's apply block. |
-| `/opsx-verify [name]` | Produce `verify.md`. |
-| `/opsx-sync [name]` | Sync delta specs into living specs without archiving. |
-| `/opsx-archive [name]` | Sync if needed, then archive. |
+Each workflow command runs a stock OpenSpec skill from `.agents/skills/` under `openspec/schemas/superspec/workflow.md`.
+
+| Command | Stock skill | Behaviour |
+|---|---|---|
+| `/opsx-init` | — | Always available. Set up the project and install the stock skills; an outdated pristine schema is upgraded after confirmation, any other non-identical schema is blocked unless you pass `--force`, which replaces it after a backup. |
+| `/opsx-explore [topic]` | `openspec-explore` | Free-form thinking, no code. |
+| `/opsx-new <name>` | `openspec-new-change` | Create a change with the `superspec` schema. |
+| `/opsx-continue [name]` | `openspec-continue-change` | Create the next ready artifact, run a review gate on it and, once approved, continue to the next; stops before `apply`. **Default path for changes needing close review.** |
+| `/opsx-ff <name or description>` | `openspec-ff-change` | Brainstorm interactively and gate `brainstorm.md`, generate proposal → plan unattended, then run one final gate; stop before apply. |
+| `/opsx-apply [name]` | `openspec-apply-change` | Run the schema's apply block. |
+| `/opsx-verify [name]` | `openspec-verify-change` | Produce `verify.md`. |
+| `/opsx-sync [name]` | `openspec-sync-specs` | Sync delta specs into living specs without archiving. |
+| `/opsx-archive [name]` | `openspec-archive-change` | Sync if needed, then archive. |
 
 `finalize` is not a command: create it with `/opsx-continue` after verify passes.
 
-Not shipped: `opsx-propose` (skips brainstorm and plan) and `opsx-bulk-archive`.
+Not shipped: `opsx-propose` (skips brainstorm and plan) and `opsx-bulk-archive`. The stock skills `openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change` and `openspec-onboard` stay installed but are not part of the workflow.

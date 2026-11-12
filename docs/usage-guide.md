@@ -6,14 +6,14 @@ Commands are typed into pi. Arguments are free text; there are no flags.
 
 ## Before you start
 
-- Install OpenSpec 1.16 or newer and the Superpowers package for pi, then install pi-superspec itself (see the [README](../README.md#install)).
+- Install OpenSpec 2.0 or newer and the Superpowers package for pi, select the eight workflows in the OpenSpec profile (`openspec config profile`: explore, new, continue, ff, apply, verify, sync, archive), then install pi-superspec itself (see the [README](../README.md#install)).
 - Only `/opsx-init` exists in a fresh repository. Run it once per repository:
 
   ```text
   /opsx-init
   ```
 
-  It checks `openspec --version`, runs `openspec init --tools none` when `openspec/` does not exist, sets `schema: superspec` in `openspec/config.yaml`, installs the bundled schema into `openspec/schemas/superspec/` (with the lock file `.pi-superspec.json`), validates it with `openspec schema validate superspec`, and then reloads pi by itself. On success you see `Schema superspec is valid.` and `Superspec is set up. Next: /opsx-new <name>`. The other `/opsx-*` commands now appear in the same session.
+  It checks `openspec --version`, makes sure the eight stock skills are in `.agents/skills/` (running `openspec init --tools pi` when `openspec/` or a skill is missing; commit `.agents/skills/` afterwards), sets `schema: superspec` in `openspec/config.yaml`, installs the bundled schema into `openspec/schemas/superspec/` (with the lock file `.pi-superspec.json`), validates it with `openspec schema validate superspec`, and then reloads pi by itself. On success you see `Schema superspec is valid.` and `Superspec is set up. Next: /opsx-new <name>`. The other `/opsx-*` commands now appear in the same session.
 - `/opsx-init` does not need git. Outside a git repository it only warns (`Not inside a git repository; continuing without git.`). The rest of the workflow does use git, so work in a repository with an `origin` remote you can push to.
 - Finalize uses the GitHub CLI (`gh`) to detect, create and comment on PRs. It is optional: when `gh pr view` finds nothing (or `gh` is missing) finalize treats it as no PR and records `PR comment status: skipped (no PR)`; if posting the reviewer comment fails (for example `gh` missing) it records `PR comment status: failed: <reason>` and does not roll back the merge or push.
 - pi itself is the agent that runs these commands; install it first (see the [README](../README.md#prerequisites)).
@@ -285,13 +285,20 @@ git add openspec/schemas/superspec && git commit -m "chore: restore superspec sc
 
 A restored older schema is upgraded again the next time you run `/opsx-init`, so use `/opsx-init` only when you want that.
 
+## Upgrading
+
+Two things upgrade separately:
+
+- **Stock skills.** `openspec update` upgrades the stock skills (OpenSpec's own) in `.agents/skills/` to the installed OpenSpec version. Commit the result.
+- **Superspec rules.** Update the pi-superspec package, reload pi, then run `/opsx-init` to upgrade `openspec/schemas/superspec/` and its `workflow.md`, as described in [Existing schemas](#existing-schemas); the session-start notice tells you when it is needed.
+
 ## Troubleshooting
 
 **The `opsx-*` commands do not appear (only `/opsx-init` does).**
 The project is not activated. A project is activated when `openspec/schemas/superspec/schema.yaml` contains the `x-pi-superspec` marker. Run `/opsx-init`, which installs the schema and reloads pi. If it ended with a validation error, the installed files are kept and the project activates on the next session start, so reload pi or start a new session. If it stopped on an existing schema, see [Existing schemas](#existing-schemas). A `foreign` schema without the marker does not activate the project. Also check that pi's current directory is inside the project: the root is the nearest parent directory that contains `openspec/`.
 
 **`openspec was not found`, `Could not parse the openspec version`, or `openspec <major>.<minor> is too old`.**
-`/opsx-init` stops and writes nothing. The message ends with `Install or upgrade OpenSpec (>= 1.16): brew install openspec`. Install or upgrade OpenSpec to 1.16 or newer (the npm package of OpenSpec 1.16 needs Node 22.12 or newer; the Homebrew formula installs its own Node), make sure `openspec --version` works in the shell pi uses, and run `/opsx-init` again.
+`/opsx-init` stops and writes nothing. The message ends with `Install or upgrade OpenSpec (>= 2.0): brew install openspec`. Install or upgrade OpenSpec to 2.0 or newer, make sure `openspec --version` works in the shell pi uses, and run `/opsx-init` again.
 
 **Superpowers not found.**
 `/opsx-init` warns `Superpowers skills were not found; install Superpowers for the full workflow.` In an activated project, each session start (including reload) also shows `pi-superspec needs Superpowers, which is not installed. Install it with: pi install git:github.com/obra/superpowers`. Run that command and reload pi. Without Superpowers the skills stop and tell you to install it.
@@ -302,11 +309,17 @@ Only a warning for `/opsx-init`. Before you reach `/opsx-apply`, initialise git 
 **My schema was replaced and I want my edits back.**
 A `--force` run always prints `Backup of the previous schema: <path>`. If you lost the message, look in `~/.pi/superspec-backups/<project-folder>-<hash>/`; the newest `<label>-<timestamp>` directory is the last backup. Copy it over `openspec/schemas/superspec/` and commit, as in [Backups and restore](#backups-and-restore). A confirmed upgrade of an unchanged schema makes no backup; restore it from git.
 
-**`openspec init --tools none failed` or `openspec schema validate superspec failed`.**
+**`openspec init --tools pi failed` or `openspec schema validate superspec failed`.**
 The output of the failed command is appended to the message. Fix the cause and run `/opsx-init` again. After a validation failure the installed files are kept.
 
-**Legacy `.pi` files.**
-If `.pi/prompts/opsx-*.md` or `.pi/skills/openspec-*` exist, `/opsx-init` asks `Delete legacy openspec files?` and deletes them only if you confirm. Without an interactive UI it lists them and deletes nothing.
+**The OpenSpec profile is missing workflows.**
+`/opsx-init` stopped before writing anything because `openspec config list --json` shows a profile that does not select every required workflow (or could not be read). Run `openspec config profile`, select explore, new, continue, ff, apply, verify, sync and archive, then run `/opsx-init` again. `/opsx-init` never changes the global OpenSpec configuration itself.
+
+**Stock skills are missing after `openspec update`.**
+At session start pi warns that required stock skills are missing from `.agents/skills/`. `openspec update` follows the OpenSpec profile and removes the workflows it does not select, so an update after a profile change can delete them. Add the workflows back with `openspec config profile`, then run `openspec update` (or `/opsx-init`) and commit `.agents/skills/`. Until then a `/opsx-*` command whose skill is missing stops and names it.
+
+**Old `.pi` files from OpenSpec 1.x.**
+`/opsx-init` no longer deletes `.pi/prompts/opsx-*.md` or `.pi/skills/openspec-*` left by an OpenSpec 1.x init; OpenSpec 2.0 cleans up its own old files when it installs the stock skills. Your own files, such as `.pi/prompts/mine.md`, are never touched.
 
 **`/opsx-apply` says the change is blocked.**
 Required artifacts are missing. Run `/opsx-continue` until the plan exists.
