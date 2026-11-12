@@ -21,9 +21,9 @@ Blocked by: 1
 
 Blocked by: 1
 
-- [ ] 3.1 Add the stock skills paragraph (command → stock skill map, the `workflow.md` override, unused stock skills) to `extensions/routing-note.ts`, before the document language paragraph.
-- [ ] 3.2 Add a file-only check for the eight stock skills under `.agents/skills/` and a `session_start` warning in `extensions/superspec.ts` (activated project with a UI; a failure never reaches the user).
-- [ ] 3.3 Cover both in `tests/routing-note.test.ts` and `tests/extension.test.ts`.
+- [x] 3.1 Add the stock skills paragraph (command → stock skill map, the `workflow.md` override, unused stock skills) to `extensions/routing-note.ts`, before the document language paragraph.
+- [x] 3.2 Add a file-only check for the eight stock skills under `.agents/skills/` and a `session_start` warning in `extensions/superspec.ts` (activated project with a UI; a failure never reaches the user).
+- [x] 3.3 Cover both in `tests/routing-note.test.ts` and `tests/extension.test.ts`.
 
 ## 4. /opsx-init on OpenSpec 2.0
 
