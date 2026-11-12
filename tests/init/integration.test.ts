@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +8,39 @@ import { isActivated } from "../../extensions/activation.ts";
 import { runInit } from "../../extensions/init/init.ts";
 import type { ExecResult } from "../../extensions/init/io.ts";
 import { fakeIO } from "../helpers/io.ts";
-import { hasOpenspec } from "../helpers/project.ts";
+
+const WORKFLOWS = '["explore","new","continue","ff","apply","verify","sync","archive"]';
+const SKILL_IDS = [
+	"openspec-explore",
+	"openspec-new-change",
+	"openspec-continue-change",
+	"openspec-ff-change",
+	"openspec-apply-change",
+	"openspec-verify-change",
+	"openspec-sync-specs",
+	"openspec-archive-change",
+];
+
+function openspecMajor(): number {
+	const res = spawnSync("openspec", ["--version"], { encoding: "utf8" });
+	if (res.status !== 0) return 0;
+	return Number(/(\d+)\./.exec(res.stdout)?.[1] ?? 0);
+}
+
+/** Isolated global OpenSpec config whose profile selects the eight workflows. */
+function isolatedEnv(): NodeJS.ProcessEnv {
+	const xdg = mkdtempSync(join(tmpdir(), "pi-superspec-xdg-"));
+	dirs.push(xdg);
+	const env = { XDG_CONFIG_HOME: xdg };
+	for (const args of [
+		["config", "set", "profile", "custom"],
+		["config", "set", "workflows", WORKFLOWS],
+	]) {
+		const res = spawnSync("openspec", args, { encoding: "utf8", env: { ...process.env, ...env } });
+		if (res.status !== 0) throw new Error(`openspec ${args.join(" ")} failed: ${res.stdout}${res.stderr}`);
+	}
+	return env;
+}
 
 const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
 
@@ -24,11 +56,11 @@ afterEach(() => {
 	for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 });
 
-function realIO(cwd: string) {
+function realIO(cwd: string, env: NodeJS.ProcessEnv) {
 	return fakeIO({
 		cwd,
 		async exec(command: string, args: string[], execCwd?: string): Promise<ExecResult> {
-			const res = spawnSync(command, args, { cwd: execCwd ?? cwd, encoding: "utf8" });
+			const res = spawnSync(command, args, { cwd: execCwd ?? cwd, encoding: "utf8", env: { ...process.env, ...env } });
 			return { code: res.status ?? -1, stdout: res.stdout ?? "", stderr: res.stderr ?? "" };
 		},
 	});
@@ -48,45 +80,52 @@ function snapshot(root: string): Record<string, string> {
 	return out;
 }
 
-describe.skipIf(!hasOpenspec())("opsx-init end to end", () => {
+describe.skipIf(openspecMajor() < 2)("opsx-init end to end", () => {
 	it("activates an empty repository and is idempotent", async () => {
 		const root = emptyRepo();
-		const io = realIO(root);
+		const env = isolatedEnv();
+		const io = realIO(root, env);
 
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		expect(isActivated(root)).toBe(true);
 		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], {
 			cwd: root,
 			encoding: "utf8",
+			env: { ...process.env, ...env },
 		});
 		expect(validate.status, validate.stdout + validate.stderr).toBe(0);
 
+		for (const id of SKILL_IDS) {
+			expect(existsSync(join(root, ".agents", "skills", id, "SKILL.md")), id).toBe(true);
+		}
 		const before = snapshot(root);
 		expect(Object.keys(before).length).toBeGreaterThan(0);
-		expect(await runInit(realIO(root), packageRoot)).toBe("activated");
+		expect(await runInit(realIO(root, env), packageRoot)).toBe("activated");
 		expect(snapshot(root)).toEqual(before);
 	}, 60_000);
 
 	it("activates with --generate and is idempotent", async () => {
 		const root = emptyRepo();
-		const io = realIO(root);
+		const env = isolatedEnv();
+		const io = realIO(root, env);
 
 		expect(await runInit(io, packageRoot, "--generate")).toBe("activated");
 		expect(isActivated(root)).toBe(true);
 		expect(io.reports[0]).toContain("/opsx-generate-specs");
 
 		const before = snapshot(root);
-		expect(await runInit(realIO(root), packageRoot, "--generate")).toBe("activated");
+		expect(await runInit(realIO(root, env), packageRoot, "--generate")).toBe("activated");
 		expect(snapshot(root)).toEqual(before);
 	}, 60_000);
 
 	it("preserves custom keys and comments in an existing config.yaml", async () => {
 		const root = emptyRepo();
+		const env = isolatedEnv();
 		mkdirSync(join(root, "openspec"), { recursive: true });
 		const config = join(root, "openspec", "config.yaml");
 		writeFileSync(config, "# my project notes\ncontext: |\n  keep me\n");
 
-		expect(await runInit(realIO(root), packageRoot)).toBe("activated");
+		expect(await runInit(realIO(root, env), packageRoot)).toBe("activated");
 
 		const text = readFileSync(config, "utf8");
 		expect(text).toContain("# my project notes");
@@ -96,21 +135,23 @@ describe.skipIf(!hasOpenspec())("opsx-init end to end", () => {
 
 	it("accepts a language key in config.yaml", async () => {
 		const root = emptyRepo();
+		const env = isolatedEnv();
 
-		expect(await runInit(realIO(root), packageRoot, "--lang vi")).toBe("activated");
+		expect(await runInit(realIO(root, env), packageRoot, "--lang vi")).toBe("activated");
 
 		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("schema: superspec\nlanguage: vi\n");
-		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], { cwd: root, encoding: "utf8" });
+		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], { cwd: root, encoding: "utf8", env: { ...process.env, ...env } });
 		expect(validate.status, validate.stdout + validate.stderr).toBe(0);
 	}, 60_000);
 
 	it("defaults the language to en without a flag", async () => {
 		const root = emptyRepo();
+		const env = isolatedEnv();
 
-		expect(await runInit(realIO(root), packageRoot)).toBe("activated");
+		expect(await runInit(realIO(root, env), packageRoot)).toBe("activated");
 
 		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toContain("schema: superspec\nlanguage: en\n");
-		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], { cwd: root, encoding: "utf8" });
+		const validate = spawnSync("openspec", ["schema", "validate", "superspec"], { cwd: root, encoding: "utf8", env: { ...process.env, ...env } });
 		expect(validate.status, validate.stdout + validate.stderr).toBe(0);
 	}, 60_000);
 });

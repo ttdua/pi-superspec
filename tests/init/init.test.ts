@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { REQUIRED_STOCK_SKILLS } from "../../extensions/stock-skills.ts";
 import { runInit } from "../../extensions/init/init.ts";
 import type { ExecResult, InitIO } from "../../extensions/init/io.ts";
 import { fakeIO } from "../helpers/io.ts";
@@ -43,9 +44,37 @@ interface Call {
 	cwd?: string;
 }
 
+const READY_PROFILE = JSON.stringify({
+	profile: "custom",
+	workflows: ["explore", "new", "continue", "ff", "apply", "verify", "sync", "archive"],
+});
+const CORE_PROFILE = JSON.stringify({ profile: "core", delivery: "skills", workflows: null });
+
+/** Create the eight required stock skill files under `<root>/.agents/skills/`. */
+function withStockSkills(root: string): void {
+	for (const id of REQUIRED_STOCK_SKILLS) {
+		mkdirSync(join(root, ".agents", "skills", id), { recursive: true });
+		writeFileSync(join(root, ".agents", "skills", id, "SKILL.md"), `# ${id}\n`);
+	}
+}
+
+/** Command-aware stand-in for OpenSpec 2.x: version, profile and `init --tools pi`. */
+function fakeOpenspec(call: Call, profile = READY_PROFILE): ExecResult {
+	const ok = (stdout = ""): ExecResult => ({ code: 0, stdout, stderr: "" });
+	if (call.command !== "openspec") return ok();
+	if (call.args[0] === "--version") return ok("2.0.0\n");
+	if (call.args.join(" ") === "config list --json") return ok(profile);
+	if (call.args.join(" ") === "init --tools pi" && call.cwd !== undefined) {
+		mkdirSync(join(call.cwd, "openspec"), { recursive: true });
+		withStockSkills(call.cwd);
+	}
+	return ok();
+}
+
+/** `respond` may return undefined to fall back to the command-aware default. */
 function recording(
 	cwd: string,
-	respond: (call: Call) => ExecResult = () => ({ code: 0, stdout: "1.16.0\n", stderr: "" }),
+	respond: (call: Call) => ExecResult | undefined = () => undefined,
 	overrides: Partial<InitIO> = {},
 ) {
 	const calls: Call[] = [];
@@ -54,7 +83,7 @@ function recording(
 		async exec(command, args, execCwd) {
 			const call = { command, args, cwd: execCwd };
 			calls.push(call);
-			return respond(call);
+			return respond(call) ?? fakeOpenspec(call);
 		},
 		...overrides,
 	});
@@ -78,19 +107,20 @@ describe("runInit", () => {
 		expect(io.reloads).toBe(0);
 	});
 
-	it("runs openspec init --tools none when openspec/ is missing", async () => {
+	it("runs openspec init --tools pi when openspec/ is missing", async () => {
 		const root = tmp();
 		const { io, calls } = recording(root);
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		const init = calls.filter(isInit);
 		expect(init).toHaveLength(1);
-		expect(init[0].args).toEqual(["init", "--tools", "none"]);
+		expect(init[0].args).toEqual(["init", "--tools", "pi"]);
 		expect(init[0].cwd).toBe(root);
 	});
 
-	it("does not run openspec init when openspec/ exists", async () => {
+	it("does not run openspec init when openspec/ and the stock skills exist", async () => {
 		const root = tmp();
 		mkdirSync(join(root, "openspec"));
+		withStockSkills(root);
 		const { io, calls } = recording(root);
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		expect(calls.some(isInit)).toBe(false);
@@ -101,7 +131,7 @@ describe("runInit", () => {
 		const errors: string[] = [];
 		const { io } = recording(
 			root,
-			(c) => (isInit(c) ? { code: 1, stdout: "", stderr: "boom" } : { code: 0, stdout: "1.16.0\n", stderr: "" }),
+			(c) => (isInit(c) ? { code: 1, stdout: "", stderr: "boom" } : undefined),
 			{
 				notify(message, level) {
 					if (level === "error") errors.push(message);
@@ -115,7 +145,7 @@ describe("runInit", () => {
 	it("returns validation-failed without reloading when validation fails", async () => {
 		const root = tmp();
 		const { io, calls } = recording(root, (c) =>
-			isValidate(c) ? { code: 1, stdout: "bad schema", stderr: "" } : { code: 0, stdout: "1.16.0\n", stderr: "" },
+			isValidate(c) ? { code: 1, stdout: "bad schema", stderr: "" } : undefined,
 		);
 		expect(await runInit(io, packageRoot)).toBe("validation-failed");
 		expect(calls.filter(isValidate)).toHaveLength(1);
@@ -171,7 +201,7 @@ describe("runInit", () => {
 		const warnings: string[] = [];
 		const { io } = recording(
 			root,
-			(c) => (c.command === "git" ? { code: 128, stdout: "", stderr: "" } : { code: 0, stdout: "1.16.0\n", stderr: "" }),
+			(c) => (c.command === "git" ? { code: 128, stdout: "", stderr: "" } : undefined),
 			{
 				superpowersAvailable: () => false,
 				notify(message, level) {
@@ -216,18 +246,10 @@ describe("runInit", () => {
 		expect(io.reports[0]).toContain("Superpowers skills were not found");
 	});
 
-	it("still runs legacy cleanup when blocked", async () => {
-		const root = tmp();
-		cpSync(join(fixtures, "unmarked"), root, { recursive: true });
-		mkdirSync(join(root, ".pi", "skills", "openspec-explore"), { recursive: true });
-		const { io } = recording(root);
-		expect(await runInit(io, packageRoot)).toBe("blocked");
-		expect(existsSync(join(root, ".pi", "skills", "openspec-explore"))).toBe(false);
-	});
-
 	it("installs into the ancestor project root when cwd is nested", async () => {
 		const root = tmp();
 		mkdirSync(join(root, "openspec"));
+		withStockSkills(root);
 		const nested = join(root, "a", "b");
 		mkdirSync(nested, { recursive: true });
 		const { io, calls } = recording(nested);
@@ -237,6 +259,154 @@ describe("runInit", () => {
 		expect(existsSync(join(root, "openspec", "schemas", "superspec", "schema.yaml"))).toBe(true);
 		expect(existsSync(join(nested, "openspec"))).toBe(false);
 		expect(calls.find(isValidate)?.cwd).toBe(root);
+	});
+
+	describe("stock skills", () => {
+		const isConfig = (c: Call) => c.command === "openspec" && c.args[0] === "config";
+		const snapTree = (dir: string): Record<string, string> => {
+			const out: Record<string, string> = {};
+			const walk = (d: string) => {
+				for (const e of readdirSync(d, { withFileTypes: true })) {
+					const p = join(d, e.name);
+					if (e.isDirectory()) walk(p);
+					else out[relative(dir, p)] = readFileSync(p, "utf8");
+				}
+			};
+			walk(dir);
+			return out;
+		};
+
+		it("stops on the core profile naming the missing workflows and writes nothing", async () => {
+			const root = tmp();
+			const { io, calls } = recording(root, (c) =>
+				c.args.join(" ") === "config list --json" ? { code: 0, stdout: CORE_PROFILE, stderr: "" } : undefined,
+			);
+			expect(await runInit(io, packageRoot)).toBe("profile-not-ready");
+			const notes = io.notes.join("\n");
+			for (const w of ["new", "continue", "ff", "verify"]) expect(notes).toContain(w);
+			expect(notes).toContain("openspec config profile");
+			expect(notes).toContain("/opsx-init");
+			expect(calls.some(isInit)).toBe(false);
+			expect(readdirSync(root)).toEqual([]);
+			expect(io.reloads).toBe(0);
+		});
+
+		it("stops as unreadable when config list fails", async () => {
+			const root = tmp();
+			const { io, calls } = recording(root, (c) =>
+				c.args.join(" ") === "config list --json" ? { code: 1, stdout: "", stderr: "boom" } : undefined,
+			);
+			expect(await runInit(io, packageRoot)).toBe("profile-not-ready");
+			expect(io.notes.join("\n")).toContain("unreadable");
+			expect(calls.some(isInit)).toBe(false);
+			expect(readdirSync(root)).toEqual([]);
+		});
+
+		it("runs openspec init --tools pi exactly once when the profile is ready", async () => {
+			const root = tmp();
+			const { io, calls } = recording(root);
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			const init = calls.filter(isInit);
+			expect(init).toHaveLength(1);
+			expect(init[0].args).toEqual(["init", "--tools", "pi"]);
+		});
+
+		it("makes no config or init call when all skills are present", async () => {
+			const root = tmp();
+			mkdirSync(join(root, "openspec"));
+			withStockSkills(root);
+			const { io, calls } = recording(root);
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(calls.some(isConfig)).toBe(false);
+			expect(calls.some(isInit)).toBe(false);
+		});
+
+		it("does not write config.yaml or the schema when openspec init fails", async () => {
+			const root = tmp();
+			mkdirSync(join(root, "openspec"));
+			const { io } = recording(root, (c) => (isInit(c) ? { code: 1, stdout: "", stderr: "boom" } : undefined));
+			expect(await runInit(io, packageRoot)).toBe("preflight-failed");
+			expect(readdirSync(join(root, "openspec"))).toEqual([]);
+			expect(io.notes.join("\n")).toContain("boom");
+		});
+
+		it("never changes the global OpenSpec configuration", async () => {
+			const root = tmp();
+			const all: Call[] = [];
+			for (const profile of [READY_PROFILE, CORE_PROFILE, "garbage"]) {
+				const { io, calls } = recording(tmp(), (c) =>
+					c.args.join(" ") === "config list --json" ? { code: 0, stdout: profile, stderr: "" } : undefined,
+				);
+				await runInit(io, packageRoot);
+				all.push(...calls);
+			}
+			void root;
+			const forbidden = all.filter(
+				(c) => c.command === "openspec" && c.args[0] === "config" && c.args[1] !== "list",
+			);
+			expect(forbidden).toEqual([]);
+		});
+
+		it("tells the user to commit .agents/skills/ and keep the profile after an install", async () => {
+			const root = tmp();
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(io.reports[0]).toContain(".agents/skills/");
+			expect(io.reports[0]).toContain("openspec config profile");
+		});
+
+		it("omits the skills lines when no skills were installed", async () => {
+			const root = tmp();
+			mkdirSync(join(root, "openspec"));
+			withStockSkills(root);
+			const { io } = recording(root);
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(io.reports[0]).not.toContain("openspec config profile");
+		});
+
+		it("changes no file on a second run when schema and skills are present", async () => {
+			const root = tmp();
+			expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+			const before = snapTree(root);
+			const second = recording(root);
+			expect(await runInit(second.io, packageRoot)).toBe("activated");
+			expect(snapTree(root)).toEqual(before);
+			expect(second.calls.some(isInit)).toBe(false);
+			expect(second.calls.some(isConfig)).toBe(false);
+		});
+
+		it("restores a missing skill without touching config.yaml or the schema", async () => {
+			const root = tmp();
+			expect(await runInit(recording(root).io, packageRoot)).toBe("activated");
+			const skill = join(root, ".agents", "skills", "openspec-ff-change");
+			rmSync(skill, { recursive: true });
+			const before = {
+				config: readFileSync(join(root, "openspec", "config.yaml"), "utf8"),
+				schema: snapTree(join(root, "openspec", "schemas", "superspec")),
+			};
+			const { io, calls } = recording(root, (c) => {
+				if (isInit(c)) {
+					mkdirSync(skill, { recursive: true });
+					writeFileSync(join(skill, "SKILL.md"), "# ff\n");
+					return { code: 0, stdout: "", stderr: "" };
+				}
+				return undefined;
+			});
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(calls.filter(isInit)).toHaveLength(1);
+			expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe(before.config);
+			expect(snapTree(join(root, "openspec", "schemas", "superspec"))).toEqual(before.schema);
+		});
+
+		it("counts a skill folder without SKILL.md as missing", async () => {
+			const root = tmp();
+			mkdirSync(join(root, "openspec"));
+			withStockSkills(root);
+			rmSync(join(root, ".agents", "skills", "openspec-ff-change", "SKILL.md"));
+			const { io, calls } = recording(root);
+			expect(await runInit(io, packageRoot)).toBe("activated");
+			expect(calls.filter(isInit)).toHaveLength(1);
+		});
 	});
 
 	describe("language", () => {
@@ -443,7 +613,7 @@ describe("runInit", () => {
 		it("prints no hint when validation fails", async () => {
 			const root = tmp();
 			const { io } = recording(root, (c) =>
-				isValidate(c) ? { code: 1, stdout: "", stderr: "bad" } : { code: 0, stdout: "1.16.0\n", stderr: "" },
+				isValidate(c) ? { code: 1, stdout: "", stderr: "bad" } : undefined,
 			);
 			expect(await runInit(io, packageRoot, "--generate")).toBe("validation-failed");
 			expect(io.reports).toEqual([]);
@@ -728,7 +898,7 @@ describe("existing schema", () => {
 		const bak = tmp();
 		const { io } = recording(
 			root,
-			(c) => (isValidate(c) ? { code: 1, stdout: "bad", stderr: "" } : { code: 0, stdout: "1.16.0\n", stderr: "" }),
+			(c) => (isValidate(c) ? { code: 1, stdout: "bad", stderr: "" } : undefined),
 			{ backupRoot: bak },
 		);
 		expect(await runInit(io, packageRoot, "--force")).toBe("validation-failed");
