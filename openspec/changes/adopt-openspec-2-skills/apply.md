@@ -5,8 +5,8 @@
 > Overwritten on each apply iteration; iteration counter grows.
 
 **Change**: `adopt-openspec-2-skills`
-**Iteration**: `1`
-**Applied at**: `2026-11-12 10:36`
+**Iteration**: `2`
+**Applied at**: `2026-11-12 11:35`
 **Executor**: `subagent-driven-development`
 
 Implementers were general-purpose agents briefed with the superspec implementer contract; reviewers were `code-reviewer` agents (read-only) per task, plus one whole-branch review. The bundled `superspec.*` agents are not registered under gotgenes, so the generic agents were used with the role handoff.
@@ -24,8 +24,8 @@ Implementers were general-purpose agents briefed with the superspec implementer 
 
 ## Commits
 
-- **Range**: `574e1b3..56ea9e4` (this receipt is committed on top)
-- **Count**: `15`
+- **Range**: `574e1b3..02c8c05` (receipts committed on top)
+- **Count**: `19`
 
 ---
 
@@ -52,6 +52,7 @@ Implementers were general-purpose agents briefed with the superspec implementer 
 | Task 3 | sequential | `2921012..31499c5` | pass after fixes (failure-silence assertion, symlink cases) | n/a |
 | Task 4 | sequential | `31499c5..d283292` | pass after fixes (hermetic integration env, config-call guard, restore case) | n/a |
 | Task 5 | sequential | `d283292..e8aaeec` | covered by whole-branch review | n/a |
+| Iteration 2 | sequential | `dadd90f..02c8c05` | verify W1/W2 fixed: usage-guide legacy clause removed; tool-name scan moved to `tests/plugin-neutral.test.ts` | n/a |
 | Final | sequential | `e8aaeec..56ea9e4` | whole-branch review: pass-with-fixes, fixed (workspace-mode scope, explore capture override, minor docs) | n/a |
 
 ---
@@ -59,7 +60,7 @@ Implementers were general-purpose agents briefed with the superspec implementer 
 ## Validation at receipt time
 
 - `bun run typecheck`: exit 0.
-- `bun run test`: 806 passed, 6 skipped (integration tests skip on the local OpenSpec 1.17).
+- `bun run test` (iteration 2, at `02c8c05`): 806 passed, 6 skipped (integration tests skip on the local OpenSpec 1.17).
 - `PATH=/tmp/os2shim:$PATH bun run test tests/init/integration.test.ts tests/schema.test.ts` (OpenSpec 2.0.0 via shim): 74 passed.
 - `openspec validate adopt-openspec-2-skills --strict`: valid.
 - Not yet verified: an agentic E2E run of the shipped layout in pi (the `docs/e2e-checklist.md` "Shipped layout and OpenSpec 2.0" section). The spike covered the same checks with the overlay in the routing note, not in the schema.

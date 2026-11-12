@@ -6,8 +6,8 @@
 > Failed checks must be fixed in the corresponding artifact, then re-run verify.
 
 **Change**: `adopt-openspec-2-skills`
-**Verified at**: `2026-11-12 10:49`
-**Iteration**: `1`
+**Verified at**: `2026-11-12 11:35`
+**Iteration**: `2`
 **Verifier**: parent session (checks 1, 2, 4, 6 and fresh test runs) with an independent read-only verifier agent (`code-reviewer`, evidence for checks 3 and 5); the parent inspected the report and the files it cites.
 
 ---
@@ -67,7 +67,7 @@ Change 'adopt-openspec-2-skills' is valid
 | execution-commands: Verify compares contracts | MODIFIED | Pass | `W:86`; `S:298–304` |
 | execution-commands: Delegated verify evidence with parent receipt | MODIFIED | Pass | `W:87` |
 | execution-commands: Execution command and skill pairs | REMOVED | Pass | the four execution skill directories are deleted (`git diff --name-status 574e1b3..195b279 -- skills`) |
-| execution-commands: No Claude tool names in execution commands | REMOVED | Pass (see W2) | the baseline targets the deleted skills; `tests/execution-commands.test.ts:70–83` still scans `skills/` and `prompts/`, which now hold only `opsx-generate-specs` (still covered by generate-specs-command "No Claude tool names") and logic-free prompts |
+| execution-commands: No Claude tool names in execution commands | REMOVED | Pass | the baseline targets the deleted skills; the old scan is gone from `tests/execution-commands.test.ts`; the remaining guard in `tests/plugin-neutral.test.ts` cites the live generate-specs-command requirement and the prompt contract |
 | generate-specs-command: Scout dispatch | MODIFIED | Pass | `skills/opsx-generate-specs/SKILL.md:22,47,78–85` |
 | init-command: Stock skill check | ADDED | Pass | `extensions/init/stock-skills.ts:7–50`; `extensions/init/init.ts:84–98`; `tests/init/init.test.ts:270–347`; `tests/init/stock-skills.test.ts` |
 | init-command: OpenSpec preflight | MODIFIED | Pass | `extensions/init/preflight.ts:13–32`; `tests/init/preflight.test.ts` |
@@ -93,7 +93,7 @@ Change 'adopt-openspec-2-skills' is valid
 | planning-commands: Internal spec and plan review seats | MODIFIED | Pass | `W:35,42,52–54` |
 | planning-commands: Spec review receives the baseline | MODIFIED | Pass | `W:42,52`; `tests/planning-commands.test.ts:480–495` |
 | planning-commands: Command and skill pairs | REMOVED | Pass | the four planning skill directories are deleted |
-| planning-commands: No Claude tool names | REMOVED | Pass (see W2) | as for the execution counterpart; `tests/planning-commands.test.ts:79–92` |
+| planning-commands: No Claude tool names | REMOVED | Pass | as for the execution counterpart; old scan removed from `tests/planning-commands.test.ts` |
 | project-readme: README installation instructions | MODIFIED | Pass | `README.md:13–48`, `README.vi.md:13–48` |
 | project-readme: README uninstall behaviour | MODIFIED | Pass | `README.md:100–108`, `README.vi.md:100–108` |
 | review-gate: Single gate section | ADDED | Pass | `W:113–133`; `tests/workflow-rules.test.ts:50,86` |
@@ -102,7 +102,7 @@ Change 'adopt-openspec-2-skills' is valid
 | routing-note: Missing stock skills warning | ADDED | Pass | `extensions/superspec.ts:78–91`; `extensions/stock-skills.ts:28–44`; `tests/extension-stock-skills.test.ts:57–80` |
 | routing-note: Routing note content | MODIFIED | Pass | `extensions/routing-note.ts:4–26`; `tests/routing-note.test.ts:236–260` |
 | subagent-routing: Shared integration reference | MODIFIED | Pass | `schema/superspec/subagent-routing.md:3–99` (absolute compatibility URLs) |
-| usage-guide: Usage guide schema states and troubleshooting | MODIFIED | Pass (see W1) | `docs/usage-guide.md:158–160,247–322`; one stale clause at `:266` |
+| usage-guide: Usage guide schema states and troubleshooting | MODIFIED | Pass | `docs/usage-guide.md:158–160,247–322`; the replacement steps at `:266` match `extensions/init/init.ts:183–186`, pinned by `tests/project-readme.test.ts` "describes the shipped steps after a schema replacement" |
 
 ---
 
@@ -114,7 +114,7 @@ Change 'adopt-openspec-2-skills' is valid
 All 181 scenarios outside REMOVED requirements map to tests (the plan's "Scenario → test" table). 114 match an `it` title by name. The other 67 are covered by content in the test files listed in section 3: the init, routing-note, review-gate and package-activation tests use descriptive titles, not scenario names. The parent spot-checked the init, stock-skills, routing-note, workflow-rules and extension tests. Scenarios under REMOVED requirements are skipped.
 
 **Test command**: `bun run typecheck` then `bun run test` (cwd: worktree, local `openspec` 1.17.0)
-**Result**: typecheck exit 0; tests exit 0, 29 files passed and 1 skipped, **806 passed, 6 skipped**. The 6 skipped tests are the OpenSpec 2.x integration tests, which the next run covers.
+**Result**: typecheck exit 0; tests exit 0 (iteration 2, at `02c8c05`), 29 files passed and 1 skipped, **806 passed, 6 skipped**. The 6 skipped tests are the OpenSpec 2.x integration tests, which the next run covers.
 
 **Test command**: `PATH=/tmp/os2shim:$PATH bun run test tests/init/integration.test.ts tests/schema.test.ts` (`openspec --version` = 2.0.0)
 **Result**: exit 0, 2 files, **74 passed**. These are the real-CLI integration tests: empty-repo activation, idempotency, config preservation, language, and "Missing stock skills restored".
@@ -154,7 +154,7 @@ Both apply.md deviations match too: the v9 digest in `tests/fixtures/schema-chec
 
 - [x] Working tree is clean (`git status --porcelain` empty before writing this report)
 
-**Commit range**: `574e1b3..195b279`
+**Commit range**: `574e1b3..02c8c05`
 
 ---
 
@@ -162,9 +162,7 @@ Both apply.md deviations match too: the v9 digest in `tests/fixtures/schema-chec
 
 **CRITICAL**: none.
 
-**WARNING**
-- **W1 — `docs/usage-guide.md:266` still lists "legacy cleanup" in the steps after a schema replacement.** `/opsx-init` no longer has that step (`extensions/init/init.ts:183–186` goes from schema to language to validation), and `docs/usage-guide.md:321–322` already says so. *Fix:* change the clause to "(language, `openspec schema validate superspec`, reload)".
-- **W2 — Two tests are anchored to REMOVED requirements.** `tests/planning-commands.test.ts:79–92` and `tests/execution-commands.test.ts:70–83` ("contains no Claude tool names") still scan all of `skills/` and `prompts/`. The guard is still valid: `skills/` holds only `opsx-generate-specs`, whose "No Claude tool names" requirement is live, and the prompts carry no logic. But the test titles and anchors point to the removed requirements. *Fix:* rename them to cite generate-specs-command "No Claude tool names" and the prompt contract, or move the scan into `tests/plugin-neutral.test.ts`.
+**WARNING**: none. Iteration 1's W1 (stale "legacy cleanup" clause in `docs/usage-guide.md:266`) and W2 (tool-name tests anchored to removed requirements) are fixed in `02c8c05`.
 
 **SUGGESTION**
 - **S1 — Run the shipped-layout agentic check before release.** Follow `docs/e2e-checklist.md` § "Shipped layout and OpenSpec 2.0": in a real pi session, check that ff stops at the brainstorm gate and the final gate, and that apply creates the `<change-name>` worktree, uses the executor and opens no code review gate. The text tests prove the rules ship. They do not prove the agent follows them when the rules come from the schema rather than the routing note, which is what the spike tested.
@@ -174,12 +172,12 @@ Both apply.md deviations match too: the v9 digest in `tests/fixtures/schema-chec
 ## Overall Decision
 
 - [ ] PASS: proceed with `/opsx-continue` to finalize
-- [x] PASS_WITH_WARNINGS: proceed, noting: W1 is a one-line documentation inaccuracy and W2 is test naming; neither changes behaviour. Both should be fixed before the PR merges, through the finalize code review gate or a small commit on the worktree branch, and the change re-verified.
+- [x] PASS_WITH_WARNINGS: proceed, noting: S1, the agentic shipped-layout check in a real pi session, has not been run. Everything else passes.
 - [ ] FAIL: fix the cause, then re-apply (iteration N+1)
 
 **Next step**:
 
-Run `/opsx-continue` with the worktree as working directory to create the finalize artifact, then `/opsx-archive`. Fixing W1 and W2 first is recommended.
+Run `/opsx-continue` with the worktree as working directory to create the finalize artifact, then `/opsx-archive`.
 
 > **Convergence loop reminder**:
 > - PASS / PASS_WITH_WARNINGS: `/opsx-continue` advances to the finalize artifact.
