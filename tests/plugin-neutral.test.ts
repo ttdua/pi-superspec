@@ -18,6 +18,7 @@ function filesUnder(dir: string): string[] {
 }
 
 const rel = (path: string): string => path.slice(rootPath.length);
+const WORKFLOW = join(rootPath, "schema", "superspec", "workflow.md");
 
 describe("plugin-neutral workflow text", () => {
 	const skillFiles = filesUnder(join(rootPath, "skills"));
@@ -27,17 +28,18 @@ describe("plugin-neutral workflow text", () => {
 	it("finds the files it checks", () => {
 		expect(skillFiles.length).toBeGreaterThan(0);
 		expect(promptFiles.length).toBeGreaterThan(0);
+		expect(statSync(WORKFLOW).isFile()).toBe(true);
 		expect(agentFiles).toHaveLength(6);
 	});
 
-	it("skills and prompts name no plugin-specific tool or package", () => {
-		for (const file of [...skillFiles, ...promptFiles]) {
+	it("skills, prompts and workflow.md name no plugin-specific tool or package", () => {
+		for (const file of [...skillFiles, ...promptFiles, WORKFLOW]) {
 			expect(readFileSync(file, "utf8"), rel(file)).not.toMatch(PLUGIN_SPECIFIC);
 		}
 	});
 
-	it("Skills name roles, not bundled agent names", () => {
-		for (const file of skillFiles) {
+	it("Skills and workflow.md name roles, not bundled agent names", () => {
+		for (const file of [...skillFiles, WORKFLOW]) {
 			expect(readFileSync(file, "utf8"), rel(file)).not.toMatch(BUNDLED_NAME);
 		}
 	});

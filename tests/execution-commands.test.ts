@@ -3,12 +3,17 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
+import {
+	expectStockPrompt,
+	STOCK_SKILL,
+	type PromptCommand,
+} from "./helpers/stock-prompt.ts";
 import { flatSection, sentences, workflow } from "./helpers/workflow.ts";
 
 const root = new URL("..", import.meta.url);
 const rootPath = fileURLToPath(root);
 
-const COMMANDS = ["apply", "verify", "sync", "archive"] as const;
+const COMMANDS: readonly PromptCommand[] = ["apply", "verify", "sync", "archive"];
 const SUPERPOWERS_RULE = "STOP and tell the user to install Superpowers";
 
 function read(path: string): string {
@@ -27,36 +32,31 @@ function walk(dir: string): string[] {
 	});
 }
 
-function frontmatter(text: string): string {
-	const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-	return match ? match[1] : "";
-}
-
-const skill = (c: string) => read(`skills/opsx-${c}/SKILL.md`);
 const apply = () => flatSection("apply");
 const verify = () => flatSection("verify");
 const sync = () => flatSection("sync");
 const archive = () => flatSection("archive");
 
-// Package layout and prompt bodies: rewritten in Task 2 together with the prompts.
 describe("execution commands: package layout", () => {
-	it("ships all four skill and prompt pairs", () => {
+	it("Prompts exist without package skills", () => {
 		for (const c of COMMANDS) {
-			expect(exists(`skills/opsx-${c}/SKILL.md`)).toBe(true);
 			expect(exists(`prompts/opsx-${c}.md`)).toBe(true);
-			const fm = frontmatter(skill(c));
-			expect(fm).toMatch(new RegExp(`^name: opsx-${c}\\s*$`, "m"));
-			expect(fm).toMatch(/^description:\s*\S+/m);
+			expect(exists(`skills/opsx-${c}`), c).toBe(false);
 		}
 	});
 
-	it("prompts delegate to their skill and pass $@", () => {
+	it("Prompt maps to its stock skill", () => {
+		for (const c of COMMANDS) {
+			expectStockPrompt(read(`prompts/opsx-${c}.md`), c);
+			expect(read(`prompts/opsx-${c}.md`)).toContain(`\`${STOCK_SKILL[c]}\``);
+		}
+	});
+
+	it("Mapped stock skill missing", () => {
 		for (const c of COMMANDS) {
 			const prompt = read(`prompts/opsx-${c}.md`);
-			expect(prompt).toContain(`opsx-${c}`);
-			expect(prompt).toContain("SKILL.md");
-			expect(prompt).toContain("$@");
-			expect(prompt.trimEnd().split("\n").length).toBeLessThanOrEqual(15);
+			expect(prompt).toContain(`If \`${STOCK_SKILL[c]}\` is not in the available skills list`);
+			expect(prompt).toContain("stop without");
 		}
 	});
 

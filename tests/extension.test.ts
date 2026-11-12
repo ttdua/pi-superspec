@@ -61,12 +61,12 @@ describe("superspec extension", () => {
 		expect(result.skillPaths[0]).toMatch(/[\\/]skills$/);
 		expect(result.promptPaths[0]).toMatch(/[\\/]prompts$/);
 		expect(
-			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
+			existsSync(join(result.skillPaths[0], "opsx-generate-specs", "SKILL.md")),
 		).toBe(true);
-		expect(existsSync(join(result.promptPaths[0], "opsx-new.md"))).toBe(true);
 		expect(
-			existsSync(join(result.skillPaths[0], "opsx-apply", "SKILL.md")),
-		).toBe(true);
+			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
+		).toBe(false);
+		expect(existsSync(join(result.promptPaths[0], "opsx-new.md"))).toBe(true);
 		expect(existsSync(join(result.promptPaths[0], "opsx-apply.md"))).toBe(true);
 	});
 

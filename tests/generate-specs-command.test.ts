@@ -160,7 +160,8 @@ describe("generate-specs evidence-only scouts", () => {
 	const dispatch = () => step("**SCOUT each capability**", "**Write the other artifacts**");
 
 	it("SA-G00 reads the shared routing reference before delegating", () => {
-		expect(skill()).toContain("../references/subagent-routing.md");
+		expect(skill()).toContain("openspec/schemas/superspec/subagent-routing.md");
+		expect(skill()).not.toContain("../references/");
 		expect(skill()).not.toContain("## Availability");
 		expect(skill()).not.toContain("Helper-only");
 	});
