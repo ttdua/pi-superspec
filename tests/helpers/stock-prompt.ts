@@ -24,7 +24,9 @@ export function expectStockPrompt(text: string, cmd: PromptCommand): void {
 	expect(text).toContain("openspec config profile");
 	expect(text).toContain("openspec update");
 	expect(text).toContain("/opsx-init");
-	expect(text).toContain("stop without");
+	expect(text).toContain("read its SKILL.md");
+	expect(text).toContain("name the missing skill");
+	expect(text).toContain("stop without doing the work another way");
 	expect(text.trimEnd().endsWith("User input: $@")).toBe(true);
 	expect(text.trimEnd().split("\n").length).toBeLessThanOrEqual(15);
 }

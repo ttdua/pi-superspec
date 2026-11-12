@@ -44,6 +44,10 @@ function inOrder(text: string, parts: string[]): void {
 }
 
 describe("planning commands: package layout", () => {
+	it("Only the generate-specs skill ships in skills/", () => {
+		expect(readdirSync(new URL("skills", root)).sort()).toEqual(["opsx-generate-specs"]);
+	});
+
 	it("Prompts exist without package skills", () => {
 		for (const c of COMMANDS) {
 			expect(exists(`prompts/opsx-${c}.md`)).toBe(true);

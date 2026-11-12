@@ -157,11 +157,16 @@ describe("generate-specs evidence-only scouts", () => {
 		return text.slice(text.indexOf(from), text.indexOf(to));
 	};
 	const map = () => step("**MAP the codebase**", "**Drop existing specs**");
+	it("SA-G00 resolves the routing path against the project root in both reads", () => {
+		expect(map()).toMatch(/relative to the activated project's root, not this skill's directory/);
+		expect(dispatch()).toMatch(/relative to the activated project's root, not this skill's directory/);
+	});
 	const dispatch = () => step("**SCOUT each capability**", "**Write the other artifacts**");
 
 	it("SA-G00 reads the shared routing reference before delegating", () => {
 		expect(skill()).toContain("openspec/schemas/superspec/subagent-routing.md");
 		expect(skill()).not.toContain("../references/");
+		expect(skill()).toMatch(/relative to the activated project's root, not this skill's directory/);
 		expect(skill()).not.toContain("## Availability");
 		expect(skill()).not.toContain("Helper-only");
 	});
