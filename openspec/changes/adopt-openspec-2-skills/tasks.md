@@ -2,11 +2,11 @@
 
 Blocked by: none
 
-- [ ] 1.1 Write `schema/superspec/workflow.md` with sections explore, new, continue, ff, apply, verify, sync, archive, Review gate, Superpowers rule and Stock skills not used. Port every rule from `skills/opsx-*/SKILL.md` that `schema.yaml` does not already state, per design D2. Use harness-neutral wording: no pi or plugin tool names, commands spelled `/opsx-<cmd>`.
-- [ ] 1.2 Move `skills/references/subagent-routing.md` to `schema/superspec/subagent-routing.md`; turn its links to `docs/architecture.md` and `docs/e2e-checklist.md` into absolute repository URLs.
-- [ ] 1.3 Start every artifact `instruction` and the `apply` instruction in `schema/superspec/schema.yaml` with the `workflow.md` pointer sentence. Bump `version` and `x-pi-superspec.version` to 9 and update the header comment.
-- [ ] 1.4 Record the v9 digest in `tests/fixtures/schema-checksums.json`; update `tests/schema.test.ts` for v9, the `workflow.md` sections, the pointer sentence, harness-neutral wording over `workflow.md` and `subagent-routing.md`, and `openspec schema validate superspec`.
-- [ ] 1.5 Move each skill-text assertion of `tests/planning-commands.test.ts`, `tests/execution-commands.test.ts` and `tests/subagent-routing.test.ts` that targets a rule now in `workflow.md` or `subagent-routing.md` so it reads those files. Keep one test per scenario of the planning-commands, execution-commands, review-gate, bundled-schema and subagent-routing deltas.
+- [x] 1.1 Write `schema/superspec/workflow.md` with sections explore, new, continue, ff, apply, verify, sync, archive, Review gate, Superpowers rule and Stock skills not used. Port every rule from `skills/opsx-*/SKILL.md` that `schema.yaml` does not already state, per design D2. Use harness-neutral wording: no pi or plugin tool names, commands spelled `/opsx-<cmd>`.
+- [x] 1.2 Move `skills/references/subagent-routing.md` to `schema/superspec/subagent-routing.md`; turn its links to `docs/architecture.md` and `docs/e2e-checklist.md` into absolute repository URLs.
+- [x] 1.3 Start every artifact `instruction` and the `apply` instruction in `schema/superspec/schema.yaml` with the `workflow.md` pointer sentence. Bump `version` and `x-pi-superspec.version` to 9 and update the header comment.
+- [x] 1.4 Record the v9 digest in `tests/fixtures/schema-checksums.json`; update `tests/schema.test.ts` for v9, the `workflow.md` sections, the pointer sentence, harness-neutral wording over `workflow.md` and `subagent-routing.md`, and `openspec schema validate superspec`.
+- [x] 1.5 Move each skill-text assertion of `tests/planning-commands.test.ts`, `tests/execution-commands.test.ts` and `tests/subagent-routing.test.ts` that targets a rule now in `workflow.md` or `subagent-routing.md` so it reads those files. Keep one test per scenario of the planning-commands, execution-commands, review-gate, bundled-schema and subagent-routing deltas.
 
 ## 2. Prompts and package skills
 
