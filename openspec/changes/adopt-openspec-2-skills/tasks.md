@@ -12,10 +12,10 @@ Blocked by: none
 
 Blocked by: 1
 
-- [ ] 2.1 Rewrite `prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md` to name the mapped stock skill and its `workflow.md` section, state that `workflow.md` wins on conflict, and pass `$@`.
-- [ ] 2.2 Delete `skills/opsx-{explore,new,continue,ff,apply,verify,sync,archive}/` and `skills/references/`.
-- [ ] 2.3 Point `skills/opsx-generate-specs/SKILL.md` at `openspec/schemas/superspec/subagent-routing.md` instead of `../references/subagent-routing.md`.
-- [ ] 2.4 Update `tests/planning-commands.test.ts`, `tests/execution-commands.test.ts`, `tests/generate-specs-command.test.ts`, `tests/plugin-neutral.test.ts` and `tests/extension.test.ts` for prompts mapping to stock skills, the only remaining package skill, and the new reference path.
+- [x] 2.1 Rewrite `prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md` to name the mapped stock skill and its `workflow.md` section, state that `workflow.md` wins on conflict, and pass `$@`.
+- [x] 2.2 Delete `skills/opsx-{explore,new,continue,ff,apply,verify,sync,archive}/` and `skills/references/`.
+- [x] 2.3 Point `skills/opsx-generate-specs/SKILL.md` at `openspec/schemas/superspec/subagent-routing.md` instead of `../references/subagent-routing.md`.
+- [x] 2.4 Update `tests/planning-commands.test.ts`, `tests/execution-commands.test.ts`, `tests/generate-specs-command.test.ts`, `tests/plugin-neutral.test.ts` and `tests/extension.test.ts` for prompts mapping to stock skills, the only remaining package skill, and the new reference path.
 
 ## 3. Routing note and session warning
 
