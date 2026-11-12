@@ -269,7 +269,7 @@ describe("session_start handler", () => {
 		const run = (state: State, hasUI = true) => {
 			const { root, schema } = project(state);
 			const before = hashTree(schema);
-			const calls = start(root, sp, hasUI);
+			const calls = start(root, sp, hasUI).filter(([m]) => !m.includes("stock OpenSpec skills"));
 			expect(hashTree(schema)).toEqual(before);
 			return calls;
 		};
@@ -375,7 +375,7 @@ describe("interaction channel wiring", () => {
 			getActiveTools: () => [],
 		});
 		await expect(start()).resolves.toBeUndefined();
-		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("coding-standards") && !m.includes("Schema superspec"))).toHaveLength(0);
+		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("coding-standards") && !m.includes("Schema superspec") && !m.includes("stock OpenSpec skills"))).toHaveLength(0);
 		expect(note()).not.toContain("plannotator-cli");
 	});
 

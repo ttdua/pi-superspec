@@ -17,6 +17,7 @@ import {
 	insertRoutingNote,
 	SUPERPOWERS_MISSING_WARNING,
 } from "./routing-note.ts";
+import { missingStockSkills, stockSkillsWarning } from "./stock-skills.ts";
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -82,6 +83,12 @@ export default function (pi: ExtensionAPI) {
 		}
 		if (ctx.hasUI && !hasCodingStandards(pi.getCommands())) ctx.ui.notify(CODING_STANDARDS_MISSING_WARNING, "warning");
 		if (ctx.hasUI) {
+			try {
+				const missing = missingStockSkills(root);
+				if (missing.length > 0) ctx.ui.notify(stockSkillsWarning(missing), "warning");
+			} catch {
+				// A failed skill check must not block the session or the probe.
+			}
 			try {
 				const text = schemaNotice(root, packageRoot);
 				if (text) ctx.ui.notify(text, "info");

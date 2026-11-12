@@ -14,9 +14,13 @@ Before starting, state the path you chose and a one-line reason.
 
 Do NOT write design docs or plans to docs/superpowers/; they live in the change directory instead.`;
 
-/** The routing note, with the document language paragraph. */
+export const STOCK_SKILLS_PARAGRAPH = `Stock skills: each /opsx-<cmd> command runs a stock OpenSpec skill from .agents/skills/: /opsx-explore → openspec-explore, /opsx-new → openspec-new-change, /opsx-continue → openspec-continue-change, /opsx-ff → openspec-ff-change, /opsx-apply → openspec-apply-change, /opsx-verify → openspec-verify-change, /opsx-sync → openspec-sync-specs, /opsx-archive → openspec-archive-change. Where openspec/schemas/superspec/workflow.md differs from a stock skill, workflow.md overrides it. openspec-propose, openspec-update-change, openspec-bulk-archive-change and openspec-onboard are not part of this workflow; suggest the matching /opsx-* path instead.`;
+
+/** The routing note, with the stock skills and document language paragraphs. */
 export function routingNote(language: string, channelText = "", subagentText = ""): string {
 	const base = `${ROUTING_NOTE}
+
+${STOCK_SKILLS_PARAGRAPH}
 
 Document language: write the prose of OpenSpec documents (change artifacts and main specs) in ${JSON.stringify(language)}. Keep headings, requirement and scenario names, WHEN/THEN/SHALL/MUST, checkbox syntax, delta operation headers, and file and capability names in English. Code, code comments and commit messages are not affected. If the user asks to change the document language, update \`language:\` in openspec/config.yaml.`;
 	return [base, channelText, subagentText].filter((part) => part !== "").join("\n\n");

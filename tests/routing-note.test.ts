@@ -10,6 +10,7 @@ import {
 	insertRoutingNote,
 	ROUTING_NOTE,
 	ROUTING_NOTE_MARKER,
+	STOCK_SKILLS_PARAGRAPH,
 	routingNote,
 	SUPERPOWERS_MISSING_WARNING,
 } from "../extensions/routing-note.ts";
@@ -229,5 +230,27 @@ describe("CODING_STANDARDS_MISSING_WARNING", () => {
 	it("does not tell the user to install a package or mention Superpowers", () => {
 		expect(CODING_STANDARDS_MISSING_WARNING).not.toContain("pi install");
 		expect(CODING_STANDARDS_MISSING_WARNING).not.toContain("Superpowers");
+	});
+});
+
+describe("STOCK_SKILLS_PARAGRAPH", () => {
+	it("starts with its label and maps the commands to stock skills", () => {
+		expect(STOCK_SKILLS_PARAGRAPH.startsWith("Stock skills:")).toBe(true);
+		expect(STOCK_SKILLS_PARAGRAPH).toContain("/opsx-ff");
+		expect(STOCK_SKILLS_PARAGRAPH).toContain("openspec-ff-change");
+		expect(STOCK_SKILLS_PARAGRAPH).toContain("/opsx-apply");
+		expect(STOCK_SKILLS_PARAGRAPH).toContain("openspec-apply-change");
+	});
+
+	it("names the override file and the unused skills", () => {
+		expect(STOCK_SKILLS_PARAGRAPH).toContain("openspec/schemas/superspec/workflow.md");
+		for (const id of ["openspec-propose", "openspec-update-change", "openspec-bulk-archive-change", "openspec-onboard"]) {
+			expect(STOCK_SKILLS_PARAGRAPH).toContain(id);
+		}
+	});
+
+	it("sits right after ROUTING_NOTE and before the language paragraph", () => {
+		const text = routingNote("en");
+		expect(text.startsWith(`${ROUTING_NOTE}\n\n${STOCK_SKILLS_PARAGRAPH}\n\nDocument language:`)).toBe(true);
 	});
 });
