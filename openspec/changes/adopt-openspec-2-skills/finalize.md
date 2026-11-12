@@ -6,10 +6,10 @@
 > from "keep as-is" to PR later).
 
 **Change**: `adopt-openspec-2-skills`
-**Finalized at**: `2026-11-12 11:45`
-**Outcome**: `pr-created`
+**Finalized at**: `2026-11-12 18:10`
+**Outcome**: `pr-updated`
 
-The merge into the feature branch was local. Push and PR were done only after the user's explicit yes in chat (project policy). The branch was pushed over HTTPS with the `ttdua` account (`gh auth switch`). Deviation from the canonical closeout: step 12 (code-reviewer onboarding comment) was not run; the PR description carries the orientation instead.
+Finalized twice. Iterations 1–2 (`574e1b3..9269d90`) were merged, pushed and opened as PR #24 after the user's explicit yes. Iterations 3–4 (`c4c48d8..0f53caf`: the eight step prompts removed, then the missing-skill stop fix) were reviewed on the `inbox` channel (approved) and merged fast-forward into the feature branch locally; the push to PR #24 waits for the user's separate yes (project policy: no push without an explicit yes in chat). The branch was pushed over HTTPS with the `ttdua` account (`gh auth switch`). Deviation from the canonical closeout: step 12 (code-reviewer onboarding comment) was not run; the PR description carries the orientation instead.
 
 ---
 
@@ -17,7 +17,7 @@ The merge into the feature branch was local. Push and PR were done only after th
 
 - **Branch**: `spec/adopt-openspec-2-skills`
 - **Base branch**: `main`
-- **Final state**: `pr-open`
+- **Final state**: `pr-updated`
 - **PR URL**: `https://github.com/ttdua/pi-superspec/pull/24`
 
 ---
@@ -39,18 +39,19 @@ The merge into the feature branch was local. Push and PR were done only after th
 
 - **Code review**: `approved`
 - **Reviewer tier**: `inbox`
-- **Commit range reviewed**: `574e1b3..9269d90`
+- **Commit range reviewed**: `574e1b3..9269d90`, then `c4c48d8..0f53caf` (iterations 3–4), both approved on `inbox`
 
 ---
 
 ## Tests
 
-- **Baseline status at finish**: `passing` (after the fast-forward merge on the feature branch: typecheck exit 0; 806 passed, 6 skipped on the local OpenSpec 1.17; with OpenSpec 2.0 via shim, integration + schema 74 passed in the worktree)
+- **Baseline status at finish**: `passing` (after the fast-forward merge on the feature branch at `0f53caf`: typecheck exit 0; 826 passed, 6 skipped on the local OpenSpec 1.17; with OpenSpec 2.0 via shim, integration + schema 75 passed, none skipped)
 
 ---
 
 ## Next step
 
+- Ask the user before pushing `spec/adopt-openspec-2-skills` to update PR #24.
 - Wait for PR code review on https://github.com/ttdua/pi-superspec/pull/24.
-- Run `/opsx-archive` on the feature branch (the archive commits land there), push the archive commits to update the PR, then merge it (`gh pr merge --squash --delete-branch` or the GitHub UI). Afterwards run `wt remove adopt-openspec-2-skills` from the main worktree.
+- Run the `openspec-archive-change` skill on the feature branch (the archive commits land there), push the archive commits to update the PR, then merge it (`gh pr merge --squash --delete-branch` or the GitHub UI). Afterwards run `wt remove adopt-openspec-2-skills` from the main worktree.
 - Before release, run the shipped-layout checks of `docs/e2e-checklist.md` in a real pi session (verify.md S1).
