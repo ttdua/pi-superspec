@@ -263,7 +263,7 @@ A blocked run reads: `Existing schema at openspec/schemas/superspec is <state>; 
 
 **After a package update.** At session start in an activated project with a UI, an outdated or edited schema shows a one-line notice, for example `Schema superspec v6 is older than the bundled v7. Run /opsx-init to upgrade.` (for local edits, `Schema superspec differs from the bundled v7 (local edits). Run /opsx-init --force to replace it (a backup is kept).`; for an older schema with local edits, `Schema superspec v6 is older than the bundled v7 and has local edits. Run /opsx-init --force to replace it (a backup is kept).`). The notice only reads the project; nothing is written until you run `/opsx-init`. Upgrading from v6 to v7 is an ordinary upgrade: run `/opsx-init`, confirm, and commit `openspec/schemas/superspec/`.
 
-A replaced schema then continues like a fresh install (legacy cleanup, language, `openspec schema validate superspec`, reload). The report adds `Schema superspec <upgraded|downgraded|replaced> from v<from> to v<to>.`, `Backup of the previous schema: <path>` when a backup was made, and `Commit openspec/schemas/superspec/.`
+A replaced schema then continues like a fresh install (language, `openspec schema validate superspec`, reload). The report adds `Schema superspec <upgraded|downgraded|replaced> from v<from> to v<to>.`, `Backup of the previous schema: <path>` when a backup was made, and `Commit openspec/schemas/superspec/.`
 
 ### Backups and restore
 

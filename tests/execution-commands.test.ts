@@ -67,21 +67,6 @@ describe("execution commands: package layout", () => {
 		}
 	});
 
-	it("contains no Claude tool names", () => {
-		const files = [
-			...walk(join(rootPath, "skills")),
-			...walk(join(rootPath, "prompts")),
-		];
-		expect(files.length).toBeGreaterThan(0);
-		for (const file of files) {
-			expect(readFileSync(file, "utf8"), file).not.toMatch(
-				/AskUserQuestion|TodoWrite|Task tool/,
-			);
-			expect(readFileSync(file, "utf8"), file).not.toMatch(
-				/ask_user_question|plannotator/i,
-			);
-		}
-	});
 
 	it("frontmatter of every skill and prompt parses like pi does", () => {
 		const skills = walk(join(rootPath, "skills")).filter((f) =>

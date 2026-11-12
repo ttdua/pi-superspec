@@ -206,6 +206,11 @@ describe("usage guide", () => {
 		expect(guide).toMatch(/commands do not appear[\s\S]*?`\/opsx-init`[\s\S]*?reload/i);
 	});
 
+	it("describes the shipped steps after a schema replacement, without legacy cleanup", () => {
+		expect(guide).toContain("continues like a fresh install (language, `openspec schema validate superspec`, reload)");
+		expect(guide).not.toMatch(/fresh install \(legacy cleanup/);
+	});
+
 	it("Existing schema is not overwritten", () => {
 		expect(guide).toContain("--force");
 		expect(guide).toMatch(/backs? up|backup/i);

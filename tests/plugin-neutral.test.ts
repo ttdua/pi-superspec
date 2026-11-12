@@ -38,6 +38,15 @@ describe("plugin-neutral workflow text", () => {
 		}
 	});
 
+	// generate-specs-command "No Claude tool names" (the only package skill) and the prompt contract.
+	it("skills and prompts name no Claude or channel tool", () => {
+		for (const file of [...skillFiles, ...promptFiles]) {
+			const text = readFileSync(file, "utf8");
+			expect(text, rel(file)).not.toMatch(/AskUserQuestion|TodoWrite|Task tool/);
+			expect(text, rel(file)).not.toMatch(/ask_user_question|plannotator/i);
+		}
+	});
+
 	it("Skills and workflow.md name roles, not bundled agent names", () => {
 		for (const file of [...skillFiles, WORKFLOW]) {
 			expect(readFileSync(file, "utf8"), rel(file)).not.toMatch(BUNDLED_NAME);
