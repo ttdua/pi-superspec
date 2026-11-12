@@ -96,4 +96,4 @@ The parent owns official artifact writes, task checkbox updates, receipt outcome
 
 ## Compatibility
 
-Smoke-tested builds per integration are recorded in [docs/architecture.md](../../docs/architecture.md) and [docs/e2e-checklist.md](../../docs/e2e-checklist.md). This reference does not claim that untested versions or forks are compatible. Runtime evidence recorded during testing supersedes any assumption here, and no dependency pin is added.
+Smoke-tested builds per integration are recorded in [docs/architecture.md](https://github.com/ttdua/pi-superspec/blob/main/docs/architecture.md) and [docs/e2e-checklist.md](https://github.com/ttdua/pi-superspec/blob/main/docs/e2e-checklist.md). This reference does not claim that untested versions or forks are compatible. Runtime evidence recorded during testing supersedes any assumption here, and no dependency pin is added.

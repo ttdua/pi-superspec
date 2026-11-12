@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
+import { flatSection, sentences, workflow } from "./helpers/workflow.ts";
 
 const root = new URL("..", import.meta.url);
 const rootPath = fileURLToPath(root);
@@ -32,8 +33,13 @@ function frontmatter(text: string): string {
 }
 
 const skill = (c: string) => read(`skills/opsx-${c}/SKILL.md`);
+const apply = () => flatSection("apply");
+const verify = () => flatSection("verify");
+const sync = () => flatSection("sync");
+const archive = () => flatSection("archive");
 
-describe("execution commands", () => {
+// Package layout and prompt bodies: rewritten in Task 2 together with the prompts.
+describe("execution commands: package layout", () => {
 	it("ships all four skill and prompt pairs", () => {
 		for (const c of COMMANDS) {
 			expect(exists(`skills/opsx-${c}/SKILL.md`)).toBe(true);
@@ -54,7 +60,7 @@ describe("execution commands", () => {
 		}
 	});
 
-	it("does not ship opsx-propose or opsx-bulk-archive", () => {
+	it("Excluded commands absent", () => {
 		for (const c of ["propose", "bulk-archive"]) {
 			expect(exists(`skills/opsx-${c}`), c).toBe(false);
 			expect(exists(`prompts/opsx-${c}.md`), c).toBe(false);
@@ -96,385 +102,338 @@ describe("execution commands", () => {
 			}
 		}
 	});
+});
 
-	it("skills ask through the Interaction channel", () => {
-		for (const c of COMMANDS) {
-			const text = skill(c);
-			expect(text, c).toContain("Interaction channel");
-			expect(text, c).toContain("numbered options");
-		}
+describe("execution rules in workflow.md", () => {
+	describe("Apply follows the schema apply block", () => {
+		it("Blocked change", () => {
+			expect(apply()).toContain("`blocked`: change no code. Missing artifacts: point to `/opsx-continue`.");
+		});
+
+		it("Blocked by a missing tracking file", () => {
+			expect(apply()).toContain("Missing tracking file: report it, offer to repair it and start no implementation.");
+		});
+
+		it("Stops after the receipt", () => {
+			expect(apply()).toContain("write and commit `apply.md` in the worktree");
+			expect(apply()).toContain("Then stop, report the executor and the commit range, and point to `/opsx-verify`.");
+			expect(apply()).toContain("Apply never opens the code review gate");
+			expect(flatSection("Shared rules")).toContain("No command invokes `finishing-a-development-branch`");
+		});
+
+		it("Schema apply block replaces the stock loop", () => {
+			expect(apply()).toContain("in place of the stock skill's task loop");
+			expect(apply()).toContain("(the step 0 commit, the `<change-name>` worktree, the executor, the `apply.md` receipt)");
+			expect(apply()).toContain("The first apply and every fix iteration before finalize implement only in the `<change-name>` worktree; post-PR mode works on the feature branch.");
+		});
+
+		it("apply re-enters the existing worktree and handles a verify FAIL", () => {
+			expect(apply()).toContain("git worktree list --porcelain");
+			expect(apply()).toContain("refs/heads/<change-name>");
+			expect(apply()).toContain("Fix-iteration trigger");
+			expect(apply()).toContain("`verify.md` reports `FAIL`");
+			expect(apply()).toContain("systematic-debugging");
+		});
 	});
 
-	it("apply handles blocked and all_done states", () => {
-		const text = skill("apply");
-		expect(text).toContain("openspec instructions apply");
-		expect(text).toContain("blocked");
-		expect(text).toContain("all_done");
+	describe("Executor depends on subagent availability", () => {
+		it("With pi-subagents", () => {
+			const t = apply();
+			expect(t).toContain("If delegation is available through the Subagent integration paragraph, read `subagent-driven-development`");
+			expect(t).toContain("implementer role");
+			expect(t).toContain("task reviewer role");
+			expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*task reviewer role/i);
+			expect(t).toMatch(/final whole-branch review is one more task reviewer seat/i);
+			expect(t).toContain("no duplicate generic reviewer");
+			expect(t).toContain("one implementation writer per worktree");
+			expect(t).toMatch(/configured models/i);
+			expect(t).toMatch(/overrides any conflicting generic model-pinning advice/);
+			expect(t).toMatch(/parent keeps the `todo` progress, ticks `tasks.md`/);
+			expect(t).toMatch(/BASE\.\.HEAD/);
+			expect(t).toContain("Select and announce an agent");
+		});
+
+		it("Without pi-subagents", () => {
+			const t = apply();
+			expect(t).toMatch(/Subagent integration paragraph says delegation is unavailable, read `executing-plans`/);
+			expect(t).toContain("whole-branch review (`requesting-code-review`) over the full commit range");
+			expect(flatSection("Shared rules")).toMatch(/Never invent subagent calls/);
+		});
+
+		it("Unusable delegated executor", () => {
+			const t = apply();
+			expect(t).toMatch(/no available agent meets a role[^.]*stop the affected lane/i);
+			expect(t).toMatch(/mid-run \(runtime failure\)/);
+			expect(t).toContain("no generic replacement or substitute and never silently go inline");
+		});
+
+		it("apply applies the same policy to fix-iteration and post-PR delegation", () => {
+			expect(apply()).toContain("Fix-iteration and post-PR modes use the same policy and seats wherever they delegate.");
+		});
+
+		it("apply overrides the sequential-only rule of SDD for child worktree lanes", () => {
+			expect(apply()).toMatch(/parallel writer lanes are allowed only in separate child worktrees/);
+			expect(apply()).toMatch(/inside one worktree its sequential rule stands/);
+		});
+
+		it("apply schedules plan tasks in lanes", () => {
+			expect(apply()).toContain("schedule one lane per plan task as the reference's Lanes section describes");
+			expect(apply()).toMatch(/escalated lane waits: the parent does neither merge nor tick it/);
+			const lanes = read("schema/superspec/subagent-routing.md").replace(/\s+/g, " ");
+			expect(lanes).toMatch(/every task named in its `Blocked by` is merged/);
+			expect(lanes).toMatch(/plan without `Blocked by` metadata runs its tasks one after another/);
+			expect(lanes).toMatch(/the plan governs scheduling/);
+		});
 	});
 
-	it("apply uses task locations and scope pauses", () => {
-		const text = skill("apply");
-		expect(text).toContain("sourcePath");
-		expect(text).toContain("fully implemented");
-		expect(text).toContain("adds scope");
-		expect(text).toContain("tracking file");
-		expect(text).toContain("tracked tasks are complete");
-		expect(text.replace(/\s+/g, " ")).toContain(
-			"after checking that the checkbox there still matches the task",
-		);
+	describe("Post-PR feedback loop", () => {
+		it("Feedback after a PR is open", () => {
+			const t = apply();
+			expect(t).toContain("Read `receiving-code-review`");
+			expect(t).toContain("append a `post-PR iteration N+1` entry with the new commit range to `apply.md`");
+			expect(t).toContain("tell the user to run `/opsx-verify`, then update `finalize.md`");
+			expect(t).toContain("a policy in the project `AGENTS.md` overrides it");
+		});
+
+		it("post-PR trigger precedes the blocked and all_done stops", () => {
+			expect(apply().indexOf("Post-PR trigger")).toBeLessThan(apply().indexOf("`blocked`: change no code"));
+		});
 	});
 
-	it("apply stops after the receipt without finishing the branch", () => {
-		const text = skill("apply");
-		expect(text).toContain("finishing-a-development-branch");
-		expect(text).toContain("Do NOT invoke");
+	describe("Verify runs in the worktree", () => {
+		it("Missing apply receipt", () => {
+			expect(verify()).toContain("If `apply.md` does not exist, stop and point to `/opsx-apply`.");
+		});
+
+		it("Verify in the worktree", () => {
+			expect(verify()).toContain("Every `openspec` call and check, including the test run, uses that working directory");
+			expect(verify()).toContain("openspec instructions verify --change <name> --json");
+			expect(verify()).toContain("record the command, exit status and counts");
+		});
+
+		it("Failing verify", () => {
+			expect(verify()).toContain("point to `/opsx-apply` (a fix iteration)");
+			expect(apply()).toContain("read `systematic-debugging`");
+			expect(verify()).toContain("Stop after 5 iterations");
+		});
+
+		it("verify points to /opsx-continue and handles the post-finalize case", () => {
+			expect(verify()).toContain("/opsx-continue");
+			expect(verify()).toContain("`finalize.md` exists");
+		});
 	});
 
-	it("apply selects subagent-driven-development when the subagent tool exists", () => {
-		const text = skill("apply");
-		expect(text).toContain("subagent");
-		expect(text).toContain("subagent-driven-development");
+	describe("Sync merges delta specs without archiving", () => {
+		it("Sync only", () => {
+			expect(sync()).toContain("never archive, move or delete the change");
+			expect(sync()).toContain("RENAMED, REMOVED, MODIFIED, then ADDED");
+		});
+
+		it("Project rules applied", () => {
+			expect(sync()).toContain(
+				"Read `openspec instructions specs --change <name> --json` once and apply its `rules` as constraints on the text you write; never copy the `rules` into any spec.",
+			);
+		});
+
+		it("Instructions unavailable", () => {
+			expect(sync()).toContain("If reading the instructions fails, stop and report the error without writing any spec.");
+		});
+
+		it("sync replaces whole MODIFIED blocks and matches headers exactly", () => {
+			expect(sync()).toContain("A MODIFIED block replaces the whole requirement block");
+			expect(sync()).toContain("case-sensitive");
+			expect(sync()).toContain("counts as already applied and is skipped silently");
+		});
 	});
 
-	it("apply overrides the sequential-only rule of SDD for child worktree lanes", () => {
-		const text = skill("apply").replace(/\s+/g, " ");
-		expect(text).toMatch(/parallel writer lanes[^.]*only in separate child worktrees/i);
-		expect(text).toMatch(/inside one worktree[^.]*sequential rule stands/i);
+	describe("Archive performs the delta-sync check", () => {
+		it("Unsynced deltas", () => {
+			expect(archive()).toContain('offer "Sync now (recommended)", "Archive without syncing" and "Cancel"');
+		});
+
+		it("Already synced", () => {
+			expect(archive()).toContain('All synced: report "already synced" and archive without syncing or asking.');
+		});
+
+		it("Incomplete artifacts", () => {
+			// Warn-and-confirm is stock openspec-archive-change behaviour (steps 2-3); workflow.md does not override it.
+			expect(archive()).not.toMatch(/without (asking|confirmation) on incomplete/i);
+		});
+
+		it("Sync verified before archive", () => {
+			expect(archive()).toContain("After a sync, compare every delta again with its main spec");
+			expect(archive()).toContain('Report "Synced" only if all match; if any differs, stop and do not archive.');
+		});
+
+		it("Missing main spec", () => {
+			// The missing-main-spec decision by delta operations is stock openspec-archive-change step 4.
+			expect(archive()).not.toMatch(/missing main spec[^.]*unsynced/i);
+		});
+
+		it("Task counts from the CLI", () => {
+			// Counts from `openspec list --json` and the stop on invalid output are stock openspec-archive-change step 3.
+			expect(archive()).not.toContain("tasks.md");
+		});
+
+		it("Skipped artifact", () => {
+			// `skipped` counts as complete in stock openspec-archive-change step 2.
+			expect(archive()).not.toMatch(/skipped[^.]*incomplete/i);
+		});
+
+		it("Unclear answer", () => {
+			expect(archive()).toContain("An answer that is none of the offered choices is asked again and never archives.");
+		});
+
+		it("Archive through the CLI", () => {
+			expect(archive()).toContain('openspec archive "<name>" --skip-specs -y');
+			const mv = sentences(archive()).filter((s) => s.includes("`mv`"));
+			expect(mv.length).toBeGreaterThan(0);
+			for (const s of mv) expect(s).toMatch(/\bNever\b/);
+			expect(archive()).toContain("Never pass `--no-validate`.");
+		});
+
+		it("archive blocks unsafe sync choices and keeps the fallback re-compare", () => {
+			expect(archive()).toContain('Any capability blocked: offer only "Archive without syncing" or "Cancel", never "Sync now".');
+			expect(archive()).toContain('after "Archive without syncing", still re-compare the capabilities that were not blocked');
+			expect(archive()).toContain(
+				'"Sync blocked: <capabilities>, archived without syncing"',
+			);
+		});
 	});
 
-	it("apply falls back to executing-plans with a whole-branch review", () => {
-		const text = skill("apply");
-		expect(text).toContain("executing-plans");
-		expect(text).toContain("whole-branch review");
+	describe("Superpowers-backed steps", () => {
+		it("Skill missing", () => {
+			expect(flatSection("Superpowers rule")).toContain(SUPERPOWERS_RULE);
+		});
 	});
 
-	it("apply documents the post-PR iteration", () => {
-		const text = skill("apply");
-		expect(text).toContain("post-PR");
-		expect(text).toContain("receiving-code-review");
-		expect(text).toContain("iteration");
+	describe("Apply uses task locations", () => {
+		it("Located tick", () => {
+			expect(apply()).toContain("at the `sourcePath` and `line` the apply instruction returns");
+		});
+
+		it("Checkbox changed", () => {
+			expect(apply()).toContain("after checking that the checkbox there still matches the task; if not, re-read the tracking file and do not tick a different task");
+		});
+
+		it("Partial behavior", () => {
+			expect(apply()).toContain("Mark `[x]` only when the behavior is fully implemented.");
+		});
 	});
 
-	it("apply briefs the executor on Contracts and keeps deviations", () => {
-		const text = skill("apply");
-		const section = (from: string, to: string) => {
-			const start = text.indexOf(from);
-			const end = text.indexOf(to, start + from.length);
-			expect(start, from).toBeGreaterThanOrEqual(0);
-			expect(end, to).toBeGreaterThan(start);
-			return text.slice(start, end);
-		};
-		const step5 = section("5. **Choose the executor**", "6. **Write the receipt");
-		expect(step5).toContain("Contracts");
-		expect(step5).toContain("public");
-		expect(step5).toContain("plan.md");
-		expect(step5).toContain("per-task contract order");
-		expect(step5.replace(/\s+/g, " ")).toContain("in `plan.md` with the reason");
-		const step6 = section("6. **Write the receipt", "7. **Post-PR mode**");
-		expect(step6).toContain("Contract deviations");
-		const postPr = section("7. **Post-PR mode**", "8. **Fix-iteration mode**");
-		expect(postPr).toContain("Contract deviations");
-		const fix = section("8. **Fix-iteration mode**", "\n**Superpowers rule**\n");
-		expect(fix).toContain("Contract deviations");
+	describe("Apply pauses on scope changes", () => {
+		it("Added scope", () => {
+			expect(apply()).toContain("pause and ask before adding scope no artifact specifies");
+		});
+
+		it("Deferred behavior", () => {
+			expect(apply()).toContain("or narrowing or deferring specified behavior");
+		});
+
+		it("Tracking file missing", () => {
+			expect(apply()).toContain("offer to repair it and start no implementation");
+		});
+
+		it("All tracked tasks done", () => {
+			expect(apply()).toContain("`all_done`: say the tracked tasks are complete, point to `/opsx-verify` and then `/opsx-archive`");
+		});
 	});
 
-	it("verify runs in the worktree and requires apply.md", () => {
-		const text = skill("verify");
-		expect(text).toContain("openspec instructions verify");
-		expect(text).toContain("worktree");
-		expect(text).toContain("apply.md");
-		expect(text).toContain("systematic-debugging");
-		expect(text).toContain("5 iterations");
-		expect(text).not.toContain("delta-sync");
+	describe("Verify never implements and reports skipped checks", () => {
+		it("Verify stays read-only", () => {
+			expect(verify()).toContain("Do not implement or archive anything during verify.");
+		});
+
+		it("Progress from apply", () => {
+			// Stock openspec-verify-change reads `progress` from the apply instruction and marks
+			// unavailable tracking files not verified; workflow.md keeps the six-check list on top.
+			expect(verify()).toContain("six checks");
+		});
+
+		it("Skipped check", () => {
+			const schema = read("schema/superspec/schema.yaml").replace(/\s+/g, " ");
+			expect(schema).toContain("A check that could not run is recorded as not verified with its reason and never counts as passing; the outcome is then at most PASS_WITH_WARNINGS.");
+		});
 	});
 
-	it("verify stays read-only, reads progress from apply and reports skipped checks as not verified", () => {
-		const flat = skill("verify").replace(/\s+/g, " ");
-		expect(flat).toContain("Do NOT implement or archive anything during verify; the apply state is context only.");
-		expect(flat).toContain("Read task progress from the apply instruction (`progress`)");
-		expect(flat).toContain("if a tracking file is unavailable, record the tasks check as not verified");
-		expect(flat).toContain(
-			"is recorded as not verified with its reason and is never scored as passing; the outcome is then at most `PASS_WITH_WARNINGS`",
-		);
+	describe("Apply enforces plan contracts", () => {
+		it("Executor briefed on contracts", () => {
+			expect(apply()).toContain("Brief the executor to read the Contracts section of `plan.md` and to follow the apply instruction's per-task contract order");
+		});
+
+		it("Public contract needs a change", () => {
+			expect(apply()).toContain("A `public` contract stops the executor and goes to the user");
+		});
+
+		it("Internal contract change recorded", () => {
+			expect(apply()).toContain("for an internal contract straight away, the entry is updated in `plan.md` with the reason and recorded in `apply.md` under \"Contract deviations\"");
+			expect(apply()).toContain("carrying over the cumulative \"Contract deviations\"");
+		});
 	});
 
-	it("verify compares Contracts as a warning and marks uncomparable ones not verified", () => {
-		const text = skill("verify").replace(/\s+/g, " ");
-		const section = (from: string, to: string) => {
-			const start = text.indexOf(from);
-			const end = text.indexOf(to, start + from.length);
-			expect(start).toBeGreaterThanOrEqual(0);
-			expect(end).toBeGreaterThan(start);
-			return text.slice(start, end);
-		};
-		const step5 = section("5. **Read context and follow the verify instruction**", "6. **Write `verify.md`");
-		expect(step5).toContain("Contracts");
-		expect(step5).toContain("Contract deviations");
-		expect(step5).toContain("A mismatch is a warning");
-		expect(step5).toContain("not verified");
-		expect(step5).toContain("never FAIL by itself");
-		expect(step5).toContain("read-only");
-		const step6 = section("6. **Write `verify.md`", "7. **Handle the outcome**");
-		expect(step6).toContain("Contracts");
-		expect(step6).toContain("files compared");
+	describe("Verify compares contracts", () => {
+		it("Matching contracts", () => {
+			expect(verify()).toContain("Compare Contracts read-only; a recorded deviation is the expected state, so compare against it.");
+		});
+
+		it("Mismatched contract", () => {
+			const schema = read("schema/superspec/schema.yaml").replace(/\s+/g, " ");
+			expect(schema).toContain("A mismatch is a warning only, never a FAIL by itself.");
+		});
+
+		it("Contract cannot be compared", () => {
+			const schema = read("schema/superspec/schema.yaml").replace(/\s+/g, " ");
+			expect(schema).toContain("A Contracts entry that cannot be compared with the code is recorded as not verified with its reason");
+		});
 	});
 
-	it("sync merges deltas and does not archive", () => {
-		const text = skill("sync");
-		for (const op of ["RENAMED", "REMOVED", "MODIFIED", "ADDED"]) {
-			expect(text, op).toContain(op);
-		}
-		expect(text).toContain("openspec validate");
-		expect(text).toContain("Do NOT archive");
-	});
+	describe("Delegated verify evidence with parent receipt", () => {
+		it("Fresh delegated evidence", () => {
+			const t = verify();
+			expect(t).toContain("verifier role");
+			expect(t).toContain("hand it the authoritative worktree as cwd");
+			expect(t).toContain("only the parent writes and commits the receipt");
+			expect(t).toMatch(/command, cwd, exit status, counts and file evidence collected in this invocation/);
+		});
 
-	it("sync reads the specs instructions once and applies rules without copying them", () => {
-		const flat = skill("sync").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"Read `openspec instructions specs --change <name> --json` once and apply its `rules` as constraints on the text you write; never copy the `rules` into any spec.",
-		);
-		expect(flat).toContain(
-			"If reading the instructions fails, STOP and report the error without writing any spec.",
-		);
-		expect(flat).not.toContain("or list `specs/<capability>/spec.md`");
-	});
+		it("Failing or missing evidence", () => {
+			const t = verify();
+			expect(t).toContain("Failing fresh tests are `FAIL`.");
+			expect(t).toContain("The verifier never fixes or modifies code");
+			expect(t).toContain("reject old apply or verify results and any earlier output");
+			expect(t).toMatch(/never trusts report-only success/);
+		});
 
-	it("sync keeps the delta Purpose for new capabilities", () => {
-		const flat = skill("sync").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"copy the delta's `## Purpose` text verbatim and title the spec `# <capability> Specification`",
-		);
-		expect(flat).toContain(
-			"If the delta has no `## Purpose`, write `TBD` as the Purpose and flag it in the report.",
-		);
-		expect(flat).toContain("Never overwrite the Purpose of an existing main spec.");
-		expect(flat).toContain("Never write delta section headers into a main spec.");
-	});
-
-	it("sync blocks unsafe merges", () => {
-		const flat = skill("sync").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"If the delta has MODIFIED or RENAMED operations, or only REMOVED ones, and the main spec does not exist, report the capability as blocked and write nothing.",
-		);
-		expect(flat).toContain(
-			"If applying the delta would leave `## Requirements` empty, STOP, write no empty section, and report it.",
-		);
-		expect(flat).toContain(
-			"delete the spec only when the change's `.openspec.yaml` sets `retire_capabilities: true`, then report its Purpose and say it can be restored with git",
-		);
-	});
-
-	it("archive performs the delta-sync check", () => {
-		const text = skill("archive");
-		expect(text).toContain("delta-sync");
-		expect(text).toContain("openspec archive");
-		expect(text).toContain("sync");
-		expect(text).toContain("confirm");
-	});
-
-	it("archive handles retirement and the fallback re-compare", () => {
-		const flat = skill("archive").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"a missing main spec with only REMOVED requirements and `retire_capabilities: true` in the change's `.openspec.yaml` counts as synced (retired)",
-		);
-		expect(flat).toContain(
-			"after the user chooses \"Archive without syncing\", still run item 2 (the re-compare) for the capabilities that were not blocked",
-		);
-		expect(flat).toContain(
-			"On this predicted (pre-sync) path, other capabilities that are not synced are not synced either.",
-		);
-	});
-
-	it("archive verifies the sync and reads counts from the CLI", () => {
-		const flat = skill("archive").replace(/\s+/g, " ");
-		expect(flat).toContain(
-			"Compare every delta again with its main spec. Report \"Synced\" only if all match; if any differs, stop and do not archive.",
-		);
-		expect(flat).toContain(
-			"take `completedTasks` and `totalTasks` from `openspec list --json`; if that output is invalid, stop with an error",
-		);
-		expect(flat).toContain("An artifact with status `skipped` counts as complete.");
-		expect(flat).toContain(
-			"A missing main spec is not unsynced by itself; decide by the delta operations as `opsx-sync` defines",
-		);
-		expect(flat).toContain(
-			"report the blocked capabilities and offer only \"Archive without syncing\" or \"Cancel\" (ask as in step 1); never offer \"Sync now\" for a blocked capability. If the answer is none of the offered choices, ask again and do not archive.",
-		);
-		expect(flat).toContain(
-			"**Sync blocked** (checked before \"Not synced\"): if the sync is blocked for any capability, either predicted from the delta operations above",
-		);
-		expect(flat).toContain(
-			"(no capability blocked): report the differences per capability (what would be added, modified, removed, renamed), then ask the user how to proceed with options \"Sync now (recommended)\", \"Archive without syncing\", \"Cancel\" (ask as in step 1, recommended first). If the answer is none of the offered choices, ask again and do not archive.",
-		);
-		expect(flat).toContain(
-			"Capabilities reported Blocked are excluded from this re-compare",
-		);
-		expect(flat).toContain("If `totalTasks` is 0 (no tasks), skip this check.");
-		expect(flat).toContain("(if it is not listed, stop and report)");
-		expect(flat).toContain(
-			"\"Sync blocked: <capabilities>, archived without syncing\"",
-		);
-		expect(flat).toContain(
-			"Offer \"Sync now\" first, except when a capability is blocked (then only \"Archive without syncing\" or \"Cancel\")",
-		);
-	});
-
-	it("apply and verify carry the Superpowers rule", () => {
-		for (const c of ["apply", "verify"]) {
-			expect(skill(c), c).toContain(SUPERPOWERS_RULE);
-		}
-	});
-
-	it("archive skips CLI spec sync and owns the spec update", () => {
-		const text = skill("archive");
-		expect(text).toContain("--skip-specs");
-		expect(text).toMatch(/CLI also updates main specs/);
-		expect(text).toMatch(/skill owns the spec update/);
-		expect(text).toContain("already synced");
-		expect(text).toContain("never pass `--no-validate`");
-	});
-
-	it("verify points to opsx-continue and handles the post-finalize case", () => {
-		const text = skill("verify");
-		expect(text).toContain("/opsx-continue");
-		expect(text).toContain("finalize.md");
-		expect(text).toContain("/opsx-apply");
-	});
-
-	it("apply re-enters the existing worktree and handles a verify FAIL", () => {
-		const text = skill("apply");
-		expect(text).toContain("git worktree list --porcelain");
-		expect(text).toContain("refs/heads/<change-name>");
-		expect(text).toContain("Fix-iteration");
-		expect(text).toContain("`FAIL`");
-		expect(text).toContain("systematic-debugging");
+		it("Inline verify fallback", () => {
+			expect(verify()).toContain("When delegation is absent, the parent runs the same checks inline and never fabricates child evidence.");
+		});
 	});
 });
 
 describe("execution specialist routing", () => {
-	const REF = "../references/subagent-routing.md";
-	const noCopy = (t: string) => {
-		expect(t).not.toContain("## Availability");
-		expect(t).not.toContain("Helper-only");
-	};
-
-	it("SA-E01 apply maps SDD seats to canonical implementer and task-reviewer", () => {
-		const t = skill("apply");
-		expect(t).toContain(REF);
-		expect(t).toMatch(/shared (routing )?(policy|reference)[^.\n]*before (choosing|selecting) the executor/i);
-		expect(t).toContain("implementer role");
-		expect(t).toContain("task reviewer role");
-		expect(t).toMatch(/one combined spec[^\n]*quality[^\n]*task reviewer role/i);
-		expect(t).toMatch(/final whole-branch[^.\n]*task reviewer role/i);
-		expect(t).toMatch(/no duplicate generic reviewer|never[^.\n]*generic (Superpowers )?reviewer/i);
-		expect(t).toMatch(/one implementation writer per worktree/i);
-		expect(t).toMatch(/configured model/i);
-		expect(t).toMatch(/overrides?[^.\n]*(model|generic)[^.\n]*(advice|pinning|guidance)/i);
-		expect(t).toMatch(/parent[^.\n]*(todo|progress|tick)/i);
-		expect(t).toMatch(/BASE\.\.HEAD/);
-		noCopy(t);
-	});
-
-	it("SA-E01 apply applies the same policy to fix-iteration and post-PR delegation", () => {
-		const t = skill("apply");
-		expect(t).toMatch(/fix-iteration[^.\n]*post-PR[^.\n]*(same|shared)[^.\n]*(policy|seats)|(same|shared)[^.\n]*(policy|seats)[^.\n]*fix-iteration/i);
-	});
-
-	it("SA-E02 apply uses inline execution with whole-branch review when integration is absent", () => {
-		const t = skill("apply");
-		expect(t).toMatch(/Subagent integration paragraph[^.]*unavailable[^.]*executing-plans/i);
-		expect(t).toContain("whole-branch review");
-		expect(t).toMatch(/never invent subagent calls/i);
-	});
-
-	it("SA-E03 apply stops on a missing, disabled or failed canonical role without a replacement", () => {
-		const t = skill("apply");
-		expect(t).toMatch(/no available agent meets[^.]*stop/i);
-		expect(t).toMatch(/launch (or|and) runtime failure|runtime failure/i);
-		expect(t).toMatch(/mid-run/i);
-		expect(t).toMatch(/no generic replacement or substitute/i);
-		expect(t).toMatch(/never silently go inline/i);
-	});
-
-	it("SA-E04 verify loads shared policy and delegates collection to the verifier in the authoritative cwd", () => {
-		const t = skill("verify");
-		expect(t).toContain(REF);
-		expect(t).toContain("verifier role");
-		expect(t).toMatch(/authoritative (worktree|cwd)/i);
-		expect(t).toMatch(/six checks/i);
-		expect(t).toMatch(/only the parent writes[^\n]*receipt/i);
-		noCopy(t);
-	});
-
-	it("SA-E05 verify accepts only current-invocation evidence and rejects old results", () => {
-		const t = skill("verify");
-		expect(t).toMatch(/command[^.\n]*cwd[^.\n]*exit[^.\n]*count/i);
-		expect(t).toMatch(/this (verify )?invocation/i);
-		expect(t).toMatch(/(reject|never accept|not accept)[^.\n]*(apply|earlier|old)[^.\n]*(result|output|verify)/i);
-		expect(t).toMatch(/inspects?[^.\n]*report[^.\n]*files|report-only success/i);
-	});
-
-	it("SA-E06 verify pins failure, not-verified and no-fix rules", () => {
-		const t = skill("verify");
-		expect(t).toMatch(/failing (fresh )?tests?[^.\n]*FAIL/i);
-		expect(t).toMatch(/unavailable[^.\n]*not verified[^.\n]*PASS_WITH_WARNINGS|not verified[^.\n]*at most `?PASS_WITH_WARNINGS/i);
-		expect(t).toMatch(/verifier[^.\n]*(never|must not)[^.\n]*(fix|modify)[^.\n]*code/i);
-		expect(t).toMatch(/mismatch[^.\n]*(is )?a warning[^.\n]*never FAIL/i);
-	});
-
-	it("SA-E07 verify runs the same checks inline when integration is absent", () => {
-		const t = skill("verify");
-		expect(t).toMatch(/absent[^.\n]*(inline|same)[^.\n]*(verify|checks)/i);
-		expect(t).toMatch(/never fabricate/i);
-	});
-
-	it("keeps order, worktree reuse, iteration cap and receipts unchanged", () => {
-		const a = skill("apply");
-		expect(a).toContain("Re-runs reuse the existing `<change-name>` worktree");
-		expect(a).toContain("Stop at 5 fix iterations");
-		expect(a).toContain("a `public` contract stops the executor");
-		const v = skill("verify");
-		expect(v).toContain("Stop after 5 iterations");
-		expect(v).toContain("`PASS_WITH_WARNINGS`");
-	});
-
-	it("Delegation through the paragraph: no plugin or tool names in skills and prompts", () => {
+	it("Delegation through the paragraph: no plugin or tool names in workflow.md", () => {
 		const banned =
 			/pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
 		const allowed =
 			/Subagent integration paragraph|subagent-driven-development|subagent routing|subagent-routing\.md|subagent calls/g;
+		expect(workflow()).not.toMatch(banned);
+		expect(workflow().replace(allowed, "")).not.toMatch(/subagent/i);
 		for (const c of COMMANDS) {
-			for (const text of [skill(c), read(`prompts/opsx-${c}.md`)]) {
-				expect(text, c).not.toMatch(banned);
-				expect(text.replace(allowed, ""), c).not.toMatch(/subagent/i);
-			}
+			expect(read(`prompts/opsx-${c}.md`), c).not.toMatch(banned);
 		}
 	});
 
-	it("apply schedules plan tasks in lanes", () => {
-		const t = skill("apply");
-		const flat = t.replace(/\s+/g, " ");
-		expect(t).toMatch(/one lane per plan task/i);
-		expect(t).toMatch(/Lanes/);
-		expect(t).toContain("## Lanes");
-		expect(t).toMatch(/merge[^.]*after[^.]*review/i);
-		expect(flat).toMatch(/without[^.]*Blocked by[^.]*one after another/i);
-		expect(flat).toMatch(/every task in its `Blocked by` is merged/i);
-		expect(flat).toMatch(/plan[^.]*metadata[^.]*governs? scheduling/i);
-		expect(flat).toMatch(/escalated lane waits[^.]*does neither merge/i);
-		expect(flat).toMatch(/escalated lane waits[^.]*nor tick it/i);
+	it("apply and verify refer delegation to the Subagent integration paragraph", () => {
+		expect(apply()).toMatch(/If delegation is available through the Subagent integration paragraph/);
+		expect(apply()).toMatch(/If the Subagent integration paragraph says delegation is unavailable/);
+		expect(flatSection("Shared rules")).toMatch(/Spawning, waiting and report collection follow the routing note's Subagent integration paragraph/);
 	});
 
-	it("apply and verify refer delegation to the Subagent integration paragraph", () => {
-		const apply = skill("apply").replace(/\s+/g, " ");
-		const step5 = apply.slice(apply.indexOf("5. **Choose the executor**"), apply.indexOf("6. **Write the receipt"));
-		expect(step5).toMatch(/through the Subagent integration paragraph/);
-		expect(step5).toMatch(/If delegation is available through the Subagent integration paragraph/);
-		expect(step5).toMatch(/If the Subagent integration paragraph says delegation is unavailable/);
-		const verify = skill("verify").replace(/\s+/g, " ");
-		const ev = verify.slice(verify.indexOf("**Delegated evidence:**"), verify.indexOf("Beyond the instruction"));
-		expect(ev).toMatch(/Delegate as the Subagent integration paragraph describes/);
-		expect(ev).toMatch(/When the Subagent integration paragraph says delegation is absent/);
+	it("keeps worktree reuse, iteration cap and receipts", () => {
+		expect(apply()).toContain("Re-runs never redo step 0 or recreate the branch.");
+		expect(apply()).toContain("if it is already 5, stop");
+		expect(verify()).toContain("Stop after 5 iterations");
+		expect(verify()).toContain("`PASS_WITH_WARNINGS`");
 	});
 
 	it("usage guide explains seats, evidence, absence vs failure, fresh tests and parent receipts", () => {

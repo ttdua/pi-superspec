@@ -20,6 +20,9 @@ if (!available) {
 }
 const run = available ? describe : describe.skip;
 
+const POINTER =
+	"Follow openspec/schemas/superspec/workflow.md for the command you are running; it overrides the running skill where they differ.";
+
 run("bundled schema", () => {
 	let project: TempProject;
 	beforeAll(() => {
@@ -44,14 +47,15 @@ run("bundled schema", () => {
 		].join("\n");
 	};
 
-	it("identity: name, version and marker", () => {
+	it("Identity fields: name, version 9 and marker", () => {
 		const text = schemaYaml();
 		expect(text).toMatch(/^name: superspec$/m);
-		expect(text).toMatch(/^version: 8$/m);
-		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 8$/m);
+		expect(text).toMatch(/^version: 9$/m);
+		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 9$/m);
+		expect(text.split("\n")[0]).toBe("# Superspec schema v9 for pi-superspec.");
 	});
 
-	it("keeps the nine artifact IDs of version 7", () => {
+	it("No artifact ID changes: keeps the nine artifact IDs of versions 7 and 8", () => {
 		const ids = [...schemaYaml().matchAll(/^  - id: (\S+)/gm)].map((m) => m[1]);
 		expect(ids).toEqual([
 			"brainstorm",
@@ -76,6 +80,40 @@ run("bundled schema", () => {
 		const text = schemaYaml();
 		expect(text).toContain("Superspec");
 		expect(text).toContain("e1c8f417");
+	});
+
+	it("File shipped: workflow.md and subagent-routing.md sit in the schema directory", () => {
+		expect(existsSync(join(SCHEMA_DIR, "workflow.md"))).toBe(true);
+		expect(existsSync(join(SCHEMA_DIR, "subagent-routing.md"))).toBe(true);
+		expect(existsSync(new URL("../skills/references/subagent-routing.md", import.meta.url))).toBe(false);
+	});
+
+	it("Every instruction points to it: every artifact and the apply instruction start with the pointer", () => {
+		for (const id of ["brainstorm", "proposal", "design", "specs", "tasks", "plan", "apply", "verify", "finalize"]) {
+			const out = project.openspec(["instructions", id, "--change", "x", "--json"]);
+			expect(out.status, out.stdout + out.stderr).toBe(0);
+			const first = (JSON.parse(out.stdout).instruction as string).trimStart().split("\n")[0];
+			expect(first, id).toBe(POINTER);
+		}
+		const yamlInstructions = [...schemaYaml().matchAll(/^ +instruction: \|\n( +)(.*)$/gm)];
+		expect(yamlInstructions).toHaveLength(10);
+		for (const m of yamlInstructions) expect(m[2]).toBe(POINTER);
+	}, 60_000);
+
+	it("Still valid: the schema directory with workflow.md validates", () => {
+		const res = project.openspec(["schema", "validate", "superspec"]);
+		expect(res.status, res.stdout + res.stderr).toBe(0);
+	});
+
+	it("No tool names: schema, templates, workflow.md and subagent-routing.md", () => {
+		const text = [
+			schemaText(),
+			readFileSync(join(SCHEMA_DIR, "workflow.md"), "utf8"),
+			readFileSync(join(SCHEMA_DIR, "subagent-routing.md"), "utf8"),
+		].join("\n");
+		for (const term of ["AskUserQuestion", "rpiv-", "pi-subagents", "Skill tool", "/opsx:"]) {
+			expect(text, term).not.toContain(term);
+		}
 	});
 
 	it("schema text has no harness-specific tool names", () => {

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
+import { flatSection, sentences, workflow, workflowSection } from "./helpers/workflow.ts";
 
 const root = new URL("..", import.meta.url);
 const rootPath = fileURLToPath(root);
@@ -31,20 +32,7 @@ function frontmatter(text: string): string {
 }
 
 const skill = (c: string) => read(`skills/opsx-${c}/SKILL.md`);
-
-function reviewGate(text: string): string {
-	const lines = text.split("\n");
-	const start = lines.findIndex((l) => l.trim() === "**Review gate**");
-	if (start === -1) return "";
-	let end = lines.length;
-	for (let i = start + 1; i < lines.length; i++) {
-		if (/^\*\*[^*\n]+\*\*$/.test(lines[i].trim())) {
-			end = i;
-			break;
-		}
-	}
-	return lines.slice(start, end).join("\n").trim();
-}
+const gate = () => workflowSection("Review gate");
 
 function inOrder(text: string, parts: string[]): void {
 	let last = -1;
@@ -56,7 +44,8 @@ function inOrder(text: string, parts: string[]): void {
 	}
 }
 
-describe("planning commands", () => {
+// Package layout and prompt bodies: rewritten in Task 2 together with the prompts.
+describe("planning commands: package layout", () => {
 	it("ships all four skill and prompt pairs", () => {
 		for (const c of COMMANDS) {
 			expect(exists(`skills/opsx-${c}/SKILL.md`)).toBe(true);
@@ -117,114 +106,144 @@ describe("planning commands", () => {
 			}
 		}
 	});
+});
 
-	it("skills ask through the Interaction channel", () => {
-		for (const c of ["new", "continue", "ff"]) {
-			const text = skill(c);
-			expect(text, c).toContain("Interaction channel");
-			expect(text, c).toContain("numbered options");
-		}
+describe("planning rules in workflow.md", () => {
+	it("Questions defer to the channel", () => {
+		const shared = flatSection("Shared rules");
+		expect(shared).toContain("Interaction channel");
+		expect(shared).toContain("numbered options");
 	});
 
-	it("explore asks through the Interaction channel", () => {
-		expect(skill("explore")).toContain("Interaction channel");
-	});
+	describe("Superpowers-backed artifacts", () => {
+		const rule = () => flatSection("Superpowers rule");
 
-	it("provenance headers record the 1.16.0 sync and what was not adopted", () => {
-		const upstream: Record<string, string> = {
-			explore: "openspec-explore",
-			new: "openspec-new-change",
-			continue: "openspec-continue-change",
-			ff: "openspec-ff-change",
-			apply: "openspec-apply-change",
-			verify: "openspec-verify-change",
-			sync: "openspec-sync-specs",
-			archive: "openspec-archive-change",
-		};
-		for (const [c, name] of Object.entries(upstream)) {
-			const line = skill(c).split("\n")[5];
-			expect(line, c).toBe(
-				`<!-- Adapted from OpenSpec 1.4.1 ${name} (MIT) for pi, synced with 1.16.0. Not adopted: store selection, project-root guard, optionalWorkflow handoffs, mv archive. -->`,
-			);
-		}
-	});
-
-	it("continue and ff carry the Superpowers artifact rule", () => {
-		for (const c of ["continue", "ff"]) {
-			const text = skill(c);
-			expect(text, c).toContain("superpowers:");
-			expect(text, c).toContain("SKILL.md");
-			expect(text, c).toContain("STOP and tell the user to install Superpowers");
-			expect(text, c).toContain("docs/superpowers");
-			expect(text, c).toContain("STOP");
-		}
-	});
-
-	it("new creates without --schema, stops, and suggests continue", () => {
-		const text = skill("new");
-		expect(text).toContain("openspec new change");
-		expect(text).toContain("Do NOT create any artifacts");
-		expect(text).toContain("/opsx-continue");
-		const schemaLines = text.split("\n").filter((l) => l.includes("--schema"));
-		for (const line of schemaLines) {
-			expect(line).toMatch(/omit|Omit|never/);
-		}
-	});
-
-	it("continue creates one artifact per gate", () => {
-		const text = skill("continue");
-		expect(text).toContain("exactly one artifact per gate");
-		expect(text).toContain("STOP");
-	});
-
-	describe("continue review gate", () => {
-		const text = skill("continue");
-		const gate = reviewGate(text);
-
-		it("continue has a review gate section", () => {
-			expect(gate.length).toBeGreaterThan(0);
+		it("Brainstorm redirected", () => {
+			expect(rule()).toContain("superpowers:");
+			expect(rule()).toContain("SKILL.md");
+			expect(rule()).toContain("never under `docs/superpowers/`");
+			expect(rule()).toContain("write output only where the instruction says");
 		});
 
+		it("Skill missing", () => {
+			expect(rule()).toContain("STOP and tell the user to install Superpowers");
+		});
+
+		it("the brainstorm gate is the brainstorming skill's design-doc approval", () => {
+			expect(rule()).toContain("the brainstorming skill's design-doc approval");
+			expect(rule()).toContain("never ask for it separately");
+		});
+	});
+
+	describe("New change creation", () => {
+		const t = () => flatSection("new");
+
+		it("Change created and stopped", () => {
+			expect(t()).toContain("Create no artifact.");
+			expect(t()).toContain("stop");
+			const schemaSentences = sentences(t()).filter((s) => s.includes("--schema"));
+			expect(schemaSentences.length).toBeGreaterThan(0);
+			for (const s of schemaSentences) expect(s).toMatch(/never|Never|omit/);
+		});
+
+		it("Name exists", () => {
+			expect(t()).toContain("`openspec list --json`");
+			expect(t()).toContain("suggest `/opsx-continue <name>` and stop");
+		});
+	});
+
+	describe("Continue advances after approval", () => {
+		const t = () => flatSection("continue");
+
+		it("Brainstorm then proposal", () => {
+			inOrder(t(), [
+				"Create exactly one artifact per gate",
+				"Review gate",
+				"On `approved`",
+				"create the next ready artifact, then gate it, without a new command",
+			]);
+		});
+
+		it("Gate before stop", () => {
+			expect(t()).toContain("then run the Review gate on the file(s) written");
+		});
+
+		it("Approval does not advance", () => {
+			expect(t()).toContain("Stop when planning is complete or the next ready artifact is `apply`");
+			expect(t()).toContain("never create the `apply` artifact; point to `/opsx-apply`");
+		});
+
+		it("Changes requested", () => {
+			const s = t().slice(t().indexOf("Only a human gate approval advances"));
+			expect(sentences(s).slice(0, 2).join(" ")).toContain("`changes_requested`");
+			expect(gate()).toContain("After `changes_requested`, always open the gate again.");
+		});
+
+		it("Dismissed", () => {
+			expect(t()).toContain("`dismissed` do not advance");
+			expect(gate()).toMatch(/`dismissed` outcome is not an approval, so ask the user/);
+		});
+
+		it("Meaningful note on approval", () => {
+			expect(t()).toContain("`approved_with_notes` handled per the Review gate");
+			expect(gate()).toContain("Otherwise open the gate again on the changed files. When unsure, reopen.");
+		});
+
+		it("Planning already complete", () => {
+			expect(t()).toContain("Create nothing except a ready `finalize` artifact");
+			expect(t()).toContain("otherwise point to `/opsx-apply`");
+		});
+
+		it("Planning completes mid-loop", () => {
+			expect(t()).toContain("Repeat until planning is complete or the next ready artifact is `apply`.");
+			expect(t()).toContain("`isPlanningComplete` is true");
+		});
+
+		it("the code review gate for finalize runs before the document gate", () => {
+			inOrder(t(), [
+				"Run the code review gate while creating `finalize`",
+				"before the git-side closeout",
+				"follow-up commit and push on the feature branch",
+			]);
+		});
+
+		it("continue asks the user to choose among several changes", () => {
+			expect(flatSection("Shared rules")).toContain("When several changes exist");
+			expect(flatSection("Shared rules")).toContain("never guess");
+		});
+
+		it("continue closing prompts", () => {
+			expect(t()).toContain('"Planning is complete. Run `/opsx-apply`, or tell me what to change."');
+			expect(t()).toContain('"Run `/opsx-continue` again, or tell me what to change."');
+		});
+	});
+
+	describe("review gate", () => {
 		it("gate lists the four outcomes", () => {
-			for (const o of [
-				"approved",
-				"approved_with_notes",
-				"changes_requested",
-				"dismissed",
-			]) {
-				expect(gate, o).toContain(o);
+			for (const o of ["approved", "approved_with_notes", "changes_requested", "dismissed"]) {
+				expect(gate(), o).toContain(o);
 			}
-			const sentence = gate
-				.split(/(?<=\.)\s/)
-				.find((s) => s.includes("dismissed") && s.includes("not an approval"));
-			expect(sentence).toBeDefined();
-			expect(sentence).toContain("ask");
 		});
 
 		it("gate defers to the Interaction channel", () => {
-			expect(gate).toContain("Interaction channel");
-			expect(gate).toContain("Result on the channel");
+			expect(gate()).toContain("Interaction channel");
+			expect(gate()).toContain("Result on the channel");
 		});
 
 		it("gate falls back when the channel fails", () => {
-			expect(gate).toContain("fails to open");
-			expect(gate).toContain("fallback");
-		});
-
-		it("gate section has no tool names", () => {
-			expect(gate).not.toMatch(/plannotator/i);
-			expect(gate).not.toContain("ask_user_question");
+			expect(gate()).toContain("fails to open");
+			expect(gate()).toContain("fallback");
 		});
 
 		it("gate handles notes", () => {
-			expect(gate).toContain("wording");
-			expect(gate).toContain("short diff");
-			expect(gate).toContain("When unsure, reopen");
+			expect(gate()).toContain("wording");
+			expect(gate()).toContain("short diff");
+			expect(gate()).toContain("When unsure, reopen");
 		});
 
 		it("gate defines the cascade", () => {
-			expect(gate).toContain("openspec status --change");
-			expect(gate).toContain("only the files that changed");
+			expect(gate()).toContain("openspec status --change");
+			expect(gate()).toContain("only the files that changed");
 		});
 
 		it("code review uses the injected channel", () => {
@@ -236,324 +255,264 @@ describe("planning commands", () => {
 				"`receiving-code-review`",
 				"`/opsx-verify`",
 			]) {
-				expect(gate, s).toContain(s);
+				expect(gate(), s).toContain(s);
 			}
-			expect(gate).toMatch(/always reopens?/);
-			expect(gate).toMatch(/changed behaviour or a requirement/);
+			expect(gate()).toMatch(/always reopens?/);
+			expect(gate()).toMatch(/changed behaviour or a requirement/);
 		});
 
 		it("dismissed code review does not proceed", () => {
-			expect(gate).toMatch(/code review[^\n]*`dismissed`[^\n]*not approved/);
+			expect(gate()).toMatch(/code review[^\n]*`dismissed`[^\n]*not approved/);
 		});
 
 		it("receipt records the channel as reviewer tier", () => {
-			expect(gate).toContain("reviewer tier");
-			expect(gate).toContain("channel");
+			expect(gate()).toContain("reviewer tier");
+			expect(gate()).toContain("channel");
 		});
 
 		it("gate keeps late brainstorm cascade and resume point explicit", () => {
-			expect(gate).toContain("open the next gate on every artifact that depends on it");
-			expect(gate).toContain("at step 3");
-			expect(gate).toContain("not at step 2b");
+			expect(gate()).toContain("open the next gate on every artifact that depends on it");
+			expect(gate()).toContain("`brainstorm.md` plus all five");
+			expect(gate()).toContain("at step 3");
+			expect(gate()).toContain("not at step 2b");
 		});
 
 		it("gate does not depend on its position or on continue", () => {
-			expect(gate).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
-		});
-
-		it("continue runs the gate before advancing", () => {
-			const start = text.indexOf("**Act based on status**");
-			const end = text.indexOf("\n**Review gate**");
-			expect(start).toBeGreaterThan(-1);
-			expect(end).toBeGreaterThan(start);
-			const step3 = text.slice(start, end);
-			inOrder(step3, [
-				"Create the artifact file",
-				"Review gate",
-				"On `approved`",
-				"next ready artifact",
-			]);
-		});
-
-		it("continue stops before apply", () => {
-			const guard = text.slice(text.indexOf("**Guardrails**"));
-			expect(guard).toContain("Only a human gate approval advances");
-			expect(guard).toContain(
-				"STOP when planning is complete or the next ready artifact is `apply`",
-			);
-			expect(guard).toContain("Do NOT create an `apply` artifact");
-			const sentence = guard
-				.split(/(?<=\.)\s/)
-				.find((s) => s.includes("Only a human gate approval advances"));
-			expect(sentence).toBeDefined();
-			expect(sentence).toContain("changes_requested");
-			expect(sentence).toContain("dismissed");
-		});
-
-		it("continue runs the code review gate for finalize", () => {
-			expect(text).toContain("finalize");
-			expect(text.toLowerCase()).toContain("code review");
-			expect(gate).toContain("finalize");
-			expect(gate.toLowerCase()).toContain("code review");
+			expect(gate()).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
 		});
 
 		it("code review fixes update apply.md as a new iteration", () => {
-			expect(gate).not.toMatch(/append an iteration/i);
-			expect(gate).toContain("update `apply.md` as iteration N+1");
-			expect(gate).toContain("raise `Iteration:`");
-			expect(gate).toContain("gate outcome");
+			expect(gate()).not.toMatch(/append an iteration/i);
+			expect(gate()).toContain("update `apply.md` as iteration N+1");
+			expect(gate()).toContain("raise `Iteration:`");
+			expect(gate()).toContain("gate outcome");
+		});
+	});
+
+	describe("Fast-forward interaction boundary", () => {
+		const t = () => flatSection("ff");
+
+		it("Reaches plan and gates", () => {
+			expect(t()).toContain("until every `applyRequires` artifact (`plan`) is done");
+			expect(t()).toContain("Once `plan` is done, run the Review gate once on the final packet");
+			expect(t()).toContain("Never create the `apply` artifact and do not start apply.");
 		});
 
-		it("late brainstorm revision reopens brainstorm.md plus all five", () => {
-			expect(gate).toContain("`brainstorm.md` plus all five");
-		});
-
-		it("continue runs the finalize code review gate before the document gate", () => {
-			const start = text.indexOf("**Act based on status**");
-			const end = text.indexOf("\n**Review gate**");
-			const step3 = text.slice(start, end);
-			inOrder(step3, [
-				"If the artifact is `finalize`",
-				"before the git-side closeout",
-				"Run the **Review gate** on the written file(s)",
-				"follow-up commit and push on the feature branch",
+		it("Brainstorm gate first", () => {
+			inOrder(t(), [
+				"Right after `brainstorm.md` is written, run the Review gate on that one file.",
+				"Create no later artifact until it is approved.",
+				"create every remaining artifact in dependency order",
 			]);
 		});
 
-		it("continue artifact rule makes the brainstorm gate the design-doc approval", () => {
-			const rule = text.slice(
-				text.indexOf("\n**Superpowers artifact rule**\n"),
-				text.indexOf("\n**Review gate**\n"),
-			);
-			expect(rule).toContain("the brainstorming skill's design-doc approval");
-			expect(rule).toContain("do not ask for it separately");
-		});
-
-		it("continue frontmatter mentions the review gate", () => {
-			const fm = text.split("---")[1];
-			expect(fm).toContain(
-				"run a review gate on it, and after approval continue until apply",
-			);
-			expect(fm).not.toContain("then stop");
-			expect(fm).not.toContain("then stop for review");
-		});
-	});
-
-	it("ff stops before apply and points to /opsx-apply", () => {
-		const text = skill("ff");
-		expect(text).toContain("/opsx-apply");
-		expect(text).toContain("Do NOT start apply");
-		expect(text).toContain("interactively");
-	});
-
-	describe("ff review gates", () => {
-		const text = skill("ff");
-
-		it("ff and continue share an identical review gate", () => {
-			const gate = reviewGate(text);
-			expect(gate.length).toBeGreaterThan(0);
-			expect(gate).toBe(reviewGate(skill("continue")));
-		});
-
-		it("ff gates brainstorm.md before later artifacts", () => {
-			const gateAt = text.indexOf("Review gate");
-			const laterAt = text.indexOf("create every remaining artifact");
-			expect(gateAt).toBeGreaterThan(-1);
-			expect(laterAt).toBeGreaterThan(-1);
-			expect(gateAt).toBeLessThan(laterAt);
-			expect(text.slice(gateAt, laterAt)).toContain("brainstorm.md");
+		it("Final gate blocks apply pointer", () => {
+			expect(t()).toContain("On `changes_requested`, revise, cascade per the Review gate and reopen it.");
+			expect(t()).toContain("Point to `/opsx-apply` only after the final gate is approved.");
 		});
 
 		it("ff final gate lists the packet explicitly", () => {
 			for (const s of [
-				"proposal.md",
-				"design.md",
+				"`proposal.md`",
+				"`design.md`",
 				"every `specs/<capability>/spec.md`",
-				"tasks.md",
-				"plan.md",
+				"`tasks.md`",
+				"`plan.md`",
 				"explicit ordered list",
 				"never a folder",
 				"does not repeat `brainstorm.md`",
 			]) {
-				expect(text, s).toContain(s);
+				expect(t(), s).toContain(s);
 			}
 		});
 
-		it("ff points to /opsx-apply only after the final gate", () => {
-			const prompt = text.indexOf('Prompt: "Run `/opsx-apply`');
-			const guard = text.indexOf("only after the final gate is approved");
-			expect(prompt).toBeGreaterThan(-1);
-			expect(guard).toBeGreaterThan(-1);
-			expect(guard).toBeLessThan(prompt);
+		it("ff keeps the brainstorm interactive and asks only for missing input", () => {
+			expect(t()).toContain("Run the `brainstorm` artifact interactively");
+			expect(t()).toContain("never fabricate the user's answers or approval");
+			expect(t()).toContain("Ask only when required input is missing");
+			expect(t()).toContain("Do not ask the execution-handoff question");
 		});
 
-		it("ff artifact rule no longer forbids the gate", () => {
-			expect(text).not.toContain("must not cause a stop before the plan is written");
-			const rule = text.slice(
-				text.indexOf("**Superpowers artifact rule**"),
-				text.indexOf("\n**Review gate**\n"),
-			);
-			expect(rule.length).toBeGreaterThan(0);
-			expect(rule).toContain("review gate");
-		});
-
-		it("ff reopens everything when brainstorm changes late", () => {
-			expect(text).toContain("all five");
-		});
-
-		it("ff artifact rule makes the brainstorm gate the design-doc approval", () => {
-			const rule = text.slice(
-				text.indexOf("\n**Superpowers artifact rule**\n"),
-				text.indexOf("\n**Review gate**\n"),
-			);
-			expect(rule).toContain("the brainstorming skill's design-doc approval");
-			expect(rule).toContain("do not ask for it separately");
-		});
-
-		it("ff frontmatter and guardrail reflect the gates", () => {
-			const fm = text.split("---")[1];
-			expect(fm).not.toContain("without stopping");
-			expect(fm).toContain("unattended");
-			const guard = text.slice(text.indexOf("**Guardrails**"));
-			expect(guard).toContain("stop after the final gate");
-			expect(guard).not.toContain("stop after the artifacts");
+		it("ff confirms before continuing an existing change", () => {
+			expect(t()).toContain("If the change already exists, tell the user and ask to confirm continuing it");
 		});
 	});
 
-	describe("partial artifacts and skipped reporting", () => {
-		const flat = (c: string) => skill(c).replace(/\s+/g, " ");
+	describe("Fast-forward grounds and reports", () => {
+		const t = () => flatSection("ff");
 
-		it("continue reads isPlanningComplete and falls back to isComplete", () => {
-			expect(flat("continue")).toContain(
-				"`isPlanningComplete`: Whether all planning artifacts are complete; older CLI versions expose the same value as `isComplete`, so fall back to `isComplete` when `isPlanningComplete` is absent",
-			);
+		it("Grounded tasks", () => {
+			expect(t()).toContain("Inspect the relevant repository code, tests and docs before drafting");
+			expect(t()).toContain('tasks reference real files or tests you found, never a generic "explore the codebase" step');
 		});
 
-		it("continue treats a skipped artifact as satisfied", () => {
-			expect(flat("continue")).toContain(
-				'An artifact with status "skipped" is satisfied: it has no files, so never create it and do not look for its files',
-			);
-		});
-
-		it("continue completes a partial glob artifact with only the missing files", () => {
-			const t = flat("continue");
-			expect(t).toContain(
-				"compare the files the proposal calls for with `artifactPaths.<id>.existingOutputPaths`",
-			);
-			expect(t).toContain(
-				"write only the missing files as that call's one artifact, then run the Review gate",
-			);
-			expect(t).toContain("after approval, continue");
-		});
-
-		it("continue points to /opsx-apply when planning is complete", () => {
-			expect(flat("continue")).toContain(
-				"**If planning is complete (`isPlanningComplete: true`, or legacy `isComplete: true`) and no `done` glob artifact is missing files**",
-			);
-			expect(flat("continue")).toContain(
-				"create a ready `finalize`",
-			);
-		});
-
-		it("continue always re-reads dependencies from disk", () => {
-			expect(flat("continue")).toContain(
-				"always re-read them from disk, even if you saw them earlier in the conversation",
-			);
-		});
-
-		it("ff inspects the repository before drafting and avoids generic tasks", () => {
-			const t = flat("ff");
-			expect(t).toContain(
-				"Inspect the relevant repository code, tests and docs before drafting",
-			);
-			expect(t).toContain(
-				'tasks reference real files or tests you found, never a generic "explore the codebase" step',
-			);
-		});
-
-		it("ff always creates design even though its instruction calls it optional", () => {
-			expect(flat("ff")).toContain(
+		it("Design always created", () => {
+			expect(t()).toContain(
 				"Always create `design`, even if its `instruction` calls it optional, and the final gate packet still lists it",
 			);
 		});
 
-		it("ff lists each other skipped artifact with its reason", () => {
-			const t = flat("ff");
-			expect(t).toContain(
-				'skip no other artifact unless `status` already reports it `skipped`',
-			);
-			expect(t).toContain(
-				"list each other `skipped` artifact with its reason in the final summary",
-			);
+		it("Skipped artifact reported", () => {
+			expect(t()).toContain("Skip no other artifact unless `status` already reports it `skipped`");
+			expect(t()).toContain("each other `skipped` artifact with its reason");
 		});
 	});
 
-	it("explore forbids writing implementation code", () => {
-		expect(skill("explore")).toContain("Do NOT write code");
+	describe("Explore writes no code", () => {
+		const t = () => flatSection("explore");
+
+		it("No implementation", () => {
+			expect(t()).toContain("Never write code.");
+		});
+
+		it("Consent before writing", () => {
+			expect(t()).toContain(
+				"Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.",
+			);
+		});
+
+		it("Schema edits refused", () => {
+			expect(t()).toContain(
+				"Editing a schema, a template or `config.yaml` counts as implementing: refuse it and point the user to creating a change",
+			);
+		});
+
+		it("Scaffold and hand off", () => {
+			expect(t()).toContain(
+				"you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`.",
+			);
+			expect(t()).toContain("do not write `brainstorm.md`");
+			expect(t()).toContain("do not run a review gate in explore");
+		});
+
+		it("Plain diagrams", () => {
+			expect(t()).toContain("Diagrams use ASCII characters only.");
+			expect(workflow()).not.toMatch(/[^\x00-\x7F]/);
+		});
+
+		it("explore capture targets omit the gated artifacts", () => {
+			expect(t()).toContain(
+				"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.",
+			);
+			for (const f of ["`proposal.md`", "`specs/<capability>/spec.md`", "`design.md`", "`tasks.md`"]) {
+				expect(t(), f).toContain(f);
+			}
+		});
 	});
 
-	const flatExplore = () => skill("explore").replace(/\s+/g, " ");
+	describe("Continue completes partial artifacts", () => {
+		const t = () => flatSection("continue");
 
-	it("explore asks consent before the first write and names file and scope", () => {
-		expect(flatExplore()).toContain(
-			"Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.",
-		);
+		it("Interrupted specs", () => {
+			expect(t()).toContain("A `done` glob artifact such as `specs` can still miss files the proposal calls for.");
+			expect(t()).toContain("Write only the missing files as that call's one artifact, then run the Review gate on them; after approval, continue.");
+		});
+
+		it("Planning complete", () => {
+			expect(t()).toContain("Stop when planning is complete");
+			expect(t()).toContain("point to `/opsx-apply`");
+		});
+
+		it("Older status output", () => {
+			expect(t()).toContain("(fall back to `isComplete` when it is absent)");
+		});
+
+		it("Dependencies re-read", () => {
+			// Stock openspec-continue-change re-reads dependency files from disk (its step 3);
+			// workflow.md adds nothing that would override it.
+			expect(t()).not.toMatch(/from (conversation )?memory/i);
+		});
+
+		it("a skipped artifact is satisfied", () => {
+			expect(t()).toContain("An artifact with status `skipped` is satisfied: never create it and do not look for its files.");
+		});
+	});
+});
+
+describe("planning specialist routing", () => {
+	const REF = "[subagent routing](subagent-routing.md)";
+
+	it("Explore with repository recon", () => {
+		const t = flatSection("explore");
+		expect(t).toContain("scout role");
+		expect(t).toMatch(/evidence-only/i);
+		expect(t).toMatch(/read-only/i);
+		expect(t).toMatch(/never write[^.\n]*(code|schema|artifact)/i);
+		expect(flatSection("Shared rules")).toContain(REF);
 	});
 
-	it("explore refuses schema, template and config.yaml edits as implementing", () => {
-		expect(flatExplore()).toContain(
-			"Editing a schema, a template or `config.yaml` counts as implementing: refuse it and point the user to creating a change.",
-		);
+	it("Small conceptual question", () => {
+		const t = flatSection("explore");
+		expect(t).toMatch(/small conceptual[^.\n]*inline/i);
+		expect(t).toMatch(/availability (alone )?(does not|never)[^.\n]*(trigger|justif)/i);
+		expect(t).toMatch(/user conversation[^.\n]*(parent|stays)/i);
 	});
 
-	it("explore scaffolds a change and hands off to /opsx-continue without writing brainstorm.md", () => {
-		const t = flatExplore();
+	it("Continue reviews one artifact", () => {
+		const t = flatSection("continue");
+		expect(t).toContain("spec reviewer role");
+		expect(t).toContain("plan reviewer role");
+		expect(t).toMatch(/existing dependency files/i);
+		expect(t).toMatch(/re-review/i);
+		expect(t).toMatch(/before the (existing )?human (review )?gate/i);
+		expect(t).toMatch(/advisory[^.\n]*not (a )?(human )?approval/i);
+		expect(t).toContain("Create exactly one artifact per gate");
+		expect(t).toMatch(/neither does an internal review verdict/);
+	});
+
+	it("Fast-forward retains two planned stops", () => {
+		const t = flatSection("ff");
+		expect(t).toContain("internal check of the continue section");
+		expect(t).toMatch(/internal reviews add no extra human stop or approval/i);
+		expect(t).toContain("The brainstorm gate and the final gate are the only planned stops");
+		expect(t).toMatch(/recon never moves the user conversation/i);
+	});
+
+	it("Planning review without subagents", () => {
+		expect(flatSection("continue")).toMatch(/absent[^.\n]*inline self-check/i);
+	});
+
+	it("Continue passes main specs", () => {
+		const t = flatSection("continue");
 		expect(t).toContain(
-			"you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`.",
+			"the main spec `openspec/specs/<capability>/spec.md` of every capability the deltas modify, remove or rename",
 		);
-		expect(t).toContain("Do not write `brainstorm.md` and do not run a review gate in explore.");
+		expect(t).toMatch(/no main spec[^.\n]*no baseline/i);
 	});
 
-	it("explore context checks list specs", () => {
-		const t = skill("explore");
-		expect(t).toContain("openspec list --specs");
-		expect(t).toContain("openspec show <id> --type spec");
+	it("Fast-forward passes main specs", () => {
+		// ff runs the continue section's internal check, which carries the baseline handoff.
+		expect(flatSection("ff")).toContain("run the internal check of the continue section");
+		expect(flatSection("continue")).toContain("every capability the deltas modify, remove or rename");
 	});
 
-	it("explore capture table uses the superspec artifact names and omits gated artifacts", () => {
-		const rows = skill("explore")
-			.split("\n")
-			.filter((l) => l.trim().startsWith("|"))
-			.map((l) => l.replace(/\s+/g, " ").trim());
-		for (const row of [
-			"| Scope changed | `proposal.md` |",
-			"| New requirement discovered | `specs/<capability>/spec.md` |",
-			"| Requirement changed | `specs/<capability>/spec.md` |",
-			"| Design decision made | `design.md` |",
-			"| New work identified | `tasks.md` |",
-		]) {
-			expect(rows).toContain(row);
+	it("Inline check uses the baseline", () => {
+		expect(flatSection("continue")).toMatch(/inline self-check[^.\n]*same main specs/i);
+	});
+
+	it("Delegation through the paragraph: workflow.md names roles, not plugins", () => {
+		const forbidden = /pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
+		expect(workflow()).not.toMatch(forbidden);
+		for (const c of ["continue", "ff", "explore", "generate-specs"]) {
+			expect(read(`prompts/opsx-${c}.md`), `prompt ${c}`).not.toMatch(forbidden);
 		}
-		expect(rows.join("\n")).not.toMatch(/brainstorm\.md|plan\.md/);
-		expect(flatExplore()).toContain(
-			"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.",
-		);
+		expect(read("skills/opsx-generate-specs/SKILL.md")).not.toMatch(forbidden);
 	});
 
-	it("explore diagrams use ASCII only", () => {
-		const t = skill("explore");
-		const body = t.slice(t.indexOf("---", 3) + 3);
-		expect(t).toContain("Diagrams use ASCII characters only.");
-		expect(body).not.toMatch(/[^\x00-\x7F]/);
+	it("Delegation routes through the Subagent integration paragraph", () => {
+		expect(flatSection("Shared rules")).toMatch(/routing note's Subagent integration paragraph/);
+		expect(flatSection("explore")).toMatch(/collect the report as the Subagent integration paragraph describes/);
 	});
 
-	it("new asks for a kebab-case name and continue handles several changes", () => {
-		const text = skill("new");
-		expect(text).toContain("kebab-case");
-		expect(text).toContain("ask for a valid name");
-		expect(skill("continue")).toContain("several");
+	it("links the shared reference once without copying policy", () => {
+		expect(workflow()).toContain(REF);
+		expect(workflow()).not.toContain("## Availability");
+		expect(workflow()).not.toContain("Helper-only");
+		expect(exists("schema/superspec/subagent-routing.md")).toBe(true);
 	});
+});
 
+describe("planning docs", () => {
 	it("workflow doc describes the review gates", () => {
 		const wf = read("docs/workflow.md");
 		expect(wf).toContain("Review gate");
@@ -592,91 +551,6 @@ describe("planning commands", () => {
 		const runB = e2e.slice(e2e.indexOf("## Run B"));
 		const finalizeB = runB.split("\n").find((l) => l.includes("(step 9, finalize)"));
 		expect(finalizeB).toContain("code review gate");
-	});
-});
-
-describe("planning specialist routing", () => {
-	const REF = "../references/subagent-routing.md";
-
-	it("SA-P01 explore offers an optional evidence-only scout via the shared reference", () => {
-		const t = skill("explore");
-		expect(t).toContain(REF);
-		expect(t).toContain("scout role");
-		expect(t).toMatch(/evidence-only/i);
-		expect(t).toMatch(/no-write|read-only/i);
-		expect(t).toMatch(/never (write|create)[^.\n]*(code|schema|artifact)/i);
-	});
-
-	it("SA-P02 explore stays inline for small conceptual work", () => {
-		const t = skill("explore");
-		expect(t).toMatch(/small conceptual[^.\n]*inline/i);
-		expect(t).toMatch(/availability (alone )?(does not|never)[^.\n]*(trigger|justif)/i);
-		expect(t).toMatch(/user conversation[^.\n]*(parent|stays)/i);
-	});
-
-	it("SA-P03 continue reviews the completed artifact before the gate, without a second artifact", () => {
-		const t = skill("continue");
-		expect(t).toContain(REF);
-		expect(t).toContain("spec reviewer role");
-		expect(t).toContain("plan reviewer role");
-		expect(t).toMatch(/existing dependency files/i);
-		expect(t).toMatch(/re-review/i);
-		expect(t).toMatch(/before the (existing )?human (review )?gate/i);
-		expect(t).toMatch(/advisory[^.\n]*not (a )?(human )?approval/i);
-		expect(t).toContain("Create exactly one artifact per gate");
-		expect(t).toMatch(/(verdict|internal review)[^.\n]*(does not|never) advance/i);
-	});
-
-	it("SA-P04 ff runs internal reviews unattended and keeps its two stops", () => {
-		const t = skill("ff");
-		expect(t).toContain(REF);
-		expect(t).toContain("spec reviewer role");
-		expect(t).toContain("plan reviewer role");
-		expect(t).toMatch(/internal (spec|review)[^.\n]*(no|without)[^.\n]*(extra|additional|another)[^.\n]*(human )?(stop|approval)/i);
-		expect(t).toContain("The brainstorm gate and the final gate are the only planned stops");
-		expect(t).toMatch(/recon never moves the user conversation/i);
-	});
-
-	it("SA-P05 planning skills fall back to an inline self-check when integration is absent", () => {
-		for (const c of ["continue", "ff"] as const) {
-			expect(skill(c), c).toMatch(/absent[^.\n]*inline (self-)?check/i);
-		}
-	});
-
-	it("SA-P06 spec review receives the baseline main specs", () => {
-		for (const c of ["continue", "ff"] as const) {
-			const t = skill(c);
-			expect(t, c).toContain("the main spec `openspec/specs/<capability>/spec.md` of every capability the deltas modify, remove or rename");
-			expect(t, c).toMatch(/no main spec[^.\n]*no baseline/i);
-			expect(t, c).toMatch(/inline self-check[^.\n]*same main specs/i);
-		}
-	});
-
-	it("Delegation through the paragraph: skills and prompts name roles, not plugins", () => {
-		const forbidden = /pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
-		for (const c of ["continue", "ff", "explore", "generate-specs"]) {
-			expect(read(`skills/opsx-${c}/SKILL.md`), `skill ${c}`).not.toMatch(forbidden);
-			expect(read(`prompts/opsx-${c}.md`), `prompt ${c}`).not.toMatch(forbidden);
-		}
-	});
-
-	it("Delegation routes through the Subagent integration paragraph", () => {
-		for (const c of ["continue", "ff", "explore"] as const) {
-			expect(skill(c), c).toMatch(/as the Subagent integration paragraph describes/);
-		}
-		const recon = skill("explore");
-		const section = recon.slice(recon.indexOf("Before any delegation"));
-		expect(section).toMatch(/collect the report as the paragraph describes/);
-	});
-
-	it("links the shared reference from the three current planning consumers without copying policy", () => {
-		for (const c of ["explore", "continue", "ff"] as const) {
-			const t = skill(c);
-			expect(t, c).toContain(REF);
-			expect(t, c).not.toContain("## Availability");
-			expect(t, c).not.toContain("Helper-only");
-		}
-		expect(exists("skills/references/subagent-routing.md")).toBe(true);
 	});
 
 	it("docs/workflow.md names specialist seats as advisory, beside unchanged gates", () => {
