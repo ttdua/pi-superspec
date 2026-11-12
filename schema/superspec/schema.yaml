@@ -263,10 +263,12 @@ artifacts:
       Follow openspec/schemas/superspec/workflow.md for the command you are running; it overrides the running skill where they differ.
 
       Load the **openspec-verify-change** skill (users run it as
-      `/skill:openspec-verify-change` or by asking). If that skill is
-      unavailable, run the six checks below manually. The six checks
-      below replace the skill's own check list; if they differ, follow
-      this list. Also load **verification-before-completion**: record
+      `/skill:openspec-verify-change` or by asking). If
+      `openspec-verify-change` is not in the available skills list, name
+      it, point to `openspec config profile` (select the verify
+      workflow) and `openspec update` (or `/opsx-init`), and stop; do not
+      run the checks another way. The six checks below replace the
+      skill's own check list; if they differ, follow this list. Also load **verification-before-completion**: record
       fresh command output as evidence.
 
       Run verify with the WORKTREE as the working directory: apply wrote
@@ -924,6 +926,10 @@ apply:
        executor skill suggests it: merging, pushing and PR handling
        belong to finalize, after verify. Next, use `openspec-verify-change`.
 
-    If any skill is unavailable, fall back to manual implementation
-    using the standard task-by-task loop from tasks.md, then request a
-    whole-branch review, write apply.md (step 3) and stop.
+    A missing required skill stops apply: name it and stop without doing
+    the work another way. For the stock `openspec-apply-change`, point
+    to `openspec config profile` (select the apply workflow) and
+    `openspec update` (or `/opsx-init`). For a Superpowers skill that
+    the steps load, tell the user to install Superpowers. The only
+    sanctioned fallback is step 2b: when no subagent plugin is
+    available, use `superpowers:executing-plans`.

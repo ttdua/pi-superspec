@@ -805,9 +805,7 @@ run("bundled schema", () => {
 			expect(text).not.toContain("contains untracked entries");
 			expect(text).toContain("Skip the commit only when the output is empty");
 			expect(text).not.toMatch(/only modifications/);
-			expect(text).toContain(
-				"then request a whole-branch review, write apply.md (step 3) and stop.",
-			);
+			expect(text).toContain("A missing required skill stops apply");
 		});
 
 		it("apply.md template has no hard-coded .worktrees path", () => {

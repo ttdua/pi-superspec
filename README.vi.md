@@ -98,7 +98,7 @@ Package đi kèm hai lệnh:
 | sync | `openspec-sync-specs` | `/skill:openspec-sync-specs [name]` | Merge delta spec vào `openspec/specs/` mà không archive. |
 | archive | `openspec-archive-change` | `/skill:openspec-archive-change [name]` | Sync nếu cần, rồi archive một change đã hoàn thành. |
 
-pi chỉ đăng ký lệnh `/skill:<id>` cho mỗi skill khi setting `enableSkillCommands` đang bật (mặc định); nếu không, hãy nhờ agent chạy bước đó. Các phiên bản package trước có một lệnh `/opsx-<step>` cho mỗi bước; các lệnh đó đã bị gỡ. Các lệnh `opsx-propose` và `opsx-bulk-archive` không được đi kèm, và bốn stock skill không dùng nêu ở phần Yêu cầu không thuộc workflow.
+pi liệt kê lệnh `/skill:<id>` cho mỗi skill trong phần gợi ý lệnh tương tác khi setting `enableSkillCommands` đang bật (mặc định); khi tắt, lệnh `/skill:<id>` gõ tay vẫn chạy được, và bạn luôn có thể nhờ agent chạy bước đó. Các phiên bản package trước có một lệnh `/opsx-<step>` cho mỗi bước; các lệnh đó đã bị gỡ. Các lệnh `opsx-propose` và `opsx-bulk-archive` không được đi kèm, và bốn stock skill không dùng nêu ở phần Yêu cầu không thuộc workflow.
 
 Hai thứ nâng cấp riêng: `openspec update` nâng cấp các stock skill; cập nhật package rồi chạy `/opsx-init` nâng cấp schema và `workflow.md`.
 

@@ -522,3 +522,33 @@ describe("Superpowers rule and stock skills", () => {
 		expect(readFileSync(WORKFLOW_PATH, "utf8")).not.toMatch(/[^\x00-\x7F]/);
 	});
 });
+
+describe("missing required skill stops instead of a workaround", () => {
+	const schemaText = readFileSync(
+		join(dirname(WORKFLOW_PATH), "schema.yaml"),
+		"utf8",
+	).replace(/\s+/g, " ");
+	const verifyBlock = schemaText.slice(
+		schemaText.indexOf("id: verify"),
+		schemaText.indexOf("id: finalize"),
+	);
+	const applyBlock = schemaText.slice(schemaText.indexOf("apply:"));
+
+	it("verify names the missing-skill stop", () => {
+		expect(verifyBlock).toContain("openspec-verify-change");
+		expect(verifyBlock).toContain("openspec config profile");
+		expect(verifyBlock).toContain("openspec update");
+		expect(verifyBlock).toMatch(/stop/i);
+	});
+
+	it("apply names the missing-skill stop", () => {
+		expect(applyBlock).toContain("openspec config profile");
+		expect(applyBlock).toContain("openspec update");
+		expect(applyBlock).toMatch(/install Superpowers/i);
+	});
+
+	it("schema has no manual workaround for a missing skill", () => {
+		expect(schemaText).not.toContain("run the six checks below manually");
+		expect(schemaText).not.toContain("fall back to manual implementation");
+	});
+});

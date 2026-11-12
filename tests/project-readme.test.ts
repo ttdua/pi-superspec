@@ -228,9 +228,11 @@ describe("README OpenSpec 2.0 and stock skills", () => {
 		}
 	});
 
-	it("READMEs say /skill:<id> needs enableSkillCommands and that the prompts are gone", () => {
+	it("READMEs say enableSkillCommands only controls /skill:<id> discovery and that the prompts are gone", () => {
 		for (const [name, text] of docs) {
 			expect(text, name).toContain("enableSkillCommands");
+			expect(text, name).not.toMatch(/only while|chỉ đăng ký/);
+			expect(text, name).toMatch(/manually typed|gõ tay/);
 			expect(text, name).toContain("opsx-propose");
 			expect(text, name).toContain("opsx-bulk-archive");
 		}
@@ -318,6 +320,8 @@ describe("usage guide", () => {
 		expect(entry).toContain("/opsx-init");
 		expect(entry).toContain("openspec config profile");
 		expect(entry).toContain("enableSkillCommands");
+		expect(entry).toContain("manually typed");
+		expect(entry).not.toMatch(/only while/);
 		expect(entry).toMatch(/ask the agent/i);
 	});
 

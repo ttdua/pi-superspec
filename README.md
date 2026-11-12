@@ -98,7 +98,7 @@ The package ships two commands:
 | sync | `openspec-sync-specs` | `/skill:openspec-sync-specs [name]` | Merges delta specs into `openspec/specs/` without archiving. |
 | archive | `openspec-archive-change` | `/skill:openspec-archive-change [name]` | Syncs if needed, then archives a completed change. |
 
-pi registers a `/skill:<id>` command for each skill only while its `enableSkillCommands` setting is on (the default); otherwise ask the agent to run the step. Earlier package versions shipped an `/opsx-<step>` command per step; those commands are removed. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped, and the four unused stock skills listed under Prerequisites are not part of the workflow.
+pi lists a `/skill:<id>` command for each skill in interactive command discovery while its `enableSkillCommands` setting is on (the default); with it off, a manually typed `/skill:<id>` still works, and you can always ask the agent to run the step. Earlier package versions shipped an `/opsx-<step>` command per step; those commands are removed. The commands `opsx-propose` and `opsx-bulk-archive` are not shipped, and the four unused stock skills listed under Prerequisites are not part of the workflow.
 
 Two things upgrade separately: `openspec update` upgrades the stock skills; a package update followed by `/opsx-init` upgrades the schema and `workflow.md`.
 
