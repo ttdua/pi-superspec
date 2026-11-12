@@ -115,7 +115,7 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	const to = markerVersion(bundled) ?? 0;
 	const noteLine = "Note: openspec/config.yaml now has `schema: superspec`.";
 	// Blocked notice: the main line, then the config note (when config.yaml was just written), then details.
-	const block = async (main: string, details: string[] = []): Promise<InitOutcome> => {
+	const block = (main: string, details: string[] = []): InitOutcome => {
 		const lines = [main, ...(config === "written" ? [noteLine] : []), ...details];
 		io.notify(lines.join("\n"), "warning");
 		return "blocked";
@@ -178,7 +178,7 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 			}
 			if (config === "written") lines.push(noteLine);
 			io.notify(lines.join("\n"), "error");
-				return "replace-failed";
+			return "replace-failed";
 		}
 	}
 	await setLanguage(io, root, parsed.lang);

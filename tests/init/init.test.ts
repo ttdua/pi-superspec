@@ -34,8 +34,11 @@ function tmp(): string {
 	dirs.push(d);
 	return d;
 }
+/** Calls that would change the global OpenSpec configuration; no test may make one. */
+const forbiddenCalls: string[] = [];
 afterEach(() => {
 	for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
+	expect(forbiddenCalls.splice(0), "forbidden openspec config call").toEqual([]);
 });
 
 interface Call {
@@ -83,6 +86,9 @@ function recording(
 		async exec(command, args, execCwd) {
 			const call = { command, args, cwd: execCwd };
 			calls.push(call);
+			if (command === "openspec" && args[0] === "config" && args[1] !== "list") {
+				forbiddenCalls.push(args.join(" "));
+			}
 			return respond(call) ?? fakeOpenspec(call);
 		},
 		...overrides,
@@ -330,21 +336,14 @@ describe("runInit", () => {
 			expect(io.notes.join("\n")).toContain("boom");
 		});
 
-		it("never changes the global OpenSpec configuration", async () => {
-			const root = tmp();
-			const all: Call[] = [];
+		it("keeps the global OpenSpec configuration untouched for every profile state", async () => {
 			for (const profile of [READY_PROFILE, CORE_PROFILE, "garbage"]) {
-				const { io, calls } = recording(tmp(), (c) =>
+				const { io } = recording(tmp(), (c) =>
 					c.args.join(" ") === "config list --json" ? { code: 0, stdout: profile, stderr: "" } : undefined,
 				);
 				await runInit(io, packageRoot);
-				all.push(...calls);
 			}
-			void root;
-			const forbidden = all.filter(
-				(c) => c.command === "openspec" && c.args[0] === "config" && c.args[1] !== "list",
-			);
-			expect(forbidden).toEqual([]);
+			// The guard in recording() records violations; afterEach asserts none.
 		});
 
 		it("tells the user to commit .agents/skills/ and keep the profile after an install", async () => {
