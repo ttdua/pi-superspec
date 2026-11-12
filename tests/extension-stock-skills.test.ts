@@ -32,10 +32,12 @@ function start(cwd: string, hasUI = true) {
 	} as never);
 	const calls: [string, string | undefined][] = [];
 	const ctx = { cwd, hasUI, ui: { notify: (m: string, l?: string) => calls.push([m, l]) } };
-	return Promise.resolve(handlers.get("session_start")?.({ type: "session_start", reason: "startup" }, ctx)).then(() =>
-		calls.filter(([m]) => m.includes(MARKER)),
+	return Promise.resolve(handlers.get("session_start")?.({ type: "session_start", reason: "startup" }, ctx)).then(
+		() => calls,
 	);
 }
+
+const stockWarnings = (calls: [string, string | undefined][]) => calls.filter(([m]) => m.includes(MARKER));
 
 function markedWithSkills(): string {
 	const root = mkdtempSync(join(tmpdir(), "pi-superspec-skills-"));
@@ -53,26 +55,28 @@ describe("session_start stock skills check", () => {
 	});
 
 	it("warns once, naming openspec-explore, when the marked fixture has no skills", async () => {
-		const calls = await start(join(fixtures, "marked"));
+		const calls = stockWarnings(await start(join(fixtures, "marked")));
 		expect(calls).toHaveLength(1);
 		expect(calls[0][0]).toContain("openspec-explore");
 		expect(calls[0][1]).toBe("warning");
 	});
 
 	it("does not warn when all eight skills exist", async () => {
-		expect(await start(markedWithSkills())).toHaveLength(0);
+		expect(stockWarnings(await start(markedWithSkills()))).toHaveLength(0);
 	});
 
 	it("does not warn without a UI", async () => {
-		expect(await start(join(fixtures, "marked"), false)).toHaveLength(0);
+		expect(stockWarnings(await start(join(fixtures, "marked"), false))).toHaveLength(0);
 	});
 
 	it("does not warn in an unmarked project", async () => {
-		expect(await start(join(fixtures, "unmarked"))).toHaveLength(0);
+		expect(stockWarnings(await start(join(fixtures, "unmarked")))).toHaveLength(0);
 	});
 
 	it("keeps the session starting when the check throws", async () => {
 		seam.throwOnCheck = true;
-		await expect(start(join(fixtures, "marked"))).resolves.toEqual([]);
+		const calls = await start(join(fixtures, "marked"));
+		expect(calls.filter(([m]) => m.includes("boom"))).toHaveLength(0);
+		expect(stockWarnings(calls)).toHaveLength(0);
 	});
 });

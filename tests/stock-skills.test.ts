@@ -1,4 +1,4 @@
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -54,6 +54,32 @@ describe("missingStockSkills", () => {
 
 	it("returns all eight when .agents/skills is absent", () => {
 		expect(missingStockSkills(mkdtempSync(join(tmpdir(), "stock-skills-")))).toEqual([...REQUIRED_STOCK_SKILLS]);
+	});
+
+	it("counts a valid symlink to a skill directory as present", () => {
+		const root = skillsRoot(REQUIRED_STOCK_SKILLS.filter((id) => id !== "openspec-explore"));
+		const target = join(mkdtempSync(join(tmpdir(), "stock-skills-target-")), "explore");
+		mkdirSync(target);
+		writeFileSync(join(target, "SKILL.md"), "x");
+		symlinkSync(target, join(root, ".agents", "skills", "openspec-explore"));
+		expect(missingStockSkills(root)).toEqual([]);
+	});
+
+	it("counts a broken symlink as missing", () => {
+		const root = skillsRoot(REQUIRED_STOCK_SKILLS.filter((id) => id !== "openspec-explore"));
+		symlinkSync(join(root, "nowhere"), join(root, ".agents", "skills", "openspec-explore"));
+		expect(missingStockSkills(root)).toEqual(["openspec-explore"]);
+	});
+
+	it.skipIf(process.getuid?.() === 0)("returns all eight when .agents/skills is not traversable", () => {
+		const root = skillsRoot();
+		const dir = join(root, ".agents", "skills");
+		chmodSync(dir, 0o000);
+		try {
+			expect(missingStockSkills(root)).toEqual([...REQUIRED_STOCK_SKILLS]);
+		} finally {
+			chmodSync(dir, 0o755);
+		}
 	});
 
 	it.skipIf(process.getuid?.() === 0)("counts an unreadable SKILL.md as missing", () => {
