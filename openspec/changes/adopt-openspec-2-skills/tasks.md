@@ -39,9 +39,9 @@ Blocked by: none
 
 Blocked by: 1, 2, 3, 4
 
-- [ ] 5.1 Update `README.md` and `README.vi.md`: OpenSpec ≥ 2.0 and the profile command with the eight workflows; uninstall leaves `.agents/skills/`; the commands now run stock skills.
-- [ ] 5.2 Update `docs/architecture.md` (Goals 2–3, components, `/opsx-init` steps, tool mapping, tested OpenSpec version) and `docs/workflow.md` (commands, conflicts resolved, routing note).
-- [ ] 5.3 Update `docs/usage-guide.md` with the profile and missing-skills troubleshooting and the two upgrade paths; add the shipped-layout checks (ff gate stop, apply worktree and executor) to `docs/e2e-checklist.md`.
-- [ ] 5.4 Add a breaking `CHANGELOG.md` entry; update `tests/project-readme.test.ts` and `tests/docs-subagents.test.ts` to the new text.
-- [ ] 5.5 Update the `## Purpose` lines of `openspec/specs/planning-commands/spec.md`, `openspec/specs/execution-commands/spec.md` and `openspec/specs/bundled-schema/spec.md` to describe prompts running stock skills under `workflow.md` and to drop the fixed schema version (sync keeps an existing Purpose, so this edit is manual).
-- [ ] 5.6 Run `bun run typecheck` and `bun run test`, and `openspec validate adopt-openspec-2-skills --strict`.
+- [x] 5.1 Update `README.md` and `README.vi.md`: OpenSpec ≥ 2.0 and the profile command with the eight workflows; uninstall leaves `.agents/skills/`; the commands now run stock skills.
+- [x] 5.2 Update `docs/architecture.md` (Goals 2–3, components, `/opsx-init` steps, tool mapping, tested OpenSpec version) and `docs/workflow.md` (commands, conflicts resolved, routing note).
+- [x] 5.3 Update `docs/usage-guide.md` with the profile and missing-skills troubleshooting and the two upgrade paths; add the shipped-layout checks (ff gate stop, apply worktree and executor) to `docs/e2e-checklist.md`.
+- [x] 5.4 Add a breaking `CHANGELOG.md` entry; update `tests/project-readme.test.ts` and `tests/docs-subagents.test.ts` to the new text.
+- [x] 5.5 Update the `## Purpose` lines of `openspec/specs/planning-commands/spec.md`, `openspec/specs/execution-commands/spec.md` and `openspec/specs/bundled-schema/spec.md` to describe prompts running stock skills under `workflow.md` and to drop the fixed schema version (sync keeps an existing Purpose, so this edit is manual).
+- [x] 5.6 Run `bun run typecheck` and `bun run test`, and `openspec validate adopt-openspec-2-skills --strict`.
