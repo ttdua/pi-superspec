@@ -418,9 +418,9 @@ describe("planning rules in workflow.md", () => {
 		});
 
 		it("Dependencies re-read", () => {
-			// Stock openspec-continue-change re-reads dependency files from disk (its step 3);
-			// workflow.md adds nothing that would override it.
-			expect(t()).not.toMatch(/from (conversation )?memory/i);
+			expect(t()).toContain(
+				"Before creating an artifact, re-read every dependency file from disk, not from conversation memory.",
+			);
 		});
 
 		it("a skipped artifact is satisfied", () => {

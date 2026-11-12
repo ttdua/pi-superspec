@@ -87,7 +87,7 @@ Must-port rows (all in `workflow.md` with a test) are marked **MUST**.
 | continue:48-49 next is `apply` → do not create, point to `/opsx-apply` | W§continue | WR continue "stops before apply" | Stock has no apply stop; added. |
 | continue:52-62 pick first ready, get instructions, field meanings | stock | — | openspec-continue-change:77-90. |
 | continue:61 instruction names `superpowers:<x>` → Superpowers rule | W§Superpowers rule | WR "redirects output" | Plus `S:brainstorm`, `S:plan` name the skill. |
-| continue:65 re-read dependencies from disk | stock | — | openspec-continue-change:92, :131. |
+| continue:65 re-read dependencies from disk | W§continue (Dependencies) + stock | PC "Dependencies re-read" | openspec-continue-change:92, :131; stated in W so the scenario has a positive anchor. |
 | continue:66-68 template, context/rules constraints, write to path | stock | — | openspec-continue-change:93-98. |
 | continue:69 multi-file artifact counts as one | stock | — | openspec-continue-change:63-65, :93. |
 | continue:70 partial: write missing only, gate, continue, never overwrite | W§continue | WR continue "completes partial glob artifacts" | Stock stops after (openspec-continue-change:65); W gates and continues. |
@@ -221,7 +221,7 @@ Must-port rows (all in `workflow.md` with a test) are marked **MUST**.
 | verify:39-44 three CLI calls in worktree | `S:verify` + stock | — | openspec-verify-change:45-57; worktree cwd per W. |
 | verify:44 workspace-planning → stop | W§Shared rules (Workspace mode) | WR "stops in workspace-planning mode" | Anchored. |
 | verify:48 follow verify instruction six checks; use contextFiles | W§verify + `S:verify` | WR verify "six checks" | Six checks in `S:verify`. |
-| verify:50 progress from apply instruction; unavailable tracking → not verified | stock | — | openspec-verify-change:85-87 (`unavailableTrackingFiles` → not verified). |
+| verify:50 progress from apply instruction; unavailable tracking → not verified | W§verify (Progress) + stock | EC "Progress from apply" | openspec-verify-change:85-87; stated in W as a Superspec contract. |
 | verify:52 Superpowers rule | W§Superpowers rule | WR | Anchored. |
 | verify:54 delegated evidence (verifier role, cwd, report, never fix, parent writes, fresh only, reject old, inspect, absent → inline, failure → stop) | W§verify | WR verify "delegated evidence" | Anchored. |
 | verify:57 fresh test run, record command/exit/counts | W§verify + `S:verify` check 4 | WR verify "fresh tests" | Anchored. |
@@ -283,12 +283,12 @@ Must-port rows (all in `workflow.md` with a test) are marked **MUST**.
 | archive:12, :18-21 select, ask, announce, active only, schema | W§Shared rules + stock | WR "never guesses the change" | openspec-archive-change:34-44. |
 | archive:29 parse status | stock | — | openspec-archive-change:75-80. |
 | archive:31 workspace-planning → stop | W§Shared rules | WR "stops in workspace-planning mode" | Anchored. |
-| archive:33 `skipped` counts as complete; incomplete → warn, confirm | stock | — | openspec-archive-change:82-85. |
-| archive:37 task counts from `openspec list --json`; invalid → stop; unlisted → stop; 0 → skip; incomplete → confirm | stock | — | openspec-archive-change:89-109. |
+| archive:33 `skipped` counts as complete; incomplete → warn, confirm | W§archive (Completion) + stock | EC "Skipped artifact", "Incomplete artifacts" | openspec-archive-change:82-85; stated in W. |
+| archive:37 task counts from `openspec list --json`; invalid → stop; unlisted → stop; 0 → skip; incomplete → confirm | W§archive (Completion) + stock | EC "Task counts from the CLI" | Counts, invalid/unlisted stop stated in W; 0 → skip stays stock (openspec-archive-change:109). |
 | archive:39 warnings never block silently | stock | — | openspec-archive-change:211. |
-| archive:43 delta paths; none → skip | stock | — | openspec-archive-change:113-116. |
+| archive:43 delta paths from `existingOutputPaths` or by listing `specs/<capability>/spec.md`; none → skip | W§archive (Delta specs) | EC "Delta specs found by status or by listing", WR archive "delta spec fallback" | Overrides openspec-archive-change:113-116 ("the only delta-spec source"); the listing fallback is kept. None → skip is stock. |
 | archive:45-48 synced definition | W§archive (Synced means) | — (EC archive block) | Stock uses semantic comparison; fork definition kept. |
-| archive:50 missing main spec decided by operations; retire exception | stock | — | openspec-archive-change:120-124. |
+| archive:50 missing main spec decided by operations; retire exception | W§archive (Delta specs) + stock | EC "Missing main spec" | Principle stated in W; the operation table and retire exception stay stock (openspec-archive-change:120-124). |
 | archive:52 idempotent, second check "already synced" | W§archive | — | Anchored. |
 | archive:56 all synced → archive without syncing | W§archive (Choices) | — | Stock offers "Archive now / Sync anyway / Cancel" (openspec-archive-change:131); overridden. |
 | archive:57 blocked → only archive-without-sync or cancel; unclear → ask again | W§archive + stock | WR archive "offers only safe choices" | openspec-archive-change:129, :137. |

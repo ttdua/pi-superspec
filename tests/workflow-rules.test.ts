@@ -450,6 +450,11 @@ describe("archive", () => {
 		for (const s of withMv) expect(s, s).toMatch(/\bNever\b/);
 	});
 
+	it("delta spec fallback: lists specs/<capability>/spec.md when status has none, overriding stock", () => {
+		expect(text()).toContain("or by listing `specs/<capability>/spec.md` in the change directory when that entry is missing or empty");
+		expect(text()).toContain("this overrides the stock rule that `existingOutputPaths` is the only source");
+	});
+
 	it("never passes --no-validate", () => {
 		expect(text()).toContain("Never pass `--no-validate`.");
 	});

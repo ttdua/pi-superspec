@@ -256,8 +256,9 @@ describe("execution rules in workflow.md", () => {
 		});
 
 		it("Incomplete artifacts", () => {
-			// Warn-and-confirm is stock openspec-archive-change behaviour (steps 2-3); workflow.md does not override it.
-			expect(archive()).not.toMatch(/without (asking|confirmation) on incomplete/i);
+			expect(archive()).toContain(
+				"Incomplete artifacts or tasks: warn, ask the user to confirm and archive only on confirmation.",
+			);
 		});
 
 		it("Sync verified before archive", () => {
@@ -266,18 +267,25 @@ describe("execution rules in workflow.md", () => {
 		});
 
 		it("Missing main spec", () => {
-			// The missing-main-spec decision by delta operations is stock openspec-archive-change step 4.
-			expect(archive()).not.toMatch(/missing main spec[^.]*unsynced/i);
+			expect(archive()).toContain(
+				"A missing main spec is not unsynced by itself; decide by the delta operations as the sync section and the stock sync skill define.",
+			);
 		});
 
 		it("Task counts from the CLI", () => {
-			// Counts from `openspec list --json` and the stop on invalid output are stock openspec-archive-change step 3.
-			expect(archive()).not.toContain("tasks.md");
+			expect(archive()).toContain(
+				"Take task counts from `openspec list --json`; if that output is invalid or omits the change, stop with an error and do not archive.",
+			);
 		});
 
 		it("Skipped artifact", () => {
-			// `skipped` counts as complete in stock openspec-archive-change step 2.
-			expect(archive()).not.toMatch(/skipped[^.]*incomplete/i);
+			expect(archive()).toContain("An artifact with status `skipped` counts as complete.");
+		});
+
+		it("Delta specs found by status or by listing", () => {
+			expect(archive()).toContain(
+				"Find the delta specs from `artifactPaths.specs.existingOutputPaths`, or by listing `specs/<capability>/spec.md` in the change directory when that entry is missing or empty; this overrides the stock rule that `existingOutputPaths` is the only source.",
+			);
 		});
 
 		it("Unclear answer", () => {
@@ -345,9 +353,9 @@ describe("execution rules in workflow.md", () => {
 		});
 
 		it("Progress from apply", () => {
-			// Stock openspec-verify-change reads `progress` from the apply instruction and marks
-			// unavailable tracking files not verified; workflow.md keeps the six-check list on top.
-			expect(verify()).toContain("six checks");
+			expect(verify()).toContain(
+				"Read task progress from the apply instruction (`progress`); an unavailable tracking file makes the tasks check not verified.",
+			);
 		});
 
 		it("Skipped check", () => {
