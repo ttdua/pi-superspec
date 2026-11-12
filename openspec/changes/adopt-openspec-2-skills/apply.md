@@ -38,7 +38,7 @@ Implementers were general-purpose agents briefed with the superspec implementer 
 
 ## Contract deviations
 
-- `v9 schema digest`: `workflow.md` changed after the first v9 digest was recorded (review fixes). v9 is unreleased, so the `"9"` entry in `tests/fixtures/schema-checksums.json` was updated instead of bumping to v10.
+- `v9 schema digest`: the schema tree changed after the first v9 digest was recorded: `workflow.md` in iteration 1 (review fixes) and 3 (step commands replaced by skill ids), and `schema.yaml` plus `templates/*.md` in iterations 3 and 4 (skill ids; the missing-skill stop). v9 is unreleased, so the `"9"` entry in `tests/fixtures/schema-checksums.json` was updated each time instead of bumping to v10.
 - `missingStockSkills` test seam: the throwing-check test uses `vi.mock` in a separate file (`tests/extension-stock-skills.test.ts`) rather than injecting a checker; the exported signature is unchanged.
 
 ---
