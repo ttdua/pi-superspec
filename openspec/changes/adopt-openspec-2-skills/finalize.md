@@ -7,9 +7,9 @@
 
 **Change**: `adopt-openspec-2-skills`
 **Finalized at**: `2026-11-12 11:45`
-**Outcome**: `merge-locally`
+**Outcome**: `pr-created`
 
-The merge into the feature branch was local only. The user has not yet approved a push or a PR (project policy: no push, merge or PR without an explicit yes in chat), so nothing was pushed and no PR exists. Deviation from the canonical closeout: steps 10–12 (push, PR offer, reviewer comment) are deferred.
+The merge into the feature branch was local. Push and PR were done only after the user's explicit yes in chat (project policy). The branch was pushed over HTTPS with the `ttdua` account (`gh auth switch`). Deviation from the canonical closeout: step 12 (code-reviewer onboarding comment) was not run; the PR description carries the orientation instead.
 
 ---
 
@@ -17,8 +17,8 @@ The merge into the feature branch was local only. The user has not yet approved 
 
 - **Branch**: `spec/adopt-openspec-2-skills`
 - **Base branch**: `main`
-- **Final state**: `merged`
-- **PR URL**: `N/A`
+- **Final state**: `pr-open`
+- **PR URL**: `https://github.com/ttdua/pi-superspec/pull/24`
 
 ---
 
@@ -31,7 +31,7 @@ The merge into the feature branch was local only. The user has not yet approved 
 
 ## PR comment
 
-- **PR comment status**: `skipped (no PR)`
+- **PR comment status**: `skipped (orientation is in the PR description)`
 
 ---
 
@@ -51,6 +51,6 @@ The merge into the feature branch was local only. The user has not yet approved 
 
 ## Next step
 
-- Ask before pushing `spec/adopt-openspec-2-skills` or opening a PR.
-- Run `/opsx-archive` on the feature branch (the archive commits land there), then `wt remove adopt-openspec-2-skills` from the main worktree.
+- Wait for PR code review on https://github.com/ttdua/pi-superspec/pull/24.
+- Run `/opsx-archive` on the feature branch (the archive commits land there), push the archive commits to update the PR, then merge it (`gh pr merge --squash --delete-branch` or the GitHub UI). Afterwards run `wt remove adopt-openspec-2-skills` from the main worktree.
 - Before release, run the shipped-layout checks of `docs/e2e-checklist.md` in a real pi session (verify.md S1).
