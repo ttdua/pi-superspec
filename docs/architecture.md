@@ -258,6 +258,7 @@ Runtime smoke evidence supersedes these assumptions, and no dependency pin is ad
   project. `version` must be a positive integer. `config.yaml` `context` and per-artifact
   `rules` are injected into `openspec instructions`; project customisation belongs
   there.
+- **Local project root.** `workflow.md` commands assume a local project root; store selection (`--store`) is left to the stock skills.
 - **pi ≥ 1.4** package API: `extensions`, `resources_discover` (gets `cwd`, returns
   `skillPaths` / `promptPaths`), `registerCommand`, `ctx.reload()`, `context` event,
   `ctx.hasUI`. Prompt arguments arrive as `$@`. Host

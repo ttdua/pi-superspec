@@ -144,6 +144,13 @@ describe("shared rules", () => {
 		expect(shared()).toContain('`actionContext.mode: "workspace-planning"`');
 		expect(shared()).toContain("stop before editing files");
 	});
+
+	it("workspace mode names verify, sync and archive; apply defers to its guard", () => {
+		const t = shared();
+		expect(t).toContain("verify, sync and archive are not supported here");
+		expect(t).not.toMatch(/apply, verify, sync and archive are not supported/);
+		expect(t).toContain("apply follows its workspace guard in the apply section");
+	});
 });
 
 describe("explore", () => {
@@ -171,6 +178,11 @@ describe("explore", () => {
 		expect(text()).toContain(
 			"Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.",
 		);
+	});
+
+	it("overrides the stock capture: scaffold only, even when asked to capture", () => {
+		expect(text()).toContain("This overrides the stock explore skill's \"capture the requested artifacts\" behaviour");
+		expect(text()).toContain("even when the user asks to capture proposal or specs into a new change, scaffold only with `openspec new change <name>` and point to `/opsx-continue <name>`");
 	});
 
 	it("never captures brainstorm.md or plan.md", () => {

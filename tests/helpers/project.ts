@@ -15,6 +15,7 @@ export interface TempProject {
 	cleanup(): void;
 }
 
+// The 1.16 floor is deliberate: the schema validates on 1.x too, so do not raise it to 2.0.
 export function meetsOpenspecFloor(versionOutput: string): boolean {
 	const m = /(\d+)\.(\d+)/.exec(versionOutput);
 	if (!m) return false;

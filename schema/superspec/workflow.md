@@ -9,13 +9,14 @@ Each `/opsx-<cmd>` command runs a stock OpenSpec skill under these rules. Read t
 - **Change selection.** Use the given or unambiguous name, or the only active change. When several changes exist and none is named or inferable, ask the user to choose, showing each candidate's name, schema and status with the most recently modified marked recommended; never guess. Announce the change used and how to override it (for example `/opsx-apply <other>`).
 - **Delegation.** Before delegating, read [subagent routing](subagent-routing.md) and follow it. Spawning, waiting and report collection follow the routing note's Subagent integration paragraph. When that paragraph says delegation is unavailable, do the work inline. Never invent subagent calls.
 - **Progress.** Track progress through artifacts or tasks with the `todo` tool if available; otherwise state the checklist in your reply. `tasks.md` stays the official status.
-- **Workspace mode.** When `openspec status` reports `actionContext.mode: "workspace-planning"`, apply, verify, sync and archive are not supported here: explain it, treat linked repos as read-only context and stop before editing files.
+- **Workspace mode.** When `openspec status` reports `actionContext.mode: "workspace-planning"`, verify, sync and archive are not supported here: explain it, treat linked repos as read-only context and stop before editing files. apply follows its workspace guard in the apply section.
 - **Finishing.** No command invokes `finishing-a-development-branch`; merging, pushing and PR handling belong to the finalize artifact.
 
 ## explore
 
 - Never write code. Editing a schema, a template or `config.yaml` counts as implementing: refuse it and point the user to creating a change with `/opsx-new <name>`.
 - Reading is free, but before the first write name the file and the scope and wait for a yes, unless the user asked for the capture.
+- This overrides the stock explore skill's "capture the requested artifacts" behaviour: even when the user asks to capture proposal or specs into a new change, scaffold only with `openspec new change <name>` and point to `/opsx-continue <name>`.
 - When an insight needs a new change, you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`. Every artifact after the scaffold needs the gated `brainstorm`, so explore only scaffolds and hands off: do not write `brainstorm.md` or any later artifact for a new change, and do not run a review gate in explore.
 - For an existing change, capture targets are `proposal.md`, `specs/<capability>/spec.md`, `design.md` and `tasks.md`. `brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.
 - Hand-offs name `/opsx-new <name>` to start a change and `/opsx-continue <name>` to continue one, in place of every stock hand-off to another skill.

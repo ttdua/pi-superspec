@@ -71,7 +71,7 @@ Setup: install `@tintinweb/pi-subagents` (and no other subagent plugin) and pi-s
 ### Shipped layout and OpenSpec 2.0
 
 - [ ] `/opsx-ff e2e-a-ff` stops at two planned points only. Expected: it stops at the `brainstorm.md` gate and at the final gate over proposal, design, specs, tasks and plan, and nothing else; it never starts apply.
-- [ ] `/opsx-apply` follows `workflow.md` rather than the stock apply loop. Expected: it creates a worktree on a branch named `<change-name>`, runs the executor chosen for the plugin set, and opens no code review gate (that gate belongs to finalize).
+- [ ] `/opsx-apply` follows `openspec/schemas/superspec/workflow.md` rather than the stock apply loop. Expected: it creates a worktree on a branch named `<change-name>`, runs the executor chosen for the plugin set, and opens no code review gate (that gate belongs to finalize).
 - [ ] Delete `.agents/skills/openspec-apply-change/` in a scratch copy and start a session. Expected: pi warns once that `openspec-apply-change` is missing from `.agents/skills/`; `/opsx-apply` stops and names the missing skill instead of improvising.
 - [ ] Deselect a workflow with `openspec config profile` in a scratch copy, then run `/opsx-init` after removing its stock skill. Expected: the output names the missing workflow, prints `openspec config profile` and `/opsx-init`, and writes no file.
 - [ ] Manual legacy check: in a 1.x-initialised project (initialised with OpenSpec 1.x via `openspec init --tools pi`) that also holds `.pi/prompts/mine.md`, upgrade OpenSpec to 2.0 and run `/opsx-init`. Expected: `.pi/prompts/opsx-*.md` are removed by OpenSpec, `.pi/prompts/mine.md` still exists, and `/opsx-init` asks no legacy-cleanup question.
