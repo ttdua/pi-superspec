@@ -56,4 +56,4 @@
 
 ## Next step
 
-`<e.g., "Run /opsx-verify" or "Re-run apply to address <issue>">`
+`<e.g., "Use openspec-verify-change" or "Re-run apply to address <issue>">`

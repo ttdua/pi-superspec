@@ -4,7 +4,6 @@ import { findProjectRoot } from "../activation.ts";
 import { parseInitArgs } from "./args.ts";
 import { DEFAULT_LANGUAGE, applyConfig, applyLanguage, readLanguage, validateLanguage } from "./config.ts";
 import type { ExecResult, InitIO } from "./io.ts";
-import { cleanLegacy } from "./legacy.ts";
 import { checkOpenspec, collectWarnings } from "./preflight.ts";
 import {
 	backupPath,
@@ -15,12 +14,14 @@ import {
 	ReplaceError,
 	type ReplaceResult,
 } from "./schema-install.ts";
+import { ensureStockSkills } from "./stock-skills.ts";
 
 export type InitOutcome =
 	| "activated"
 	| "blocked"
 	| "invalid-arguments"
 	| "preflight-failed"
+	| "profile-not-ready"
 	| "replace-failed"
 	| "validation-failed";
 
@@ -81,11 +82,17 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 	for (const warning of warnings) io.notify(warning, "warning");
 
 	const root = findProjectRoot(io.cwd) ?? io.cwd;
-	if (!existsSync(join(root, "openspec"))) {
-		const init = await run(io, ["init", "--tools", "none"], root);
+	const stock = await ensureStockSkills(io, root);
+	if (typeof stock === "object") {
+		io.notify(stock.stop, "error");
+		return "profile-not-ready";
+	}
+	const installSkills = stock === "install" || !existsSync(join(root, "openspec"));
+	if (installSkills) {
+		const init = await run(io, ["init", "--tools", "pi"], root);
 		if (init.code !== 0) {
 			const detail = output(init);
-			io.notify(`openspec init --tools none failed${detail ? `:\n${detail}` : ""}`, "error");
+			io.notify(`openspec init --tools pi failed${detail ? `:\n${detail}` : ""}`, "error");
 			return "preflight-failed";
 		}
 	}
@@ -103,16 +110,14 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 			`Could not read openspec/schemas/superspec: ${err instanceof Error ? err.message : String(err)}. Nothing was changed.`,
 			"error",
 		);
-		await cleanLegacy(io, root);
 		return "blocked";
 	}
 	const to = markerVersion(bundled) ?? 0;
 	const noteLine = "Note: openspec/config.yaml now has `schema: superspec`.";
 	// Blocked notice: the main line, then the config note (when config.yaml was just written), then details.
-	const block = async (main: string, details: string[] = []): Promise<InitOutcome> => {
+	const block = (main: string, details: string[] = []): InitOutcome => {
 		const lines = [main, ...(config === "written" ? [noteLine] : []), ...details];
 		io.notify(lines.join("\n"), "warning");
-		await cleanLegacy(io, root);
 		return "blocked";
 	};
 
@@ -173,11 +178,9 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 			}
 			if (config === "written") lines.push(noteLine);
 			io.notify(lines.join("\n"), "error");
-			await cleanLegacy(io, root);
 			return "replace-failed";
 		}
 	}
-	await cleanLegacy(io, root);
 	await setLanguage(io, root, parsed.lang);
 
 	const validation = await run(io, ["schema", "validate", "superspec"], root);
@@ -197,8 +200,14 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 		...warnings,
 		...schemaReport,
 		"Schema superspec is valid.",
-		"Superspec is set up. Next: /opsx-new <name>",
+		"Superspec is set up. Next: ask the agent to start a change, or run /skill:openspec-new-change <name>",
 	];
+	if (installSkills) {
+		report.push(
+			"Commit .agents/skills/.",
+			"Keep the eight workflows (explore, new, continue, ff, apply, verify, sync, archive) selected in the OpenSpec profile (`openspec config profile`): `openspec update` removes deselected ones.",
+		);
+	}
 	if (parsed.generate) {
 		report.push("For an existing codebase, run /opsx-generate-specs to draft specs from the code.");
 	}

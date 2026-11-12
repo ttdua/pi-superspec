@@ -19,16 +19,15 @@ describe("parseOpenspecVersion", () => {
 });
 
 describe("checkOpenspec", () => {
-	it("accepts 1.16.0 and 2.0.0", async () => {
-		expect(await checkOpenspec(fakeIO({ exec: execOut(0, "1.16.0\n") }))).toEqual({ ok: true });
-		expect(await checkOpenspec(fakeIO({ exec: execOut(0, "2.0.0\n") }))).toEqual({ ok: true });
+	it.each(["2.0.0", "2.3.1", "2.0.0-beta.1", "openspec banner\n2.0.0"])("accepts %s", async (v) => {
+		expect(await checkOpenspec(fakeIO({ exec: execOut(0, `${v}\n`) }))).toEqual({ ok: true });
 	});
-	it.each(["1.15.9", "1.4.1"])("rejects %s with the install line", async (v) => {
+	it.each(["1.17.0", "1.16.0"])("rejects %s with the install line", async (v) => {
 		const r = await checkOpenspec(fakeIO({ exec: execOut(0, `${v}\n`) }));
 		expect(r.ok).toBe(false);
 		if (!r.ok) {
 			expect(r.message).toContain(INSTALL_LINE);
-			expect(r.message).toContain("(>= 1.16)");
+			expect(r.message).toContain("(>= 2.0)");
 		}
 	});
 	it("rejects unparsable output", async () => {

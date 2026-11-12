@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const root = new URL("..", import.meta.url);
-const referenceUrl = new URL("skills/references/subagent-routing.md", root);
+const referenceUrl = new URL("schema/superspec/subagent-routing.md", root);
+const workflowUrl = new URL("schema/superspec/workflow.md", root);
 
 const SECTIONS = [
 	"Roles",
@@ -31,7 +32,6 @@ function section(name: (typeof SECTIONS)[number]): string {
 describe("subagent routing reference", () => {
 	it("SA-R00 exists as a plain reference with eight sections and no registration", () => {
 		expect(existsSync(referenceUrl)).toBe(true);
-		expect(existsSync(new URL("skills/references/SKILL.md", root))).toBe(false);
 		const text = reference();
 		for (const name of SECTIONS) {
 			expect(text).toMatch(new RegExp(`^## ${name}$`, "m"));
@@ -44,21 +44,11 @@ describe("subagent routing reference", () => {
 		expect(text).not.toMatch(/\bregisterAgent\b|npm install|bun add/);
 	});
 
-	it.each([
-		"opsx-explore",
-		"opsx-continue",
-		"opsx-ff",
-		"opsx-apply",
-		"opsx-verify",
-		"opsx-generate-specs",
-	])("SA-R00 %s links the shared reference to the packaged file", (name) => {
-		const skillUrl = new URL(`skills/${name}/SKILL.md`, root);
-		const link = /\]\((\.\.\/references\/subagent-routing\.md)\)/.exec(
-			readFileSync(skillUrl, "utf8"),
-		);
-		expect(link, `${name} lacks the shared reference link`).not.toBeNull();
-		expect(new URL(link![1], skillUrl).href).toBe(referenceUrl.href);
-		expect(existsSync(new URL(link![1], skillUrl))).toBe(true);
+	it("Integration policy loaded: workflow.md links the reference relatively", () => {
+		const link = /\]\((subagent-routing\.md)\)/.exec(readFileSync(workflowUrl, "utf8"));
+		expect(link, "workflow.md lacks the shared reference link").not.toBeNull();
+		expect(new URL(link![1], workflowUrl).href).toBe(referenceUrl.href);
+		expect(existsSync(new URL(link![1], workflowUrl))).toBe(true);
 	});
 
 	it("Plugin-neutral reference", () => {
@@ -335,6 +325,15 @@ describe("subagent routing reference", () => {
 		expect(text).toContain("docs/e2e-checklist.md");
 		expect(text).toMatch(/not claim[^.]*untested/i);
 	});
+
+	it("Compatibility links survive the copy", () => {
+		const links = [...section("Compatibility").matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
+		expect(links).toEqual([
+			"https://github.com/ttdua/pi-superspec/blob/main/docs/architecture.md",
+			"https://github.com/ttdua/pi-superspec/blob/main/docs/e2e-checklist.md",
+		]);
+		for (const link of links) expect(link).toMatch(/^https:\/\/github\.com\/ttdua\/pi-superspec\//);
+	});
 });
 
 describe("architecture compatibility note", () => {
@@ -356,7 +355,7 @@ describe("architecture compatibility note", () => {
 	};
 
 	it("links the routing reference and states no proven minimum", () => {
-		expect(architecture).toMatch(/skills\/references\/subagent-routing\.md/);
+		expect(architecture).toMatch(/schema\/superspec\/subagent-routing\.md/);
 		expect(compatibility()).toMatch(/not a proven minimum/i);
 	});
 

@@ -10,6 +10,7 @@ import {
 	insertRoutingNote,
 	ROUTING_NOTE,
 	ROUTING_NOTE_MARKER,
+	STOCK_SKILLS_PARAGRAPH,
 	routingNote,
 	SUPERPOWERS_MISSING_WARNING,
 } from "../extensions/routing-note.ts";
@@ -105,8 +106,9 @@ describe("ROUTING_NOTE", () => {
 
 	it("begins with its marker and mentions the key guidance", () => {
 		expect(ROUTING_NOTE.startsWith(ROUTING_NOTE_MARKER)).toBe(true);
-		expect(ROUTING_NOTE).toContain("/opsx-ff");
-		expect(ROUTING_NOTE).toContain("/opsx-new");
+		expect(ROUTING_NOTE).toContain("openspec-ff-change");
+		expect(ROUTING_NOTE).toContain("openspec-new-change");
+		expect(ROUTING_NOTE).toContain("openspec-continue-change");
 		expect(ROUTING_NOTE).toContain("docs/superpowers/");
 		expect(ROUTING_NOTE).toContain("TDD");
 		expect(ROUTING_NOTE).toContain("answer directly");
@@ -118,7 +120,7 @@ describe("ROUTING_NOTE", () => {
 
 	it("does not force a change", () => {
 		expect(ROUTING_NOTE).not.toContain("MUST first be proposed");
-		const lines = ROUTING_NOTE.split("\n").filter((l) => l.includes("/opsx-new"));
+		const lines = ROUTING_NOTE.split("\n").filter((l) => l.includes("openspec-new-change"));
 		expect(lines.length).toBeGreaterThan(0);
 		for (const l of lines) expect(l).toContain("review");
 	});
@@ -229,5 +231,71 @@ describe("CODING_STANDARDS_MISSING_WARNING", () => {
 	it("does not tell the user to install a package or mention Superpowers", () => {
 		expect(CODING_STANDARDS_MISSING_WARNING).not.toContain("pi install");
 		expect(CODING_STANDARDS_MISSING_WARNING).not.toContain("Superpowers");
+	});
+});
+
+const OLD_STEP_COMMAND = /\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/;
+const STOCK_SKILL_IDS = [
+	"openspec-explore",
+	"openspec-new-change",
+	"openspec-continue-change",
+	"openspec-ff-change",
+	"openspec-apply-change",
+	"openspec-verify-change",
+	"openspec-sync-specs",
+	"openspec-archive-change",
+];
+
+describe("ROUTING_NOTE path guidance", () => {
+	it("names the stock skills and no old step command", () => {
+		const ff = ROUTING_NOTE.split("\n").find((l) => l.startsWith("- Spec change with clear requirements"));
+		expect(ff).toContain("openspec-ff-change");
+		const step = ROUTING_NOTE.split("\n").find((l) => l.startsWith("- Spec change that needs careful"));
+		expect(step).toMatch(/openspec-new-change[^.]*then[^.]*openspec-continue-change/);
+		expect(ROUTING_NOTE).not.toMatch(OLD_STEP_COMMAND);
+	});
+});
+
+describe("STOCK_SKILLS_PARAGRAPH", () => {
+	it("Stock skill mapping: starts with its label and names each stock skill", () => {
+		expect(STOCK_SKILLS_PARAGRAPH.startsWith("Stock skills:")).toBe(true);
+		for (const id of STOCK_SKILL_IDS) expect(STOCK_SKILLS_PARAGRAPH, id).toContain(id);
+		expect(STOCK_SKILLS_PARAGRAPH).toMatch(/workflow\.md[^.]*(wins|overrides)/);
+	});
+
+	it("names no old step command", () => {
+		expect(STOCK_SKILLS_PARAGRAPH).not.toMatch(OLD_STEP_COMMAND);
+		expect(routingNote("en")).not.toMatch(OLD_STEP_COMMAND);
+	});
+
+	it("Section read before the stock skill", () => {
+		const p = STOCK_SKILLS_PARAGRAPH;
+		expect(p).toMatch(/[Bb]efore (you )?run(ning)? any of these skills, however (it was|they are|it is) invoked/);
+		expect(p).toContain("openspec/schemas/superspec/workflow.md");
+		expect(p).toContain(
+			"read its step's section of openspec/schemas/superspec/workflow.md plus the Shared rules, Review gate and Superpowers rule sections",
+		);
+	});
+
+	it("Missing stock skill stop", () => {
+		const p = STOCK_SKILLS_PARAGRAPH;
+		expect(p).toContain("available skills list");
+		expect(p).toContain("openspec config profile");
+		expect(p).toContain("openspec update");
+		expect(p).toContain("/opsx-init");
+		expect(p).toMatch(/stop without doing the work another way/);
+	});
+
+	it("names the override file and the unused skills", () => {
+		expect(STOCK_SKILLS_PARAGRAPH).toContain("openspec/schemas/superspec/workflow.md");
+		for (const id of ["openspec-propose", "openspec-update-change", "openspec-bulk-archive-change", "openspec-onboard"]) {
+			expect(STOCK_SKILLS_PARAGRAPH).toContain(id);
+		}
+		expect(STOCK_SKILLS_PARAGRAPH).toMatch(/not part of (this|the) workflow[^.]*suggest the matching/);
+	});
+
+	it("Stock skills paragraph first: sits right after ROUTING_NOTE and before the language paragraph", () => {
+		const text = routingNote("en");
+		expect(text.startsWith(`${ROUTING_NOTE}\n\n${STOCK_SKILLS_PARAGRAPH}\n\nDocument language:`)).toBe(true);
 	});
 });

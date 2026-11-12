@@ -6,17 +6,21 @@ export const ROUTING_NOTE = `${ROUTING_NOTE_MARKER}
 This project uses OpenSpec with the superspec schema. Choose the path that fits the work:
 
 - No spec change (a small mistake, a typo, a fix restoring specified behaviour, a refactor): work directly with TDD and no change directory. Before treating work as a fix, confirm the behaviour in the living specs under openspec/specs/; behaviour not specified there makes it a spec change.
-- Spec change with clear requirements: use /opsx-ff.
-- Spec change that needs careful step-by-step review: use /opsx-new, then /opsx-continue.
+- Spec change with clear requirements: use the openspec-ff-change skill.
+- Spec change that needs careful step-by-step review: use openspec-new-change, then openspec-continue-change.
 - Questions, research and reviews: answer directly, without proposing a change.
 
 Before starting, state the path you chose and a one-line reason.
 
 Do NOT write design docs or plans to docs/superpowers/; they live in the change directory instead.`;
 
-/** The routing note, with the document language paragraph. */
+export const STOCK_SKILLS_PARAGRAPH = `Stock skills: the workflow steps run the stock OpenSpec skills openspec-explore, openspec-new-change, openspec-continue-change, openspec-ff-change, openspec-apply-change, openspec-verify-change, openspec-sync-specs and openspec-archive-change. Before running any of these skills, however it was invoked, read its step's section of openspec/schemas/superspec/workflow.md plus the Shared rules, Review gate and Superpowers rule sections; where they differ, workflow.md overrides the skill. If the skill is not in the available skills list, name it, point to openspec config profile and openspec update (or /opsx-init), and stop without doing the work another way. openspec-propose, openspec-update-change, openspec-bulk-archive-change and openspec-onboard are not part of this workflow; suggest the matching workflow skill instead.`;
+
+/** The routing note, with the stock skills and document language paragraphs. */
 export function routingNote(language: string, channelText = "", subagentText = ""): string {
 	const base = `${ROUTING_NOTE}
+
+${STOCK_SKILLS_PARAGRAPH}
 
 Document language: write the prose of OpenSpec documents (change artifacts and main specs) in ${JSON.stringify(language)}. Keep headings, requirement and scenario names, WHEN/THEN/SHALL/MUST, checkbox syntax, delta operation headers, and file and capability names in English. Code, code comments and commit messages are not affected. If the user asks to change the document language, update \`language:\` in openspec/config.yaml.`;
 	return [base, channelText, subagentText].filter((part) => part !== "").join("\n\n");

@@ -1,7 +1,7 @@
 # bundled-schema Specification
 
 ## Purpose
-Define the bundled `superspec` OpenSpec schema (currently v7) shipped in `schema/superspec/`: identity and marker, artifact DAG, apply, verify and finalize rules, and harness-neutral wording.
+Define the bundled `superspec` OpenSpec schema shipped in `schema/superspec/`: identity and marker, artifact DAG, apply, verify and finalize rules, and harness-neutral wording.
 
 ## Requirements
 

@@ -26,6 +26,13 @@ describe("opsx-generate-specs command", () => {
 		expect(frontmatter(read(SKILL))).toMatch(/^name: opsx-generate-specs\s*$/m);
 	});
 
+	it("Stops after specs: hands off to openspec-ff-change bootstrap-specs, no old step command", () => {
+		for (const path of [SKILL, PROMPT]) {
+			expect(read(path), path).not.toMatch(/\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/);
+		}
+		expect(read(SKILL)).toContain("/skill:openspec-ff-change bootstrap-specs");
+	});
+
 	it("keeps the prompt as a short delegation", () => {
 		const prompt = read(PROMPT);
 		expect(prompt).toContain("opsx-generate-specs");
@@ -47,7 +54,7 @@ describe("opsx-generate-specs command", () => {
 		const skill = read(SKILL);
 		for (const needle of [
 			"bootstrap-specs",
-			"/opsx-ff bootstrap-specs",
+			"openspec-ff-change bootstrap-specs",
 			"Evidence:",
 			"Confidence: inferred",
 			"No design needed:",
@@ -157,10 +164,16 @@ describe("generate-specs evidence-only scouts", () => {
 		return text.slice(text.indexOf(from), text.indexOf(to));
 	};
 	const map = () => step("**MAP the codebase**", "**Drop existing specs**");
+	it("SA-G00 resolves the routing path against the project root in both reads", () => {
+		expect(map()).toMatch(/relative to the activated project's root, not this skill's directory/);
+		expect(dispatch()).toMatch(/relative to the activated project's root, not this skill's directory/);
+	});
 	const dispatch = () => step("**SCOUT each capability**", "**Write the other artifacts**");
 
 	it("SA-G00 reads the shared routing reference before delegating", () => {
-		expect(skill()).toContain("../references/subagent-routing.md");
+		expect(skill()).toContain("openspec/schemas/superspec/subagent-routing.md");
+		expect(skill()).not.toContain("../references/");
+		expect(skill()).toMatch(/relative to the activated project's root, not this skill's directory/);
 		expect(skill()).not.toContain("## Availability");
 		expect(skill()).not.toContain("Helper-only");
 	});
@@ -251,7 +264,7 @@ describe("generate-specs evidence-only scouts", () => {
 		const text = skill();
 		const review = text.search(/spec reviewer role/);
 		const validate = text.indexOf("openspec validate bootstrap-specs --strict");
-		const handoff = text.indexOf("/opsx-ff bootstrap-specs`.\"");
+		const handoff = text.indexOf("/skill:openspec-ff-change bootstrap-specs`.\"");
 		expect(review).toBeGreaterThan(text.indexOf("**SCOUT each capability**"));
 		expect(review).toBeLessThan(validate);
 		expect(validate).toBeLessThan(handoff);

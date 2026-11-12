@@ -16,9 +16,12 @@ import { parseArtifactTable } from "./helpers/artifact-table.js";
 
 const available = hasOpenspec();
 if (!available) {
-	console.warn("openspec >= 1.16 not found on PATH; skipping schema tests");
+	console.warn("openspec schema validator not found on PATH; skipping schema tests");
 }
 const run = available ? describe : describe.skip;
+
+const POINTER =
+	"Follow openspec/schemas/superspec/workflow.md for the command you are running; it overrides the running skill where they differ.";
 
 run("bundled schema", () => {
 	let project: TempProject;
@@ -44,14 +47,15 @@ run("bundled schema", () => {
 		].join("\n");
 	};
 
-	it("identity: name, version and marker", () => {
+	it("Identity fields: name, version 9 and marker", () => {
 		const text = schemaYaml();
 		expect(text).toMatch(/^name: superspec$/m);
-		expect(text).toMatch(/^version: 8$/m);
-		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 8$/m);
+		expect(text).toMatch(/^version: 9$/m);
+		expect(text).toMatch(/^x-pi-superspec:\n\s+version: 9$/m);
+		expect(text.split("\n")[0]).toBe("# Superspec schema v9 for pi-superspec.");
 	});
 
-	it("keeps the nine artifact IDs of version 7", () => {
+	it("No artifact ID changes: keeps the nine artifact IDs of versions 7 and 8", () => {
 		const ids = [...schemaYaml().matchAll(/^  - id: (\S+)/gm)].map((m) => m[1]);
 		expect(ids).toEqual([
 			"brainstorm",
@@ -76,6 +80,40 @@ run("bundled schema", () => {
 		const text = schemaYaml();
 		expect(text).toContain("Superspec");
 		expect(text).toContain("e1c8f417");
+	});
+
+	it("File shipped: workflow.md and subagent-routing.md sit in the schema directory", () => {
+		expect(existsSync(join(SCHEMA_DIR, "workflow.md"))).toBe(true);
+		expect(existsSync(join(SCHEMA_DIR, "subagent-routing.md"))).toBe(true);
+		expect(existsSync(new URL("../skills/references/subagent-routing.md", import.meta.url))).toBe(false);
+	});
+
+	it("Every instruction points to it: every artifact and the apply instruction start with the pointer", () => {
+		for (const id of ["brainstorm", "proposal", "design", "specs", "tasks", "plan", "apply", "verify", "finalize"]) {
+			const out = project.openspec(["instructions", id, "--change", "x", "--json"]);
+			expect(out.status, out.stdout + out.stderr).toBe(0);
+			const first = (JSON.parse(out.stdout).instruction as string).trimStart().split("\n")[0];
+			expect(first, id).toBe(POINTER);
+		}
+		const yamlInstructions = [...schemaYaml().matchAll(/^ +instruction: \|\n( +)(.*)$/gm)];
+		expect(yamlInstructions).toHaveLength(10);
+		for (const m of yamlInstructions) expect(m[2]).toBe(POINTER);
+	}, 60_000);
+
+	it("Still valid: the schema directory with workflow.md validates", () => {
+		const res = project.openspec(["schema", "validate", "superspec"]);
+		expect(res.status, res.stdout + res.stderr).toBe(0);
+	});
+
+	it("No tool names: schema, templates, workflow.md and subagent-routing.md", () => {
+		const text = [
+			schemaText(),
+			readFileSync(join(SCHEMA_DIR, "workflow.md"), "utf8"),
+			readFileSync(join(SCHEMA_DIR, "subagent-routing.md"), "utf8"),
+		].join("\n");
+		for (const term of ["AskUserQuestion", "rpiv-", "pi-subagents", "Skill tool", "/opsx:"]) {
+			expect(text, term).not.toContain(term);
+		}
 	});
 
 	it("schema text has no harness-specific tool names", () => {
@@ -357,7 +395,7 @@ run("bundled schema", () => {
 			const flat = verifyInstruction().replace(/\s+/g, " ");
 			const sentences = flat.split(/(?<=\.)\s/);
 			expect(
-				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
+				sentences.some((s) => s.includes("openspec-archive-change") && /sync/.test(s)),
 			).toBe(true);
 		});
 	});
@@ -397,8 +435,21 @@ run("bundled schema", () => {
 			).replace(/\s+/g, " ");
 			const sentences = flat.split(/(?<=\.)\s/);
 			expect(
-				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
+				sentences.some((s) => s.includes("openspec-archive-change") && /sync/.test(s)),
 			).toBe(true);
+		});
+	});
+	describe("no step commands", () => {
+		const OLD_STEP_COMMAND = /\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/;
+
+		it("No step commands: schema.yaml and templates name no /opsx-<step> command", () => {
+			const files = [
+				join(SCHEMA_DIR, "schema.yaml"),
+				...readdirSync(join(SCHEMA_DIR, "templates")).map((f) => join(SCHEMA_DIR, "templates", f)),
+			];
+			for (const file of files) {
+				expect(readFileSync(file, "utf8"), file).not.toMatch(OLD_STEP_COMMAND);
+			}
 		});
 	});
 	describe("artifact DAG", () => {
@@ -598,7 +649,7 @@ run("bundled schema", () => {
 		it("plan instruction carries the handoff, ID, scenario and spec rules", () => {
 			const text = instructionFor("plan");
 			expect(text).toContain(
-				"Skip the skill's execution handoff; `/opsx-apply` chooses the executor.",
+				"Skip the skill's execution handoff; `openspec-apply-change` chooses the executor.",
 			);
 			expect(text).toContain(
 				"Every plan task names the tasks.md group it implements (e.g. `Task 3 — implements 3`)",
@@ -614,7 +665,7 @@ run("bundled schema", () => {
 		it("plan template does not pre-select an executor", () => {
 			const t = tpl("plan.md");
 			expect(t).not.toContain("subagent-driven-development");
-			expect(t).toContain("Executed via `/opsx-apply`, which chooses the executor.");
+			expect(t).toContain("Executed via `openspec-apply-change`, which chooses the executor.");
 			expect(t).toMatch(/^## Task 1: .*implements N$/m);
 			expect(t).toMatch(/^## Scenario → test$/m);
 		});
@@ -754,9 +805,7 @@ run("bundled schema", () => {
 			expect(text).not.toContain("contains untracked entries");
 			expect(text).toContain("Skip the commit only when the output is empty");
 			expect(text).not.toMatch(/only modifications/);
-			expect(text).toContain(
-				"then request a whole-branch review, write apply.md (step 3) and stop.",
-			);
+			expect(text).toContain("A missing required skill stops apply");
 		});
 
 		it("apply.md template has no hard-coded .worktrees path", () => {

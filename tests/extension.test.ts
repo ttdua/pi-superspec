@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,13 +61,12 @@ describe("superspec extension", () => {
 		expect(result.skillPaths[0]).toMatch(/[\\/]skills$/);
 		expect(result.promptPaths[0]).toMatch(/[\\/]prompts$/);
 		expect(
-			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
+			existsSync(join(result.skillPaths[0], "opsx-generate-specs", "SKILL.md")),
 		).toBe(true);
-		expect(existsSync(join(result.promptPaths[0], "opsx-new.md"))).toBe(true);
 		expect(
-			existsSync(join(result.skillPaths[0], "opsx-apply", "SKILL.md")),
-		).toBe(true);
-		expect(existsSync(join(result.promptPaths[0], "opsx-apply.md"))).toBe(true);
+			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
+		).toBe(false);
+		expect(readdirSync(result.promptPaths[0])).toEqual(["opsx-generate-specs.md"]);
 	});
 
 	it("returns nothing in an unmarked project", () => {
@@ -269,7 +268,7 @@ describe("session_start handler", () => {
 		const run = (state: State, hasUI = true) => {
 			const { root, schema } = project(state);
 			const before = hashTree(schema);
-			const calls = start(root, sp, hasUI);
+			const calls = start(root, sp, hasUI).filter(([m]) => !m.includes("stock OpenSpec skills"));
 			expect(hashTree(schema)).toEqual(before);
 			return calls;
 		};
@@ -375,7 +374,7 @@ describe("interaction channel wiring", () => {
 			getActiveTools: () => [],
 		});
 		await expect(start()).resolves.toBeUndefined();
-		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("coding-standards") && !m.includes("Schema superspec"))).toHaveLength(0);
+		expect(notes.filter(([m]) => !m.includes("Superpowers") && !m.includes("coding-standards") && !m.includes("Schema superspec") && !m.includes("stock OpenSpec skills"))).toHaveLength(0);
 		expect(note()).not.toContain("plannotator-cli");
 	});
 

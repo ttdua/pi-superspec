@@ -15,7 +15,7 @@ export async function checkOpenspec(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
 	const fail = (reason: string) => ({
 		ok: false as const,
-		message: `${reason}. Install or upgrade OpenSpec (>= 1.16): ${INSTALL_LINE}`,
+		message: `${reason}. Install or upgrade OpenSpec (>= 2.0): ${INSTALL_LINE}`,
 	});
 	let result;
 	try {
@@ -26,7 +26,7 @@ export async function checkOpenspec(
 	if (result.code !== 0) return fail("openspec was not found");
 	const v = parseOpenspecVersion(result.stdout);
 	if (!v) return fail("Could not parse the openspec version");
-	if (v.major < 1 || (v.major === 1 && v.minor < 16)) {
+	if (v.major < 2) {
 		return fail(`openspec ${v.major}.${v.minor} is too old`);
 	}
 	return { ok: true };

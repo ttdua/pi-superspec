@@ -14,9 +14,11 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 ## Goals
 
 1. One command, `/opsx-init`, sets up a repository.
-2. Workflow commands and skills load only in projects initialised by the package.
-3. Removing the package removes every command and skill; `openspec/` stays a valid
-   OpenSpec project.
+2. `/opsx-generate-specs` loads only in projects initialised by the package. The
+   workflow steps run OpenSpec's own stock skills, which the package never forks.
+3. Removing the package removes `/opsx-init`, `/opsx-generate-specs` and the
+   `opsx-generate-specs` skill; `openspec/` stays a valid OpenSpec project, and the stock skills stay in
+   `.agents/skills/` (they belong to OpenSpec).
 4. The bundled schema is versioned (marker and lock file record the version).
    `/opsx-init` upgrades a project's older, unchanged copy after confirmation and
    replaces any other copy only with `--force` and a backup (see
@@ -28,7 +30,7 @@ for the entities, and [glossary.md](glossary.md) for terms. For day-to-day use s
 
 - Installing OpenSpec or Superpowers. Users run `brew install openspec` and
   `pi install git:github.com/obra/superpowers` themselves.
-- Forking OpenSpec or modifying Superpowers skills.
+- Forking OpenSpec (its stock skills are used as installed, with `workflow.md` layered on top) or modifying Superpowers skills.
 - Supporting harnesses other than pi. Schema text is harness-neutral so it does not
   break elsewhere, but only pi is tested.
 - Enforcing the workflow by blocking tool calls (possible later).
@@ -57,12 +59,12 @@ pi-superspec/
 │   ├── routing-note.ts     # routing note and Superpowers detection
 │   ├── interaction-channel.ts  # channel detection and the Interaction channel paragraph
 │   └── init/               # /opsx-init steps: init.ts, preflight.ts, config.ts,
-│                           #   schema-install.ts, legacy.ts, io.ts
+│                           #   schema-install.ts, stock-skills.ts, io.ts
 ├── agents/                 # published; six plugin-neutral superspec.<role> specialist agents (discovered by plugins that read the package manifest)
-├── schema/superspec/       # published; bundled OpenSpec schema: schema.yaml + templates/ + LICENSE
-├── skills/                 # published; pi-adapted openspec skills (loaded dynamically)
+├── schema/superspec/       # published; bundled OpenSpec schema: schema.yaml + templates/ + workflow.md + subagent-routing.md + LICENSE
+├── skills/                 # published; the opsx-generate-specs skill only
 │   └── opsx-generate-specs/  # SKILL.md: draft specs for an existing codebase
-├── prompts/                # published; opsx-*.md commands (loaded dynamically)
+├── prompts/                # published; the opsx-generate-specs prompt only (loaded dynamically)
 │   └── opsx-generate-specs.md  # short delegation to the skill
 ├── tests/                  # repository only; vitest suites, fixtures/, helpers/, init/
 ├── docs/                   # repository only; architecture.md, workflow.md, domain-model.md, glossary.md,
@@ -89,8 +91,8 @@ only to develop pi-superspec itself and is never edited by a change.
 | Extension | Registers `/opsx-init`; decides activation on `resources_discover`; warns once per session start (including reload) when Superpowers is not installed; probes once per session start whether the `plannotator` CLI exists; injects the routing note via the `context` event, always with a document language paragraph naming the `language` from `openspec/config.yaml` (read on every turn), or `en` when none is valid, and an Interaction channel paragraph for the channel detected from the active tools and the probe result. At `session_start` it only reads the project schema and may show a one-line notice; it never writes (see below). |
 | Bundled schema | The whole workflow: artifact DAG, templates, artifact instructions, the `apply` block. Copied into each project. |
 | Package agents | Six specialist definitions (`superspec.scout`, `superspec.spec-reviewer`, `superspec.plan-reviewer`, `superspec.implementer`, `superspec.task-reviewer`, `superspec.verifier`), bundled candidates for the scout, spec reviewer, plan reviewer, implementer, task reviewer and verifier roles (no precedence over other qualifying agents), declared by top-level `pi-subagents.agents: ["./agents"]` and by `pi.subagents.agents`. A compatible plugin discovers them package-wide, independent of activation; they are not loaded through `resources_discover` and are never copied into user or project agent directories. Models and thinking levels stay in user/project configuration. The parent session owns dispatch, official artifact writes, task ticks, receipts and publication. The implementer, task reviewer and plan reviewer select a user-provided `coding-standards` skill; it is optional (missing: warning, fallback to project conventions). |
-| Skills + prompts | pi versions of the OpenSpec `opsx` commands, using pi tools with plain fallbacks. Not declared in the package manifest; returned only for activated projects. |
-| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then gathers evidence per capability with evidence-only scouts (the scout role; one map scout before confirmation on configured models, then one per confirmed capability; sequentially inline when the integration is absent). The parent alone writes the delta specs in a `bootstrap-specs` change, has them reviewed by the spec reviewer role and strict-validates them, and stops before `/opsx-ff bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
+| Prompts + workflow rules | No prompt per step: the eight stock OpenSpec skills (`openspec-explore`, `openspec-new-change`, `openspec-continue-change`, `openspec-ff-change`, `openspec-apply-change`, `openspec-verify-change`, `openspec-sync-specs`, `openspec-archive-change`) are installed in `.agents/skills/` by `openspec init --tools pi`, and users run them with `/skill:<id>` or by asking the agent. The routing note's stock skills paragraph tells the agent to read the matching section of `openspec/schemas/superspec/workflow.md` before running any of them, however invoked, and to stop when one is missing; `workflow.md` wins where it differs. Every schema instruction also points to `workflow.md`. `session_start` warns once when a required stock skill is missing. The only prompt, `opsx-generate-specs.md`, is not declared in the package manifest; it is returned only for activated projects. |
+| `opsx-generate-specs` skill + prompt | Drafts specs for an existing codebase: maps the code, asks one confirmation, then gathers evidence per capability with evidence-only scouts (the scout role; one map scout before confirmation on configured models, then one per confirmed capability; sequentially inline when the integration is absent). The parent alone writes the delta specs in a `bootstrap-specs` change, has them reviewed by the spec reviewer role and strict-validates them, and stops before `openspec-ff-change bootstrap-specs`. The prompt only delegates to the skill. It is discovered like any other prompt, so it exists only after activation. |
 
 ## Runtime flow
 
@@ -125,16 +127,22 @@ Always available, idempotent: re-running on an initialised project changes nothi
 unless you pass `--lang`, answer the language prompt, or `language:` is missing or invalid (it is then set to `en`).
 It upgrades or replaces an existing schema only as the decision table below says; `--force` replaces after a backup.
 
-1. Require `openspec --version` ≥ 1.16; otherwise print the install line and stop.
+1. Require `openspec --version` ≥ 2.0; otherwise print the install line and stop.
 2. Warn (do not stop) when not in a git repo or when Superpowers skills are not
    discoverable.
-3. If `openspec/` is missing, run `openspec init --tools none` (no harness files).
+3. Check the stock skills. If `.agents/skills/openspec-<id>/SKILL.md` exists for all eight
+   required ids, continue. Otherwise read `openspec config list --json`; unless the profile is
+   `custom` and selects all eight workflows (explore, new, continue, ff, apply, verify, sync,
+   archive), report what is missing, print `openspec config profile` and "run `/opsx-init`
+   again", and stop before writing anything. `/opsx-init` never changes the global OpenSpec
+   configuration.
+3b. If `openspec/` is missing, or stock skills are missing, run `openspec init --tools pi`. It
+   leaves an existing `config.yaml` and schema untouched. A failure prints its output and stops.
 4. Write or update `openspec/config.yaml`: set `schema: superspec`, set `language` (step 7), keep all other keys.
 5. Install the schema on a fresh project (`absent`). An identical schema is left as is;
    any other existing state follows the decision table below (upgrade after confirmation, or block and mention `--force`, which replaces after a backup).
-6. If files from `openspec init --tools pi` exist (`.pi/prompts/opsx-*.md`,
-   `.pi/skills/openspec-*`), list them and **ask** before deleting them.
-7. Set the document language, after the legacy cleanup (a project blocked on an existing
+6. (No legacy cleanup: OpenSpec 2.0 removes its own old files, so the package no longer asks.)
+7. Set the document language (a project blocked on an existing
    schema writes no language and is not asked). With `--lang <value>` (or `--lang=<value>`), write or
    overwrite `language:` directly after `schema:`. The value is everything after the
    flag, quotes stripped, 1 to 64 characters, no control characters; an invalid or
@@ -146,7 +154,11 @@ It upgrades or replaces an existing schema only as the decision table below says
    An invalid existing `language:` line is replaced by `language: en`. A valid existing value is
    never changed without the flag.
 8. Run `openspec schema validate superspec` and report.
-9. `ctx.reload()` so the commands appear; print the next step (`/opsx-new <name>`).
+9. `ctx.reload()` so `/opsx-generate-specs` appears; print the next step (ask the agent to start a change, or `/skill:openspec-new-change <name>`). When stock skills
+   were installed the report says to commit `.agents/skills/`, and it reminds you to keep the eight
+   workflows in the OpenSpec profile because `openspec update` removes deselected ones.
+
+A project counts as initialised when its schema is identical and the eight stock skills are present.
 
 `--generate` (a standalone token, combinable with `--lang`) only adds one line to the printed
 output, pointing to `/opsx-generate-specs`. It does no agent work: init is TypeScript and cannot
@@ -212,9 +224,9 @@ otherwise.
 | Ask the user to choose | tool `ask_user_question` (package `rpiv-ask-user-question`, name not verified) | plain question, numbered options |
 | Review written work (review gate) | tool `plannotator_inbox` (Plannotator Inbox, enabled in Plannotator's config), then tool `plannotator` | The first available channel is detected by the extension and injected as the Interaction channel paragraph: `inbox`, `plannotator-tool`, `plannotator-cli`, `ask-tool`, `plain` |
 | Dispatch a subagent | The Subagent integration paragraph (detected): the extension reads the active tools and injects the spawn, list, thinking, report and escalation mechanics of the detected plugin (`tintinweb`, `pi-subagents`, `gotgenes`), or the activation step (`pi-subagents-helper`), or the inline path (`none`) | Superpowers `executing-plans` in-session |
-| Choose an agent for a role | Role requirements in `skills/references/subagent-routing.md`; the bundled `superspec.*` agents are candidates, with no precedence over other qualifying agents | Announced inline path only when the integration is absent; a role no agent meets stops the stage |
+| Choose an agent for a role | Role requirements in `schema/superspec/subagent-routing.md`; the bundled `superspec.*` agents are candidates, with no precedence over other qualifying agents | Announced inline path only when the integration is absent; a role no agent meets stops the stage |
 | Track todos | tool `todo` (package `rpiv-todo`, name not verified) | state the checklist in the agent's reply (`tasks.md` stays the official status) |
-| Load a skill | read its `SKILL.md`, or `/skill:<name>` | — |
+| Load a skill | read its `SKILL.md` from `.agents/skills/` (for example `.agents/skills/openspec-apply-change/SKILL.md`), or `/skill:<name>` | Missing stock skill: the routing note makes the agent name it and stop |
 
 Plugin-specific tool names live only in `extensions/subagent-integration.ts`, which
 supplies them through the Subagent integration paragraph; skills and prompts name roles,
@@ -222,13 +234,13 @@ and the schema contains no plugin-specific tool names.
 
 ### Subagent compatibility
 
-The skills name roles only. Plugin mechanics (spawn call, listing, thinking, report
+The workflow rules and the generate-specs skill name roles only. Plugin mechanics (spawn call, listing, thinking, report
 collection, escalation) come from the Subagent integration paragraph that the extension
 injects each turn; detection is a pure function of the active tools (see
 `extensions/subagent-integration.ts`). The bundled agents are plugin-neutral: they use the
 `superspec.<role>` identity, built-in tools only, and their frontmatter works with both discovering
 plugins. The escalation channel is not in the agent: the parent supplies it in the handoff. Availability, handoff, lanes, authority and failure rules are in
-`skills/references/subagent-routing.md`.
+`schema/superspec/subagent-routing.md`.
 
 | Plugin | Reference build | Status |
 |---|---|---|
@@ -241,11 +253,12 @@ Runtime smoke evidence supersedes these assumptions, and no dependency pin is ad
 
 ## Constraints
 
-- **OpenSpec ≥ 1.16.** Schemas resolve from project → `$XDG_DATA_HOME/openspec/schemas`
+- **OpenSpec ≥ 2.0.** Tested OpenSpec version: 2.0.0. Schemas resolve from project → `$XDG_DATA_HOME/openspec/schemas`
   → built-ins; there is no extra search path, so the schema is copied into the
   project. `version` must be a positive integer. `config.yaml` `context` and per-artifact
   `rules` are injected into `openspec instructions`; project customisation belongs
   there.
+- **Local project root.** `workflow.md` commands assume a local project root; store selection (`--store`) is left to the stock skills.
 - **pi ≥ 1.4** package API: `extensions`, `resources_discover` (gets `cwd`, returns
   `skillPaths` / `promptPaths`), `registerCommand`, `ctx.reload()`, `context` event,
   `ctx.hasUI`. Prompt arguments arrive as `$@`. Host
@@ -255,7 +268,7 @@ Runtime smoke evidence supersedes these assumptions, and no dependency pin is ad
   requires TDD and verification-before-completion. On pi, skill names are bare
   (`brainstorming`, not `superpowers:brainstorming`) and there is no `Skill` tool.
 - **License:** MIT. Credit Superspec (Daniel Hanold), its origin
-  (JiangWay `sdd-plus-superpowers`) and OpenSpec's generated skills.
+  (JiangWay `sdd-plus-superpowers`) and OpenSpec, whose stock skills the commands run.
 
 ## Testing
 

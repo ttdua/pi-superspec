@@ -91,7 +91,7 @@ Contracts section, is recorded as `Not verified` with the reason.
 
 ## Overall Decision
 
-- [ ] PASS: proceed with `/opsx-continue` to finalize
+- [ ] PASS: proceed with `openspec-continue-change` to finalize
 - [ ] PASS_WITH_WARNINGS: proceed, noting: `<explanation>`
 - [ ] FAIL: fix the cause, then re-apply (iteration N+1)
 
@@ -102,7 +102,7 @@ Any check recorded as Not verified caps the outcome at PASS_WITH_WARNINGS.
 <describe the next action>
 
 > **Convergence loop reminder**:
-> - PASS / PASS_WITH_WARNINGS: `/opsx-continue` advances to the finalize artifact.
-> - FAIL, code-fixable: load `systematic-debugging`, re-run `/opsx-apply`, then verify again.
-> - FAIL, artifact-level: fix the artifact, then re-run `/opsx-apply`.
+> - PASS / PASS_WITH_WARNINGS: `openspec-continue-change` advances to the finalize artifact.
+> - FAIL, code-fixable: load `systematic-debugging`, re-run `openspec-apply-change`, then verify again.
+> - FAIL, artifact-level: fix the artifact, then re-run `openspec-apply-change`.
 > - Stop after 5 iterations and report to the user.
