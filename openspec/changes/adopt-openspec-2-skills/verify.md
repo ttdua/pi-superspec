@@ -6,9 +6,9 @@
 > Failed checks must be fixed in the corresponding artifact, then re-run verify.
 
 **Change**: `adopt-openspec-2-skills`
-**Verified at**: `2026-11-12 11:35`
-**Iteration**: `2`
-**Verifier**: parent session (checks 1, 2, 4, 6 and fresh test runs) with an independent read-only verifier agent (`code-reviewer`, evidence for checks 3 and 5); the parent inspected the report and the files it cites.
+**Verified at**: `2026-11-12 18:10`
+**Iteration**: `3`
+**Verifier**: parent session (checks 1, 2, 4, 6 and fresh test runs) with an independent read-only verifier agent (`code-reviewer`, evidence for checks 3 and 5); the parent inspected the report and re-read the cited lines in `schema/superspec/schema.yaml`.
 
 ---
 
@@ -43,7 +43,7 @@ Change 'adopt-openspec-2-skills' is valid
 - [x] REMOVED: evidence the baseline behavior is gone (main spec, else git history)
 - [ ] RENAMED: none in this change
 
-56 requirements: 9 ADDED, 40 MODIFIED, 7 REMOVED. `W` = `schema/superspec/workflow.md`, `S` = `schema/superspec/schema.yaml`.
+65 requirements in the 12 delta specs: 9 ADDED, 49 MODIFIED, 7 REMOVED; 63 Pass, 2 Fail (both caused by C1). `W` = `schema/superspec/workflow.md`, `S` = `schema/superspec/schema.yaml`.
 
 | Requirement | Operation | Status | Evidence (file:line) or reason |
 |---|---|---|---|
@@ -51,7 +51,7 @@ Change 'adopt-openspec-2-skills' is valid
 | bundled-schema: Subagent routing reference in the schema | ADDED | Pass | `schema/superspec/subagent-routing.md`; link `W:10`; old path absent `tests/schema.test.ts:85–88` |
 | bundled-schema: Schema identity | MODIFIED | Pass | `S:3–8` (v9/v9); `tests/schema.test.ts:50–83` |
 | bundled-schema: Harness-neutral wording | MODIFIED | Pass | `tests/schema.test.ts:108–116` |
-| execution-commands: Execution commands run stock skills | ADDED | Pass | `prompts/opsx-{apply,verify,sync,archive}.md:4–8`; `tests/execution-commands.test.ts:40–67` |
+| execution-commands: Execution uses the stock skills | ADDED | **Fail** | layout and section-first rule are right (`prompts/` and `skills/` hold only generate-specs; `extensions/routing-note.ts:17`; `schema/superspec/workflow.md:7`), but `schema/superspec/schema.yaml:265–268` lets verify run the six checks manually when `openspec-verify-change` is missing, against the missing-skill stop. See C1. |
 | execution-commands: Execution rules live in workflow.md | ADDED | Pass | `W:8,10,57–111`; `tests/execution-commands.test.ts:421–437` |
 | execution-commands: Apply follows the schema apply block | MODIFIED | Pass | `W:59–66,77`, `W:13` |
 | execution-commands: Executor depends on subagent availability | MODIFIED | Pass | `W:67–73`; `tests/execution-commands.test.ts:139–185` |
@@ -59,7 +59,7 @@ Change 'adopt-openspec-2-skills' is valid
 | execution-commands: Verify runs in the worktree | MODIFIED | Pass | `W:83–90` |
 | execution-commands: Sync merges delta specs without archiving | MODIFIED | Pass | `W:94–99` |
 | execution-commands: Archive performs the delta-sync check | MODIFIED | Pass | `W:104–110` (`openspec archive "<name>" --skip-specs -y`, never `mv`); `tests/execution-commands.test.ts:249–308` |
-| execution-commands: Superpowers-backed steps | MODIFIED | Pass | `W:137` |
+| execution-commands: Superpowers-backed steps | MODIFIED | **Fail** | `W:137` says STOP when a Superpowers skill is missing, but `S:927–929` says "If any skill is unavailable, fall back to manual implementation". See C1. |
 | execution-commands: Apply uses task locations | MODIFIED | Pass | `W:75` |
 | execution-commands: Apply pauses on scope changes | MODIFIED | Pass | `W:64–65,76` |
 | execution-commands: Verify never implements and reports skipped checks | MODIFIED | Pass | `W:85,88`; `S:308–312` |
@@ -80,7 +80,7 @@ Change 'adopt-openspec-2-skills' is valid
 | legacy-cleanup: Confirm before deleting | REMOVED | Pass | same evidence; the remaining confirm in `extensions/init/init.ts:141–144` is the schema upgrade |
 | package-activation: Conditional resource discovery | MODIFIED | Pass | `extensions/superspec.ts:50–56` |
 | package-activation: Planning commands are visible only when activated | MODIFIED | Pass | `tests/planning-commands.test.ts:46–54,74–76`; `tests/extension.test.ts` |
-| planning-commands: Planning commands run stock skills | ADDED | Pass | `prompts/opsx-{explore,new,continue,ff}.md:4–8`; `tests/planning-commands.test.ts:46–71` |
+| planning-commands: Planning uses the stock skills | ADDED | Pass | no planning prompts or skills (`tests/planning-commands.test.ts:41–54`); section-first rule and missing-skill stop `extensions/routing-note.ts:17`; map `W:7` |
 | planning-commands: Planning rules live in workflow.md | ADDED | Pass | `W:8–11,15–55`; `tests/workflow-rules.test.ts` |
 | planning-commands: Superpowers-backed artifacts | MODIFIED | Pass | `W:137`; `tests/planning-commands.test.ts:123–139` |
 | planning-commands: New change creation | MODIFIED | Pass | `W:28–30` |
@@ -111,13 +111,13 @@ Change 'adopt-openspec-2-skills' is valid
 - [x] Every scenario maps to a test
 - [x] The project test command was run fresh in this step
 
-All 181 scenarios outside REMOVED requirements map to tests (the plan's "Scenario → test" table). 114 match an `it` title by name. The other 67 are covered by content in the test files listed in section 3: the init, routing-note, review-gate and package-activation tests use descriptive titles, not scenario names. The parent spot-checked the init, stock-skills, routing-note, workflow-rules and extension tests. Scenarios under REMOVED requirements are skipped.
+Every scenario of the delta specs outside REMOVED requirements maps to a test (the plan's "Scenario → test" table, with its iteration-3 mapping). The parent checked that the new iteration-3 scenario names occur in the tests ("No prompts or skills for the steps", "Section read before the stock skill", "Missing stock skill stop", "Skill commands not appearing", "No step commands", "Skill table maps each step", "Only the generate-specs prompt"). Many tests use descriptive titles, not scenario names; those are matched by content, as in iteration 1.
 
 **Test command**: `bun run typecheck` then `bun run test` (cwd: worktree, local `openspec` 1.17.0)
-**Result**: typecheck exit 0; tests exit 0 (iteration 2, at `02c8c05`), 29 files passed and 1 skipped, **806 passed, 6 skipped**. The 6 skipped tests are the OpenSpec 2.x integration tests, which the next run covers.
+**Result**: typecheck exit 0; tests exit 0 (iteration 3, at `45583fc`; the verifier re-ran them at `3c63b43`), 29 files passed and 1 skipped, **823 passed, 6 skipped**. The 6 skipped tests are the OpenSpec 2.x integration tests, which the next run covers.
 
 **Test command**: `PATH=/tmp/os2shim:$PATH bun run test tests/init/integration.test.ts tests/schema.test.ts` (`openspec --version` = 2.0.0)
-**Result**: exit 0, 2 files, **74 passed**. These are the real-CLI integration tests: empty-repo activation, idempotency, config preservation, language, and "Missing stock skills restored".
+**Result**: exit 0, 2 files, **75 passed**, none skipped. These are the real-CLI integration tests: empty-repo activation, idempotency, config preservation, language, and "Missing stock skills restored".
 
 | Scenario | Test |
 |---|---|
@@ -130,7 +130,7 @@ All 181 scenarios outside REMOVED requirements map to tests (the plan's "Scenari
 - [x] Decisions in design.md match the code
 - [x] Contracts in plan.md, with the Contract deviations recorded in apply.md, match the code
 
-All 13 contract rows match:
+All 16 contract rows match the code (the verifier compared each, including the Task 6 rows):
 - `workflow.md` has 12 H2 sections in order.
 - `subagent-routing.md` changed only its two URLs (`git diff --no-index` shows one hunk).
 - The schema version is 9/9.
@@ -146,7 +146,7 @@ Both apply.md deviations match too: the v9 digest in `tests/fixtures/schema-chec
 
 **Drift warnings** (non-blocking):
 
-- None for contracts. See W1 for one doc clause that disagrees with the shipped `/opsx-init` order.
+- Contracts: none. One coherence warning, W1 below: the schema text contradicts design D4/D5 (see C1).
 
 ---
 
@@ -154,30 +154,33 @@ Both apply.md deviations match too: the v9 digest in `tests/fixtures/schema-chec
 
 - [x] Working tree is clean (`git status --porcelain` empty before writing this report)
 
-**Commit range**: `574e1b3..02c8c05`
+**Commit range**: `574e1b3..3c63b43`
 
 ---
 
 ## Issues
 
-**CRITICAL**: none.
+**CRITICAL**
+- **C1 — Two shipped instructions let the agent work around a missing required skill.** The routing note and the Superpowers rule say to stop (`extensions/routing-note.ts:17`, `schema/superspec/workflow.md:137`). But `schema/superspec/schema.yaml:265–268` (verify) says "If that skill is unavailable, run the six checks below manually", and `:927–929` (apply) says "If any skill is unavailable, fall back to manual implementation using the standard task-by-task loop". Both lines are inherited from the v8 schema (`git show 574e1b3:schema/superspec/schema.yaml`, lines 250 and 905) and were never reconciled with the iteration-3 requirement "stop without doing the work another way". The current tests assert the stop text exists but do not forbid the opposite fallback. *Fix:* in `schema.yaml`, replace both with the missing-skill stop (name the skill, point to `openspec config profile` and `openspec update` or `/opsx-init`, stop), keeping the real executor fallback (no subagent plugin → `executing-plans`, which still needs its Superpowers skill); add tests that the schema contains no "unavailable … manually / fall back to manual implementation" workaround; update the v9 digest.
 
-**WARNING**: none. Iteration 1's W1 (stale "legacy cleanup" clause in `docs/usage-guide.md:266`) and W2 (tool-name tests anchored to removed requirements) are fixed in `02c8c05`.
+**WARNING**
+- **W1 — Check 5 coherence.** `design.md` D4/D5 require the missing-skill stop; the schema text in C1 contradicts it, and `apply.md` records no exception. Resolved by the fix to C1; do not record a deviation to legitimise the fallback.
 
 **SUGGESTION**
-- **S1 — Run the shipped-layout agentic check before release.** Follow `docs/e2e-checklist.md` § "Shipped layout and OpenSpec 2.0": in a real pi session, check that ff stops at the brainstorm gate and the final gate, and that apply creates the `<change-name>` worktree, uses the executor and opens no code review gate. The text tests prove the rules ship. They do not prove the agent follows them when the rules come from the schema rather than the routing note, which is what the spike tested.
+- **S1 — Run the shipped-layout agentic check before release.** `docs/e2e-checklist.md` § "Shipped layout and OpenSpec 2.0": in a real pi session, ff stops at the brainstorm and final gates, apply creates the `<change-name>` worktree and opens no code review gate, and explore, sync and archive each read their `workflow.md` section first. The text tests do not prove the agent follows these rules. This matters more now that no prompt enforces the read.
+- **S2 — `docs/usage-guide.md:37` overstates `enableSkillCommands`.** Pi's `skills.md:53` says the setting only controls interactive command discovery; a manually typed `/skill:name` still works. Reword to "appear in command discovery when enabled; typing it still works".
 
 ---
 
 ## Overall Decision
 
-- [ ] PASS: proceed with `/opsx-continue` to finalize
-- [x] PASS_WITH_WARNINGS: proceed, noting: S1, the agentic shipped-layout check in a real pi session, has not been run. Everything else passes.
-- [ ] FAIL: fix the cause, then re-apply (iteration N+1)
+- [ ] PASS: proceed to finalize
+- [ ] PASS_WITH_WARNINGS: proceed, noting: `<explanation>`
+- [x] FAIL: fix the cause, then re-apply (iteration N+1)
 
 **Next step**:
 
-Run `/opsx-continue` with the worktree as working directory to create the finalize artifact, then `/opsx-archive`.
+Fix C1 by running the `openspec-apply-change` skill (it detects the FAIL and runs a fix iteration in this worktree, iteration 4), then verify again. S1 and S2 can be handled in the same iteration.
 
 > **Convergence loop reminder**:
 > - PASS / PASS_WITH_WARNINGS: `/opsx-continue` advances to the finalize artifact.
