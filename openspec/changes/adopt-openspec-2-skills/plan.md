@@ -3,11 +3,11 @@
 > Executed via `/opsx-apply`, which chooses the executor.
 > Spec reference: this change's `specs/` and `design.md`.
 
-**Goal:** Replace the eight forked `opsx-*` skills with OpenSpec 2.0's stock `openspec-*` skills. Superspec's rules move to `schema/superspec/workflow.md` (schema v9) and the routing note, and `/opsx-init` installs and checks the stock skills.
+**Goal:** Replace the eight forked `opsx-*` skills with OpenSpec 2.0's stock `openspec-*` skills. Superspec's rules move to `schema/superspec/workflow.md` (schema v9) and the routing note, and `/opsx-init` installs and checks the stock skills. Iteration 3 then removes the `/opsx-<step>` prompts: users run the stock skills with `/skill:<id>`, and the routing note makes the agent read `workflow.md` first.
 
 **Architecture:**
 - Stock skills in the project's `.agents/skills/` do the mechanics.
-- Every schema instruction points to `workflow.md`, which overrides the stock skill, and each `/opsx-*` prompt names both.
+- Every schema instruction points to `workflow.md`, which overrides the stock skill. The routing note tells the agent to read the matching `workflow.md` section before it runs a stock skill (iteration 3 removed the `/opsx-<cmd>` step prompts).
 - The routing note adds a stock skills paragraph, and `session_start` warns when required skills are missing.
 - `/opsx-init` requires OpenSpec ≥ 2.0, checks skills and profile, and runs `openspec init --tools pi`.
 
@@ -42,16 +42,19 @@
 | `schema/superspec/workflow.md` | new | Markdown; H2 sections in this order: `## Shared rules`, `## explore`, `## new`, `## continue`, `## ff`, `## apply`, `## verify`, `## sync`, `## archive`, `## Review gate`, `## Superpowers rule`, `## Stock skills not used` | yes (shipped into projects) |
 | `schema/superspec/subagent-routing.md` | modified (moved from `skills/references/`) | same content; compatibility links become `https://github.com/ttdua/pi-superspec/blob/main/docs/architecture.md` and `.../docs/e2e-checklist.md` | yes |
 | `schema/superspec/schema.yaml` `version` / `x-pi-superspec.version` | modified | `9` / `9` | yes |
-| `prompts/opsx-<cmd>.md` (8 files) | modified | frontmatter `description`; body: the mapped stock skill id, the `workflow.md` section, the conflict rule, the missing-skill stop, `User input: $@` | yes (commands) |
+| `prompts/opsx-<cmd>.md` (8 files) | removed in Task 6 (modified in Task 2) | frontmatter `description`; body: the mapped stock skill id, the `workflow.md` section, the conflict rule, the missing-skill stop, `User input: $@` | yes (commands) |
 | `REQUIRED_STOCK_SKILLS` in `extensions/stock-skills.ts` | new | `readonly string[]` of the 8 skill ids (Global Constraints) | no |
 | `REQUIRED_WORKFLOWS` in `extensions/stock-skills.ts` | new | `readonly string[]` of the 8 workflow ids | no |
 | `missingStockSkills(root: string): string[]` in `extensions/stock-skills.ts` | new | ids from `REQUIRED_STOCK_SKILLS` whose `<root>/.agents/skills/<id>/SKILL.md` is not a regular file that `accessSync(path, constants.R_OK)` accepts; never throws (an id whose check throws counts as missing) | no |
 | `stockSkillsWarning(missing: string[]): string` in `extensions/stock-skills.ts` | new | message naming each missing id, `openspec config profile` and `openspec update` | no |
 | `profileReadiness(json: string): { ready: true } \| { ready: false; missing: string[]; reason?: string }` in `extensions/init/stock-skills.ts` | new | ready iff the parsed `profile === "custom"` and `workflows` ⊇ `REQUIRED_WORKFLOWS`; invalid JSON → `{ ready: false, missing: [...REQUIRED_WORKFLOWS], reason: "unreadable" }` | no |
-| `STOCK_SKILLS_PARAGRAPH` in `extensions/routing-note.ts` | new | string starting `Stock skills:`; inserted between `ROUTING_NOTE` and the document language paragraph | no |
+| `STOCK_SKILLS_PARAGRAPH` in `extensions/routing-note.ts` | new (rewritten in Task 6) | string starting `Stock skills:`; inserted between `ROUTING_NOTE` and the document language paragraph. Task 6: names each stock skill, tells the agent to read the matching `workflow.md` section (plus Shared rules, Review gate, Superpowers rule) before running a stock skill and to stop with instructions when the skill is missing, and lists the four unused stock skills | no |
 | `checkOpenspec` minimum | modified | `major >= 2`; message `Install or upgrade OpenSpec (>= 2.0): brew install openspec` | no |
 | `InitOutcome` in `extensions/init/init.ts` | modified | adds `"profile-not-ready"` | no |
 | `extensions/init/legacy.ts` | removed | — | no |
+| `ROUTING_NOTE` path guidance | modified (Task 6) | names `openspec-ff-change`, then `openspec-new-change` and `openspec-continue-change`, instead of `/opsx-ff`, `/opsx-new`, `/opsx-continue` | no |
+| `/opsx-init` report next step | modified (Task 6) | `Next: ask the agent to start a change, or run /skill:openspec-new-change <name>` | yes |
+| Eight step commands `/opsx-<cmd>` | removed (Task 6) | users run the stock skills with `/skill:<id>` or ask the agent; `/opsx-init` and `/opsx-generate-specs` stay | yes |
 
 ---
 
@@ -304,7 +307,68 @@ The tasks.md group 4 has no blocker. Task 3 is added here because Task 4 imports
 
 ---
 
+## Task 6: Remove the step prompts — implements 6
+
+**Covers:** 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
+**Difficulty:** Hard
+**Blocked by:** Task 1, Task 2, Task 3, Task 4, Task 5
+
+Iteration 3 of apply, after the first final gate. The user decided to drop the eight step prompts; the delta specs, design D4/D5 and the proposal already say so.
+
+**Files:**
+- Modify: `schema/superspec/workflow.md`, `schema/superspec/schema.yaml`, `schema/superspec/templates/{apply,finalize,plan,verify}.md`, `tests/fixtures/schema-checksums.json` (the unreleased v9 digest)
+- Delete: `prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md`, `tests/helpers/stock-prompt.ts`
+- Modify: `extensions/routing-note.ts`, `extensions/init/init.ts`, `skills/opsx-generate-specs/SKILL.md` (three `/opsx-ff` hand-offs at lines 3, 6 and 108 become `openspec-ff-change`)
+- Modify: the `## Purpose` lines of `openspec/specs/planning-commands/spec.md`, `openspec/specs/execution-commands/spec.md` and `openspec/specs/generate-specs-command/spec.md` (sync keeps an existing Purpose, so this edit is manual)
+- Modify: `tests/planning-commands.test.ts`, `tests/execution-commands.test.ts`, `tests/routing-note.test.ts`, `tests/workflow-rules.test.ts`, `tests/schema.test.ts`, `tests/init/init.test.ts`, `tests/extension.test.ts`, `tests/generate-specs-command.test.ts`, `tests/project-readme.test.ts`, `tests/docs-subagents.test.ts`, `tests/plugin-neutral.test.ts`
+- Modify: `README.md`, `README.vi.md`, `docs/{architecture,workflow,usage-guide,e2e-checklist,glossary,domain-model}.md`, `CHANGELOG.md`
+
+**Interfaces:**
+- Consumes: the Contracts rows for `STOCK_SKILLS_PARAGRAPH`, the path guidance and the `/opsx-init` next step.
+- Produces: no new exports.
+
+- [ ] **Step 1: Write failing tests.**
+  - `tests/routing-note.test.ts`:
+    - the path guidance names `openspec-ff-change`, `openspec-new-change` and `openspec-continue-change` and contains none of the eight old command names;
+    - the stock skills paragraph tells the agent to read the matching `workflow.md` section first, names the Shared rules, Review gate and Superpowers rule sections, names the missing-skill stop with `openspec config profile`, `openspec update` and `/opsx-init`, and still lists the four unused stock skills;
+    - "No forced change" now checks `openspec-new-change`.
+  - `tests/planning-commands.test.ts` and `tests/execution-commands.test.ts`: `prompts/` holds exactly `opsx-generate-specs.md`; none of the eight step prompts exists; no `opsx-propose` or `opsx-bulk-archive` prompt exists. Delete the prompt-shape assertions and `tests/helpers/stock-prompt.ts`.
+  - `tests/workflow-rules.test.ts`: `workflow.md` contains none of the eight old command names and names each stock skill id in its section.
+  - `tests/schema.test.ts`: the same scan over `schema.yaml` and `templates/*.md`.
+  - `tests/init/init.test.ts`: the report next step names `/skill:openspec-new-change`.
+  - `tests/extension.test.ts`: the discovered prompt path holds only `opsx-generate-specs.md`.
+  - `tests/generate-specs-command.test.ts`: `skills/opsx-generate-specs/SKILL.md` names `openspec-ff-change bootstrap-specs` and no old command (update the assertions at lines ~50 and ~260 that expect `/opsx-ff bootstrap-specs`).
+  - Doc assertions in `tests/project-readme.test.ts`:
+    - the README command table lists exactly `/opsx-init` and `/opsx-generate-specs` (compared with `prompts/` plus `/opsx-init`);
+    - a second README table has one row per step (explore, new, continue, ff, apply, verify, sync, archive) with its stock skill id and `/skill:<id>`, in both languages;
+    - the quick start names `/opsx-init` and the skills from `openspec-new-change` to `openspec-archive-change`;
+    - the usage guide walkthrough and ff section name the skills, say `/skill:<id>` or "ask the agent", and show `openspec-apply-change` as the next step after ff;
+    - the usage guide has a "skill commands not appearing" entry naming `enableSkillCommands`.
+  - Purpose lines: the three living specs' Purpose no longer name the eight commands and mention stock skills.
+  - A repository-wide test in `tests/plugin-neutral.test.ts`: no file under `schema/`, `prompts/`, `skills/`, `extensions/` names `/opsx-explore`, `/opsx-new`, `/opsx-continue`, `/opsx-ff`, `/opsx-apply`, `/opsx-verify`, `/opsx-sync` or `/opsx-archive`.
+- [ ] **Step 2: Run `bun run test`.** Expected: the new assertions FAIL.
+- [ ] **Step 3: Replace the old command names with the stock skill ids** in `schema/superspec/workflow.md`, `schema.yaml` and the four templates. Keep `/opsx-init`. Rephrase sentences so they read naturally ("run `/opsx-apply`" → "use the `openspec-apply-change` skill"). Update the digest in `tests/fixtures/schema-checksums.json` as `tests/schema-version-pin.test.ts` prints it.
+- [ ] **Step 4: Delete the eight prompts.** `git rm prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md tests/helpers/stock-prompt.ts`.
+- [ ] **Step 5: Rewrite the routing note** (`extensions/routing-note.ts`) as the Contracts rows say, and the `/opsx-init` next step in `extensions/init/init.ts`.
+- [ ] **Step 6: Run `bun run typecheck && bun run test`.** Expected: PASS except doc assertions that still read the old docs.
+- [ ] **Step 7: Update the docs.**
+  - README (both languages): the command table lists `/opsx-init` and `/opsx-generate-specs`; a second table maps each step to its stock skill and `/skill:<id>`; quick start by skill id; unused stock skills; uninstall.
+  - `docs/architecture.md`, `docs/workflow.md` (Commands table, Conflicts #11), `docs/usage-guide.md` (walkthrough and ff by skill id; troubleshooting "skill commands not appearing": `openspec init --tools pi` or `/opsx-init`, the profile, the `enableSkillCommands` setting), `docs/e2e-checklist.md` (explore, sync and archive each read their `workflow.md` section; the missing-skill stop), `docs/glossary.md`, `docs/domain-model.md`.
+  - `CHANGELOG.md`: fold into the existing BREAKING entry that the eight step commands are gone.
+  - Update the doc assertions in `tests/project-readme.test.ts` and `tests/docs-subagents.test.ts`.
+- [ ] **Step 7b: Replace the three `/opsx-ff` hand-offs in `skills/opsx-generate-specs/SKILL.md`, and edit the three Purpose lines** (planning-commands, execution-commands, generate-specs-command: describe the steps as stock skills run under `workflow.md`, with no command names).
+- [ ] **Step 8: Run `bun run typecheck && bun run test && openspec validate adopt-openspec-2-skills --strict`,** then `PATH=/tmp/os2shim:$PATH bun run test tests/schema.test.ts tests/init/integration.test.ts`. Expected: all pass.
+- [ ] **Step 9: Commit.** `git commit -m "feat!: remove the /opsx step prompts; run stock skills with /skill:<id>"`
+
+---
+
 ## Scenario → test
+
+**Iteration 3 (Task 6) supersedes the prompt-related rows below.** The prompt scenarios ("Prompts exist without package skills", "Prompt maps to its stock skill") are replaced by "No prompts or skills for the steps" → `tests/planning-commands.test.ts` / `tests/execution-commands.test.ts` (layout of `prompts/` and `skills/`); "Mapped stock skill missing" and "Section read before the skill" → `tests/routing-note.test.ts` (stock skills paragraph); "Skill commands not appearing" (usage-guide) → `tests/project-readme.test.ts`; "Stock skill mapping", "Stock skills paragraph first", "Missing stock skill stop", "Section read before the stock skill" (routing-note) → `tests/routing-note.test.ts`; "Visible when marked", "Only the generate-specs prompt" (package-activation) → `tests/extension.test.ts`. The rows below that name a prompt are kept as history of iteration 1.
+
+Iteration 3 mapping for the scenarios the revision changed: "Sync deferred" (bundled-schema) → `tests/schema.test.ts` and `tests/workflow-rules.test.ts` (text names `openspec-archive-change`); "No step commands" (bundled-schema) → `tests/schema.test.ts` scan; "Diff base" and the "Requested change loop" scenarios (review-gate) → `tests/workflow-rules.test.ts` finalize/review-gate section (names `openspec-verify-change`); "Flag alone" (init-command) → `tests/init/init.test.ts` (hint names `/opsx-generate-specs`); "Stops after specs" (generate-specs-command) → `tests/generate-specs-command.test.ts` (names `openspec-ff-change bootstrap-specs`); "Quick start reaches archive", "Skill table maps each step" (project-readme) → `tests/project-readme.test.ts` assertions listed in Task 6 Step 1; "ff stops before apply", "Skill commands not appearing" (usage-guide) → `tests/project-readme.test.ts` usage-guide block.
+
+Tasks 1–5 above are the record of iterations 1 and 2. Where they name `/opsx-<step>` prompts or commands, Task 6 supersedes them.
 
 **planning-commands**
 - Prompts exist without package skills → `tests/planning-commands.test.ts` "Prompts exist without package skills"

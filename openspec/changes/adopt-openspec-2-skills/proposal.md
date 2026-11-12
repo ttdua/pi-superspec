@@ -8,7 +8,7 @@ pi-superspec ships eight hand-maintained forks of OpenSpec's workflow skills (`s
 - From: eight package skills `opsx-explore`, `-new`, `-continue`, `-ff`, `-apply`, `-verify`, `-sync`, `-archive`, adapted from OpenSpec 1.16.
 - To: the stock `openspec-*` skills that OpenSpec 2.0 installs in the project's `.agents/skills/`. The package keeps only `opsx-generate-specs`, which has no upstream equivalent.
 - Reason: upstream upgrades through `openspec update`; no fork to re-sync.
-- Impact: breaking for the package layout. Users keep the same `/opsx-*` commands.
+- Impact: breaking for the package layout. The `/opsx-<cmd>` step commands go away (see Commands).
 
 **Superspec rules**
 - From: written into each forked skill.
@@ -17,9 +17,10 @@ pi-superspec ships eight hand-maintained forks of OpenSpec's workflow skills (`s
 - Impact: the bundled schema bumps to v9; `subagent-routing.md` moves from `skills/references/` into the schema directory.
 
 **Commands**
-- From: each `prompts/opsx-*.md` reads the matching package skill.
-- To: each points to its stock skill plus `workflow.md`, user input `$@`.
-- Impact: non-breaking for users.
+- From: eight prompts `prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md`, each reading the matching package skill; users type `/opsx-ff` and the like.
+- To: no prompt for these steps. Users run the stock skills with `/skill:openspec-ff-change` and the like, or ask the agent. The routing note's stock skills paragraph tells the agent to read the matching section of `workflow.md` before running a stock skill, and to stop with instructions when the skill is missing. `/opsx-init` and `/opsx-generate-specs` (prompt and skill) stay.
+- Reason: OpenSpec 2.0 removed its own `/opsx:*` commands and delivers skills only; a prompt per step duplicates the skill.
+- Impact: breaking; the step commands change from `/opsx-<cmd>` to `/skill:openspec-<id>`.
 
 **`/opsx-init`**
 - From: requires OpenSpec ≥ 1.16, runs `openspec init --tools none`, offers to delete legacy `.pi/` files.
@@ -42,10 +43,10 @@ pi-superspec ships eight hand-maintained forks of OpenSpec's workflow skills (`s
 <!-- none -->
 
 ### Modified Capabilities
-- `planning-commands`: the explore, new, continue and ff commands run stock skills under the workflow rules; requirements move from skill text to prompts and `workflow.md`.
+- `planning-commands`: the explore, new, continue and ff steps use the stock skills under the workflow rules; requirements move from skill text to `workflow.md` and the routing note.
 - `execution-commands`: the same for apply, verify, sync and archive; archive follows the stock mechanics after its sync check.
-- `routing-note`: the note maps each command to its stock skill, points to `workflow.md`, and names the stock skills Superspec does not use.
-- `package-activation`: the package ships commands and only `opsx-generate-specs` as a skill.
+- `routing-note`: path guidance names the stock skills; the stock skills paragraph directs the agent to read the matching `workflow.md` section before running a stock skill and to stop when the skill is missing, and names the stock skills Superspec does not use.
+- `package-activation`: the package ships only the `opsx-generate-specs` prompt and skill (plus `/opsx-init`).
 - `review-gate`: one gate section in `workflow.md`, so the "identical sections" rule is removed; the tool-name check moves to `workflow.md`.
 - `init-command`: OpenSpec 2.0 preflight, stock skill check and install, no legacy-cleanup step.
 - `legacy-cleanup`: retired (the change sets `retire_capabilities: true`); OpenSpec 2.0 does it.
@@ -58,10 +59,11 @@ pi-superspec ships eight hand-maintained forks of OpenSpec's workflow skills (`s
 ## Impact
 
 - **Removed:** `skills/opsx-{explore,new,continue,ff,apply,verify,sync,archive}/` and `skills/references/`.
-- **Changed:** `prompts/opsx-*.md`; `extensions/routing-note.ts`; `extensions/init/{init,preflight}.ts`.
+- **Removed:** `prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md`.
+- **Changed:** `extensions/routing-note.ts`; `extensions/init/{init,preflight}.ts`; every `/opsx-<cmd>` mention in `schema/superspec/` (workflow.md, schema.yaml, templates).
 - **Deleted:** `extensions/init/legacy.ts`.
 - **Schema:** `schema/superspec/` gains `workflow.md` and `subagent-routing.md`, and the version moves to v9 with a new checksum.
-- **Tests:** planning, execution, init, schema, routing-note, subagent-routing, generate-specs, README and docs tests are rewritten against prompts and `workflow.md`.
+- **Tests:** planning, execution, init, schema, routing-note, subagent-routing, generate-specs, README and docs tests are rewritten against `workflow.md` and the routing note.
 - **Docs:** README (both languages), `docs/architecture.md`, `docs/workflow.md`, `docs/usage-guide.md`, `docs/e2e-checklist.md`, `CHANGELOG.md`.
 - **Dependency:** OpenSpec CLI ≥ 2.0 with a profile that includes explore, new, continue, ff, apply, verify, sync and archive. No new package dependency.
 - **Projects:** a v8 project upgrades to v9 through `/opsx-init`, which also installs the stock skills. The project then commits `.agents/skills/`.

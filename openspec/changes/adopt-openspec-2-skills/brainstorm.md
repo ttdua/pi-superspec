@@ -6,7 +6,7 @@ Why: today eight skills under `skills/opsx-*` are hand-maintained adaptations of
 
 What exists today and what this changes:
 
-- `docs/architecture.md` Components row "Skills + prompts" (pi versions of the `opsx` commands) and `docs/workflow.md` "Commands" and "Conflicts resolved" #7. The package no longer ships the forked skills. The prompts stay as the user-facing `/opsx-*` commands, but each points to a stock skill.
+- `docs/architecture.md` Components row "Skills + prompts" (pi versions of the `opsx` commands) and `docs/workflow.md` "Commands" and "Conflicts resolved" #7. The package no longer ships the forked skills. The `/opsx-*` prompts for the eight workflow steps are removed too (decided after the first review gates, see Key Decisions): users invoke the stock skills with `/skill:openspec-ff-change` and the like, or ask the agent.
 - `docs/architecture.md` Goals 2 and 3 ("workflow commands and skills load only in initialised projects", "removing the package removes every command and skill"). Commands still load only in activated projects. The stock skills are OpenSpec's and stay when the package is removed, as any OpenSpec project's skills would. **This alters a documented goal; the docs are updated in this change.**
 - `docs/architecture.md` Non-goals ("Forking OpenSpec") is reinforced: no more forked skills.
 - Living specs whose requirements change: `planning-commands` and `execution-commands` (command and skill pairs, skill wording requirements), `routing-note` (content), `package-activation` (conditional resource discovery returns no skill path), `review-gate` ("Identical gate section" across forked skills), `init-command` (OpenSpec preflight ≥ 2.0, stock skill check and install), `legacy-cleanup` (superseded by `openspec update`), `bundled-schema` (instruction wording that names `/opsx-*` skills), `project-readme` and `usage-guide`. `generate-specs-command` keeps its own skill, since OpenSpec has no equivalent.
@@ -43,7 +43,7 @@ Alternative B. The user chose to write this change directly after the spike, rat
 Where the overlay lives (user's choice, option "combined"):
 
 - **Fixed workflow rules go into the bundled schema's artifact `instruction` text and `apply` block.** These are the brainstorm and final gates of ff, one gate per artifact in continue, the Superpowers redirection, apply following the schema instead of the stock skill's own implementation loop, the code review gate belonging to finalize, verify in the worktree, and archive's sync check. The schema is already versioned, locked and upgraded by `/opsx-init`, so these rules ship and upgrade with it.
-- **Environment-dependent rules stay in the routing note** the extension injects each turn: the Interaction channel paragraph (how to gate and ask with the tools present), the Subagent integration paragraph (how to dispatch with the plugin present), the mapping from `/opsx-*` names to stock skills, and which stock skills superspec does not use.
+- **Environment-dependent rules stay in the routing note** the extension injects each turn: the Interaction channel paragraph (how to gate and ask with the tools present), the Subagent integration paragraph (how to dispatch with the plugin present), the mapping from each workflow step to its stock skill, and which stock skills superspec does not use.
 - **The project's `openspec/config.yaml` is not changed** beyond what `/opsx-init` writes today (`schema`, `language`). `context`, `rules` and `operations` stay the user's own. OpenSpec 2.0 does not change the format of `config.yaml` or a change's `.openspec.yaml`.
 
 ## Key Decisions
@@ -54,7 +54,7 @@ Where the overlay lives (user's choice, option "combined"):
   - If the profile lacks some (the 2.0 default `core` profile lacks new, continue, ff and verify), it prints the exact commands to run (`openspec config profile`, then `/opsx-init` again) and stops.
   - It never edits the user's global OpenSpec config.
 - **Minimum OpenSpec version becomes 2.0.**
-- **`/opsx-*` commands stay** as the way users start each step, now pointing at the stock skill plus the overlay. `/opsx-init` and `/opsx-generate-specs` are unchanged in name.
+- **The eight `/opsx-*` step prompts are removed** (user's decision, after the first final gate). Users run the stock skills with `/skill:<id>` (pi registers every discovered skill as `/skill:<name>`, on by default via `enableSkillCommands`) or ask the agent. `/opsx-init` and `/opsx-generate-specs` (prompt and skill) stay. Without a prompt, `workflow.md` reaches the agent through the schema instruction pointer and through the routing note, whose stock skills paragraph tells the agent to read the matching `workflow.md` section before running any of the eight stock skills, however it was invoked; for explore, sync and archive that paragraph is the only enforcement, so the e2e checklist covers them.
 - **Stock skills superspec does not use** (`openspec-propose`, `openspec-update-change`, and `bulk-archive`/`onboard` if installed) are excluded by the overlay. Superspec does not delete them.
 - **Legacy `.pi/` cleanup is dropped.** OpenSpec 2.0's own `update` removes the files that `--tools pi` wrote in 1.x.
 - **The finalize-only code review gate is stated in the apply instruction**, fixing the one deviation the spike found.

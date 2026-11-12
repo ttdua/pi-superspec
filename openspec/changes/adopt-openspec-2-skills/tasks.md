@@ -45,3 +45,14 @@ Blocked by: 1, 2, 3, 4
 - [x] 5.4 Add a breaking `CHANGELOG.md` entry; update `tests/project-readme.test.ts` and `tests/docs-subagents.test.ts` to the new text.
 - [x] 5.5 Update the `## Purpose` lines of `openspec/specs/planning-commands/spec.md`, `openspec/specs/execution-commands/spec.md` and `openspec/specs/bundled-schema/spec.md` to describe prompts running stock skills under `workflow.md` and to drop the fixed schema version (sync keeps an existing Purpose, so this edit is manual).
 - [x] 5.6 Run `bun run typecheck` and `bun run test`, and `openspec validate adopt-openspec-2-skills --strict`.
+
+## 6. Remove the step prompts (iteration 3)
+
+Blocked by: 1, 2, 3, 4, 5
+
+- [ ] 6.1 Replace every `/opsx-<cmd>` mention of the eight step commands with the stock skill id in `schema/superspec/workflow.md`, `schema/superspec/schema.yaml` and `schema/superspec/templates/{apply,finalize,plan,verify}.md`; bump the v9 digest in `tests/fixtures/schema-checksums.json` (v9 is unreleased).
+- [ ] 6.2 Delete `prompts/opsx-{explore,new,continue,ff,apply,verify,sync,archive}.md`. Keep `prompts/opsx-generate-specs.md` and `skills/opsx-generate-specs/`.
+- [ ] 6.3 Replace the three `/opsx-ff` hand-offs in `skills/opsx-generate-specs/SKILL.md` with `openspec-ff-change`. Rewrite `extensions/routing-note.ts`: path guidance names `openspec-ff-change`, `openspec-new-change`, `openspec-continue-change`; the stock skills paragraph tells the agent to read the matching `workflow.md` section before running a stock skill, to stop with instructions when the skill is missing, and names the unused stock skills. Change the `/opsx-init` report next step in `extensions/init/init.ts` to ask the agent or `/skill:openspec-new-change <name>`.
+- [ ] 6.4 Update the tests: delete the prompt-shape assertions and `tests/helpers/stock-prompt.ts`; assert the new routing note paragraph, the absence of the eight prompts, the generate-specs prompt and skill, and that no shipped text names an old step command.
+- [ ] 6.5 Update the `## Purpose` lines of `openspec/specs/{planning-commands,execution-commands,generate-specs-command}/spec.md` to drop the command names (sync keeps an existing Purpose). Update README.md and README.vi.md (command table lists `/opsx-init` and `/opsx-generate-specs`; a second table maps each step to its stock skill and `/skill:<id>`), `docs/architecture.md`, `docs/workflow.md`, `docs/usage-guide.md` (with a "skill commands not appearing" troubleshooting entry), `docs/e2e-checklist.md` (explore, sync and archive each read their `workflow.md` section; the missing-skill stop), `docs/glossary.md`, `docs/domain-model.md` and `CHANGELOG.md`.
+- [ ] 6.6 Run `bun run typecheck`, `bun run test`, the OpenSpec 2.0 integration and schema tests, and `openspec validate adopt-openspec-2-skills --strict`.

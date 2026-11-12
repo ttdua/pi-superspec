@@ -45,6 +45,37 @@ The agent SHALL open every review gate on the interaction channel named in the r
 - **THEN** there are no matches; the outcome table's result column is named for the channel, not for a tool
 
 
+### Requirement: Code review changes requested
+When the code review outcome is `changes_requested`, the agent SHALL stop finalize before the feature branch is touched, fix the code on the worktree branch following `receiving-code-review`, update `apply.md` as iteration N+1, run `openspec-verify-change` again, and re-enter finalize so the gate runs again. The diff base MUST be the feature branch recorded in `apply.md`.
+
+#### Scenario: Requested change loop
+- **WHEN** the reviewer requests changes on the diff
+- **THEN** no merge, push or PR happens, the fix is committed on the worktree branch, `apply.md` is updated as iteration N+1, and verify runs again before finalize resumes
+
+#### Scenario: Iteration update
+- **WHEN** the agent updates `apply.md` as iteration N+1
+- **THEN** it raises `Iteration:` and extends the commit range, as the apply template directs
+
+#### Scenario: Notes on approval
+- **WHEN** the reviewer approves the diff with notes
+- **THEN** no merge, push or PR happens until the notes are applied on the worktree branch, `apply.md` is updated as iteration N+1, verify has passed again, and finalize is re-entered before the feature branch is touched
+
+#### Scenario: Reopen after changes requested
+- **WHEN** the outcome was `changes_requested`
+- **THEN** the code gate is always reopened
+
+#### Scenario: Reopen after approval with notes
+- **WHEN** the outcome was `approved_with_notes` and a note changed behaviour or a requirement, or the agent is unsure
+- **THEN** the code gate is reopened
+
+#### Scenario: Wording-only notes
+- **WHEN** every note on an approved diff is only wording and none changes behaviour or a requirement
+- **THEN** finalize resumes after re-verify without reopening the code gate
+
+#### Scenario: Diff base
+- **WHEN** the code review opens
+- **THEN** it compares the worktree against the feature branch recorded in `apply.md`
+
 ## REMOVED Requirements
 
 ### Requirement: Identical gate section

@@ -79,7 +79,7 @@ When the existing project schema is neither absent nor identical to the bundled 
 - **THEN** the run is blocked, the report says the package is older than the project schema, and the schema directory is byte-identical afterwards
 
 ### Requirement: Validation and activation
-After installing or replacing the schema, `/opsx-init` SHALL run `openspec schema validate superspec` and report the result. On success it MUST call `ctx.reload()` and print `/opsx-new <name>` as the next step. When this run installed stock skills, the report MUST also say to commit `.agents/skills/` and to keep the eight required workflows in the OpenSpec profile, because `openspec update` removes workflows the profile does not select. On failure it MUST report the validator output and MUST NOT reload.
+After installing or replacing the schema, `/opsx-init` SHALL run `openspec schema validate superspec` and report the result. On success it MUST call `ctx.reload()` and print `Next: ask the agent to start a change, or run /skill:openspec-new-change <name>` as the next step. When this run installed stock skills, the report MUST also say to commit `.agents/skills/` and to keep the eight required workflows in the OpenSpec profile, because `openspec update` removes workflows the profile does not select. On failure it MUST report the validator output and MUST NOT reload.
 
 #### Scenario: Validation passes
 - **WHEN** validation succeeds
@@ -131,3 +131,49 @@ The language step SHALL run after the project schema has been installed, replace
 - **WHEN** the project schema is upgradable, the user confirms, and `/opsx-init --lang vi` runs
 - **THEN** `config.yaml` contains `language: vi` after the run
 
+### Requirement: Generate option
+`/opsx-init` SHALL accept `--generate` as a standalone token, alone or together with `--lang` and `--force`, in any order, and MUST remove it from the argument string before the `--lang` value is parsed. The flag MUST NOT change what init writes; it only adds a `/opsx-generate-specs` hint to the report of a successful activation.
+
+#### Scenario: Flag alone
+- **WHEN** `/opsx-init --generate` runs on a fresh repository
+- **THEN** the project is activated, the report mentions `/opsx-generate-specs` and the next step printed by "Validation and activation", and `config.yaml` is the same as without the flag
+
+#### Scenario: Flag with language
+- **WHEN** `/opsx-init --lang vi --generate` runs on a fresh repository
+- **THEN** `config.yaml` contains `language: vi` and the report mentions `/opsx-generate-specs`
+
+#### Scenario: Flag before language
+- **WHEN** `/opsx-init --generate --lang vi` runs on a fresh repository
+- **THEN** `config.yaml` contains `language: vi` and the report mentions `/opsx-generate-specs`
+
+#### Scenario: Multi-word language
+- **WHEN** `/opsx-init --lang Tiếng Việt --generate` runs
+- **THEN** `config.yaml` contains `language: Tiếng Việt`
+
+#### Scenario: Flag with a value
+- **WHEN** `/opsx-init --generate=yes` runs
+- **THEN** an error is reported and no file is created or changed, and no command that writes is run
+
+#### Scenario: Repeated flag
+- **WHEN** `/opsx-init --generate --generate` runs
+- **THEN** an error is reported and no file is created or changed, and no command that writes is run
+
+#### Scenario: Other arguments
+- **WHEN** `/opsx-init` runs with an argument that is neither `--generate` nor `--force` nor starts with `--lang`
+- **THEN** an error is reported and no file is created or changed, and no command that writes is run
+
+#### Scenario: Blocked project
+- **WHEN** the project has a foreign schema and `/opsx-init --generate` runs
+- **THEN** the run is blocked and the report does not mention `/opsx-generate-specs`
+
+#### Scenario: Failed preflight or validation
+- **WHEN** preflight or validation fails while `--generate` is given
+- **THEN** no `/opsx-generate-specs` hint is printed
+
+#### Scenario: No agent work
+- **WHEN** `/opsx-init --generate` runs
+- **THEN** init starts no agent work or subagent because of the flag
+
+#### Scenario: Idempotent
+- **WHEN** `/opsx-init --generate` runs a second time on an initialised project
+- **THEN** every file is byte-identical afterwards
