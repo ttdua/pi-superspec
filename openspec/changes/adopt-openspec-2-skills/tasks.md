@@ -29,11 +29,11 @@ Blocked by: 1
 
 Blocked by: none
 
-- [ ] 4.1 Raise the preflight in `extensions/init/preflight.ts` to OpenSpec ≥ 2.0 and update its message; update `tests/init/preflight.test.ts` and the default version in `tests/helpers/io.ts`.
-- [ ] 4.2 Add the stock skill check and profile reading (`openspec config list --json`), with the stop-and-instruct path, in a new `extensions/init/stock-skills.ts`; test it in `tests/init/stock-skills.test.ts`.
-- [ ] 4.3 In `extensions/init/init.ts`, run `openspec init --tools pi` when `openspec/` or a stock skill is missing; remove every legacy cleanup call; add the commit-and-profile lines to the report; update `tests/init/init.test.ts`.
-- [ ] 4.4 Delete `extensions/init/legacy.ts` and `tests/init/legacy.test.ts`.
-- [ ] 4.5 Make `tests/init/integration.test.ts` require OpenSpec ≥ 2.0 (skip otherwise) and run it with an isolated `XDG_CONFIG_HOME` whose custom profile selects the eight workflows; assert activation, validation and the eight stock skills.
+- [x] 4.1 Raise the preflight in `extensions/init/preflight.ts` to OpenSpec ≥ 2.0 and update its message; update `tests/init/preflight.test.ts` and the default version in `tests/helpers/io.ts`.
+- [x] 4.2 Add the stock skill check and profile reading (`openspec config list --json`), with the stop-and-instruct path, in a new `extensions/init/stock-skills.ts`; test it in `tests/init/stock-skills.test.ts`.
+- [x] 4.3 In `extensions/init/init.ts`, run `openspec init --tools pi` when `openspec/` or a stock skill is missing; remove every legacy cleanup call; add the commit-and-profile lines to the report; update `tests/init/init.test.ts`.
+- [x] 4.4 Delete `extensions/init/legacy.ts` and `tests/init/legacy.test.ts`.
+- [x] 4.5 Make `tests/init/integration.test.ts` require OpenSpec ≥ 2.0 (skip otherwise) and run it with an isolated `XDG_CONFIG_HOME` whose custom profile selects the eight workflows; assert activation, validation and the eight stock skills.
 
 ## 5. Documentation
 
