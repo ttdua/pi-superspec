@@ -1,9 +1,9 @@
 ---
 name: opsx-generate-specs
-description: Draft a first set of OpenSpec specs for an existing codebase. Map the code into capabilities, confirm them with the user, gather evidence for each one, write it into a delta spec inside the bootstrap-specs change, then hand off to /opsx-ff bootstrap-specs.
+description: Draft a first set of OpenSpec specs for an existing codebase. Map the code into capabilities, confirm them with the user, gather evidence for each one, write it into a delta spec inside the bootstrap-specs change, then hand off to the openspec-ff-change skill for bootstrap-specs.
 ---
 
-Generate draft specs for an existing codebase. The result is a change named `bootstrap-specs` that the user reviews and finishes with `/opsx-ff bootstrap-specs`. Nothing is written into `openspec/specs/` directly.
+Generate draft specs for an existing codebase. The result is a change named `bootstrap-specs` that the user reviews and finishes with the `openspec-ff-change` skill (`/skill:openspec-ff-change bootstrap-specs`). Nothing is written into `openspec/specs/` directly.
 
 **Input**: Optional notes from the user (for example directories to focus on or skip).
 
@@ -105,7 +105,7 @@ Generate draft specs for an existing codebase. The result is a change named `boo
 
     Do not write tasks.md, plan.md or any later artifact. Do not start implementation. Tell the user:
 
-    "Specs drafted for <n> capabilities. Review them, then run `/opsx-ff bootstrap-specs`."
+    "Specs drafted for <n> capabilities. Review them, then run `/skill:openspec-ff-change bootstrap-specs`."
 
 **Guardrails**
 - Never touch files under `openspec/specs/`

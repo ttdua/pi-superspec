@@ -53,7 +53,7 @@ describe("usage guide", () => {
 		expect(bootstrap).toMatch(/scouts are delegated when a subagent plugin is detected/i);
 		expect(bootstrap).toContain("openspec/changes/bootstrap-specs/");
 		expect(bootstrap).toMatch(/No capability scout runs before you answer/);
-		const order = ["/opsx-init --generate", "/opsx-generate-specs", "/opsx-ff bootstrap-specs", "/opsx-apply"].map(
+		const order = ["/opsx-init --generate", "/opsx-generate-specs", "/skill:openspec-ff-change bootstrap-specs", "openspec-apply-change"].map(
 			(c) => bootstrap.indexOf(c),
 		);
 		expect(order[0]).toBeGreaterThanOrEqual(0);
@@ -77,8 +77,8 @@ describe("e2e checklist", () => {
 	it("Routing note expectation lists the current four paths", () => {
 		const line = checklist.split("\n").find((l) => l.includes("pi-superspec routing note")) ?? "";
 		expect(line).toMatch(/no spec change[^;.]*directly with TDD/i);
-		expect(line).toContain("/opsx-ff");
-		expect(line).toMatch(/\/opsx-new[^.]*\/opsx-continue/);
+		expect(line).toContain("openspec-ff-change");
+		expect(line).toMatch(/openspec-new-change[^.]*openspec-continue-change/);
 		expect(line).toMatch(/questions[^.]*directly/i);
 		expect(line).toContain("docs/superpowers/");
 		expect(checklist).not.toContain("behaviour-changing work is first proposed with `/opsx-new`");
@@ -95,7 +95,13 @@ describe("e2e checklist", () => {
 		for (const key of Object.keys(RUNS) as (keyof typeof RUNS)[]) {
 			const body = run(key).toLowerCase();
 			for (const step of STEPS) expect(body, `${key} ${step}`).toContain(step);
-			for (const command of ["/opsx-new", "/opsx-continue", "/opsx-apply", "/opsx-verify", "/opsx-archive"]) {
+			for (const command of [
+				"/skill:openspec-new-change",
+				"/skill:openspec-continue-change",
+				"/skill:openspec-apply-change",
+				"/skill:openspec-verify-change",
+				"/skill:openspec-archive-change",
+			]) {
 				expect(body, `${key} ${command}`).toContain(command);
 			}
 		}

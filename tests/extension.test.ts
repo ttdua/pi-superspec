@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -66,8 +66,7 @@ describe("superspec extension", () => {
 		expect(
 			existsSync(join(result.skillPaths[0], "opsx-new", "SKILL.md")),
 		).toBe(false);
-		expect(existsSync(join(result.promptPaths[0], "opsx-new.md"))).toBe(true);
-		expect(existsSync(join(result.promptPaths[0], "opsx-apply.md"))).toBe(true);
+		expect(readdirSync(result.promptPaths[0])).toEqual(["opsx-generate-specs.md"]);
 	});
 
 	it("returns nothing in an unmarked project", () => {

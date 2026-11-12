@@ -1,7 +1,7 @@
 # generate-specs-command Specification
 
 ## Purpose
-Define the `/opsx-generate-specs` command: the skill and prompt pair, the map, confirm and scout stages, the spec output format, the generated document language, and the hand-off to `/opsx-ff bootstrap-specs`.
+Define the `/opsx-generate-specs` command: the skill and prompt pair, the map, confirm and scout stages, the spec output format, the generated document language, and the hand-off to the stock `openspec-ff-change` skill, run under `workflow.md`, for `bootstrap-specs`.
 
 ## Requirements
 

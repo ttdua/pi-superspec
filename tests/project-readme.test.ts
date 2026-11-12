@@ -152,6 +152,24 @@ describe("README install and optional packages", () => {
 
 const UNUSED_STOCK = ["openspec-propose", "openspec-update-change", "openspec-bulk-archive-change", "openspec-onboard"];
 const WORKFLOW_IDS = ["explore", "new", "continue", "ff", "apply", "verify", "sync", "archive"];
+const OLD_STEP_COMMAND = /\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/;
+const STEP_SKILL: Record<string, string> = {
+	explore: "openspec-explore",
+	new: "openspec-new-change",
+	continue: "openspec-continue-change",
+	ff: "openspec-ff-change",
+	apply: "openspec-apply-change",
+	verify: "openspec-verify-change",
+	sync: "openspec-sync-specs",
+	archive: "openspec-archive-change",
+};
+const STEPS_TO_ARCHIVE = [
+	"openspec-new-change",
+	"openspec-continue-change",
+	"openspec-apply-change",
+	"openspec-verify-change",
+	"openspec-archive-change",
+];
 
 describe("README OpenSpec 2.0 and stock skills", () => {
 	const docs = [
@@ -184,10 +202,11 @@ describe("README OpenSpec 2.0 and stock skills", () => {
 		}
 	});
 
-	it("command table matches prompts plus /opsx-init", () => {
+	it("Table matches shipped prompts: the command table lists /opsx-init and /opsx-generate-specs only", () => {
 		const prompts = readdirSync(resolve(root, "prompts"))
 			.map((f) => `/${f.replace(/\.md$/, "")}`)
 			.sort();
+		expect(prompts).toEqual(["/opsx-generate-specs"]);
 		for (const [name, text] of docs) {
 			const rows = text
 				.split("\n")
@@ -195,6 +214,53 @@ describe("README OpenSpec 2.0 and stock skills", () => {
 				.filter((c): c is string => c !== undefined)
 				.sort();
 			expect(rows, name).toEqual([...prompts, "/opsx-init"].sort());
+		}
+	});
+
+	it("Skill table maps each step to its stock skill and /skill:<id>", () => {
+		for (const [name, text] of docs) {
+			for (const [step, id] of Object.entries(STEP_SKILL)) {
+				const row = text.split("\n").find((l) => l.startsWith(`| ${step} |`));
+				expect(row, `${name} ${step} row`).toBeDefined();
+				expect(row, `${name} ${step}`).toContain(`\`${id}\``);
+				expect(row, `${name} ${step}`).toContain(`\`/skill:${id}`);
+			}
+		}
+	});
+
+	it("READMEs say /skill:<id> needs enableSkillCommands and that the prompts are gone", () => {
+		for (const [name, text] of docs) {
+			expect(text, name).toContain("enableSkillCommands");
+			expect(text, name).toContain("opsx-propose");
+			expect(text, name).toContain("opsx-bulk-archive");
+		}
+	});
+
+	it("Quick start reaches archive by skill id", () => {
+		for (const [name, text, heading] of [
+			["README.md", read("README.md"), "## Quick start"],
+			["README.vi.md", read("README.vi.md"), "## Bắt đầu nhanh"],
+		] as const) {
+			const quick = section(text, heading);
+			const order = ["/opsx-init", ...STEPS_TO_ARCHIVE].map((c) => quick.indexOf(c));
+			for (const [i, at] of order.entries()) expect(at, `${name} ${i}`).toBeGreaterThanOrEqual(0);
+			expect(quick, name).toContain("openspec-ff-change");
+			expect(quick, name).not.toMatch(OLD_STEP_COMMAND);
+		}
+	});
+
+	it("Remaining files stated: uninstall names the shipped commands and the stock skills", () => {
+		for (const [name, text, , uninstall] of docs) {
+			const body = section(text, uninstall);
+			expect(body, name).toContain("/opsx-init");
+			expect(body, name).toContain("/opsx-generate-specs");
+			expect(body, name).not.toMatch(OLD_STEP_COMMAND);
+		}
+	});
+
+	it("READMEs name no old step command", () => {
+		for (const [name, text] of docs) {
+			expect(text, name).not.toMatch(OLD_STEP_COMMAND);
 		}
 	});
 });
@@ -246,6 +312,36 @@ describe("usage guide", () => {
 		expect(entry).toMatch(/package[^.]*`\/opsx-init`[^.]*`workflow\.md`/);
 	});
 
+	it("Skill commands not appearing", () => {
+		const entry = section(guide, "**The `/skill:openspec-*` commands do not appear.**");
+		expect(entry).toContain("openspec init --tools pi");
+		expect(entry).toContain("/opsx-init");
+		expect(entry).toContain("openspec config profile");
+		expect(entry).toContain("enableSkillCommands");
+		expect(entry).toMatch(/ask the agent/i);
+	});
+
+	it("Every workflow step covered by skill id, invoked with /skill:<id> or by asking", () => {
+		expect(guide.indexOf("/opsx-init")).toBeLessThan(guide.indexOf("## Step by step"));
+		const steps = section(guide, "## Step by step");
+		const order = STEPS_TO_ARCHIVE.map((c) => steps.indexOf(c));
+		for (const at of order) expect(at).toBeGreaterThanOrEqual(0);
+		expect([...order].sort((x, y) => x - y)).toEqual(order);
+		expect(steps).toContain("/skill:openspec-new-change");
+		expect(steps).toMatch(/ask the agent/i);
+	});
+
+	it("ff stops before apply and names openspec-apply-change next", () => {
+		const ff = section(guide, "## Fast-forward with openspec-ff-change");
+		expect(ff).toContain("/skill:openspec-ff-change <name>");
+		expect(ff).toMatch(/ask the agent/i);
+		expect(ff).toContain("openspec-apply-change");
+	});
+
+	it("names no old step command", () => {
+		expect(guide).not.toMatch(OLD_STEP_COMMAND);
+	});
+
 	it("Restore from backup", () => {
 		expect(guide).toContain("~/.pi/superspec-backups/");
 		expect(guide).toMatch(/cp -R/);
@@ -288,9 +384,35 @@ describe("docs match the 2.0 skills model", () => {
 		expect(e2e).toContain(".pi/prompts/mine.md");
 	});
 
+	it("living spec purposes describe stock skills, not the removed commands", () => {
+		for (const cap of ["planning-commands", "execution-commands", "generate-specs-command"]) {
+			const purpose = section(read(`openspec/specs/${cap}/spec.md`), "## Purpose");
+			expect(purpose, cap).not.toMatch(OLD_STEP_COMMAND);
+		}
+		for (const cap of ["planning-commands", "execution-commands"]) {
+			expect(section(read(`openspec/specs/${cap}/spec.md`), "## Purpose"), cap).toMatch(/stock (OpenSpec )?skills/);
+		}
+	});
+
+	it("docs name no old step command", () => {
+		for (const file of ["docs/architecture.md", "docs/workflow.md", "docs/e2e-checklist.md", "docs/glossary.md", "docs/domain-model.md"]) {
+			expect(read(file), file).not.toMatch(OLD_STEP_COMMAND);
+		}
+	});
+
+	it("e2e checklist covers the section read for explore, sync and archive and the missing-skill stop", () => {
+		const e2e = read("docs/e2e-checklist.md");
+		for (const id of ["openspec-explore", "openspec-sync-specs", "openspec-archive-change"]) {
+			const line = e2e.split("\n").find((l) => l.includes(`/skill:${id}`) && /reads? [^.]*workflow\.md/.test(l));
+			expect(line, id).toBeDefined();
+		}
+		expect(e2e).toMatch(/missing[^.\n]*stock skill[^\n]*stops?/i);
+	});
+
 	it("changelog marks the breaking change", () => {
 		const log = read("CHANGELOG.md");
 		expect(log).toMatch(/BREAKING[^\n]*OpenSpec (>= |≥ )?2\.0/i);
 		expect(log).toContain("schema version 9");
+		expect(log).toMatch(/BREAKING[^\n]*\/skill:<id>|step (commands|prompts)[^\n]*removed/i);
 	});
 });

@@ -168,7 +168,7 @@ describe("runInit", () => {
 		expect(io.reloads).toBe(1);
 		expect(io.reports).toHaveLength(1);
 		expect(io.reports[0]).toContain("Schema superspec is valid.");
-		expect(io.reports[0]).toContain("Next: /opsx-new <name>");
+		expect(io.reports[0]).toContain("Next: ask the agent to start a change, or run /skill:openspec-new-change <name>");
 		expect(readFileSync(join(root, "openspec", "config.yaml"), "utf8")).toBe("schema: superspec\nlanguage: en\n");
 		expect(existsSync(join(root, "openspec", "schemas", "superspec", "schema.yaml"))).toBe(true);
 		const v = calls.findIndex(isValidate);
@@ -199,7 +199,7 @@ describe("runInit", () => {
 		});
 		expect(await runInit(io, packageRoot)).toBe("activated");
 		expect(reloaded).toBe(true);
-		expect(notes.some((n) => n.includes("/opsx-new"))).toBe(true);
+		expect(notes.some((n) => n.includes("/skill:openspec-new-change"))).toBe(true);
 	});
 
 	it("emits warnings without stopping", async () => {
@@ -585,9 +585,9 @@ describe("runInit", () => {
 			const { io } = recording(root);
 			expect(await runInit(io, packageRoot, "--generate")).toBe("activated");
 			const report = io.reports[0];
-			expect(report).toContain("Next: /opsx-new <name>");
+			expect(report).toContain("Next: ask the agent to start a change, or run /skill:openspec-new-change <name>");
 			expect(report).toContain(hint);
-			expect(report.indexOf(hint)).toBeGreaterThan(report.indexOf("Next: /opsx-new <name>"));
+			expect(report.indexOf(hint)).toBeGreaterThan(report.indexOf("Next: ask the agent"));
 			expect(report.split("\n").at(-1)).toBe(
 				"For an existing codebase, run /opsx-generate-specs to draft specs from the code.",
 			);

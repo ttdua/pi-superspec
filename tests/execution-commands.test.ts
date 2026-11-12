@@ -3,17 +3,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
-import {
-	expectStockPrompt,
-	STOCK_SKILL,
-	type PromptCommand,
-} from "./helpers/stock-prompt.ts";
 import { flatSection, sentences, workflow } from "./helpers/workflow.ts";
 
 const root = new URL("..", import.meta.url);
 const rootPath = fileURLToPath(root);
 
-const COMMANDS: readonly PromptCommand[] = ["apply", "verify", "sync", "archive"];
+const COMMANDS: readonly string[] = ["apply", "verify", "sync", "archive"];
 const SUPERPOWERS_RULE = "STOP and tell the user to install Superpowers";
 
 function read(path: string): string {
@@ -38,25 +33,10 @@ const sync = () => flatSection("sync");
 const archive = () => flatSection("archive");
 
 describe("execution commands: package layout", () => {
-	it("Prompts exist without package skills", () => {
+	it("No prompts or skills for the steps", () => {
 		for (const c of COMMANDS) {
-			expect(exists(`prompts/opsx-${c}.md`)).toBe(true);
+			expect(exists(`prompts/opsx-${c}.md`), c).toBe(false);
 			expect(exists(`skills/opsx-${c}`), c).toBe(false);
-		}
-	});
-
-	it("Prompt maps to its stock skill", () => {
-		for (const c of COMMANDS) {
-			expectStockPrompt(read(`prompts/opsx-${c}.md`), c);
-			expect(read(`prompts/opsx-${c}.md`)).toContain(`\`${STOCK_SKILL[c]}\``);
-		}
-	});
-
-	it("Mapped stock skill missing", () => {
-		for (const c of COMMANDS) {
-			const prompt = read(`prompts/opsx-${c}.md`);
-			expect(prompt).toContain(`If \`${STOCK_SKILL[c]}\` is not in the available skills list`);
-			expect(prompt).toContain("stop without");
 		}
 	});
 
@@ -92,7 +72,7 @@ describe("execution commands: package layout", () => {
 describe("execution rules in workflow.md", () => {
 	describe("Apply follows the schema apply block", () => {
 		it("Blocked change", () => {
-			expect(apply()).toContain("`blocked`: change no code. Missing artifacts: point to `/opsx-continue`.");
+			expect(apply()).toContain("`blocked`: change no code. Missing artifacts: point to `openspec-continue-change`.");
 		});
 
 		it("Blocked by a missing tracking file", () => {
@@ -101,7 +81,7 @@ describe("execution rules in workflow.md", () => {
 
 		it("Stops after the receipt", () => {
 			expect(apply()).toContain("write and commit `apply.md` in the worktree");
-			expect(apply()).toContain("Then stop, report the executor and the commit range, and point to `/opsx-verify`.");
+			expect(apply()).toContain("Then stop, report the executor and the commit range, and point to `openspec-verify-change`.");
 			expect(apply()).toContain("Apply never opens the code review gate");
 			expect(flatSection("Shared rules")).toContain("No command invokes `finishing-a-development-branch`");
 		});
@@ -176,7 +156,7 @@ describe("execution rules in workflow.md", () => {
 			const t = apply();
 			expect(t).toContain("Read `receiving-code-review`");
 			expect(t).toContain("append a `post-PR iteration N+1` entry with the new commit range to `apply.md`");
-			expect(t).toContain("tell the user to run `/opsx-verify`, then update `finalize.md`");
+			expect(t).toContain("tell the user to run `openspec-verify-change`, then update `finalize.md`");
 			expect(t).toContain("a policy in the project `AGENTS.md` overrides it");
 		});
 
@@ -187,7 +167,7 @@ describe("execution rules in workflow.md", () => {
 
 	describe("Verify runs in the worktree", () => {
 		it("Missing apply receipt", () => {
-			expect(verify()).toContain("If `apply.md` does not exist, stop and point to `/opsx-apply`.");
+			expect(verify()).toContain("If `apply.md` does not exist, stop and point to `openspec-apply-change`.");
 		});
 
 		it("Verify in the worktree", () => {
@@ -197,13 +177,13 @@ describe("execution rules in workflow.md", () => {
 		});
 
 		it("Failing verify", () => {
-			expect(verify()).toContain("point to `/opsx-apply` (a fix iteration)");
+			expect(verify()).toContain("point to `openspec-apply-change` (a fix iteration)");
 			expect(apply()).toContain("read `systematic-debugging`");
 			expect(verify()).toContain("Stop after 5 iterations");
 		});
 
-		it("verify points to /opsx-continue and handles the post-finalize case", () => {
-			expect(verify()).toContain("/opsx-continue");
+		it("verify points to openspec-continue-change and handles the post-finalize case", () => {
+			expect(verify()).toContain("openspec-continue-change");
 			expect(verify()).toContain("`finalize.md` exists");
 		});
 	});
@@ -328,7 +308,7 @@ describe("execution rules in workflow.md", () => {
 		});
 
 		it("All tracked tasks done", () => {
-			expect(apply()).toContain("`all_done`: say the tracked tasks are complete, point to `/opsx-verify` and then `/opsx-archive`");
+			expect(apply()).toContain("`all_done`: say the tracked tasks are complete, point to `openspec-verify-change` and then `openspec-archive-change`");
 		});
 	});
 
@@ -411,9 +391,6 @@ describe("execution specialist routing", () => {
 			/Subagent integration paragraph|subagent-driven-development|subagent routing|subagent-routing\.md|subagent calls/g;
 		expect(workflow()).not.toMatch(banned);
 		expect(workflow().replace(allowed, "")).not.toMatch(/subagent/i);
-		for (const c of COMMANDS) {
-			expect(read(`prompts/opsx-${c}.md`), c).not.toMatch(banned);
-		}
 	});
 
 	it("apply and verify refer delegation to the Subagent integration paragraph", () => {

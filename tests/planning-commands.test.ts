@@ -3,17 +3,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
-import {
-	expectStockPrompt,
-	STOCK_SKILL,
-	type PromptCommand,
-} from "./helpers/stock-prompt.ts";
 import { flatSection, sentences, workflow, workflowSection } from "./helpers/workflow.ts";
 
 const root = new URL("..", import.meta.url);
 const rootPath = fileURLToPath(root);
 
-const COMMANDS: readonly PromptCommand[] = ["explore", "new", "continue", "ff"];
+const COMMANDS: readonly string[] = ["explore", "new", "continue", "ff"];
 
 function read(path: string): string {
 	return readFileSync(new URL(path, root), "utf8");
@@ -48,26 +43,14 @@ describe("planning commands: package layout", () => {
 		expect(readdirSync(new URL("skills", root)).sort()).toEqual(["opsx-generate-specs"]);
 	});
 
-	it("Prompts exist without package skills", () => {
+	it("Only the generate-specs prompt ships in prompts/", () => {
+		expect(readdirSync(new URL("prompts", root)).sort()).toEqual(["opsx-generate-specs.md"]);
+	});
+
+	it("No prompts or skills for the steps", () => {
 		for (const c of COMMANDS) {
-			expect(exists(`prompts/opsx-${c}.md`)).toBe(true);
+			expect(exists(`prompts/opsx-${c}.md`), c).toBe(false);
 			expect(exists(`skills/opsx-${c}`), c).toBe(false);
-		}
-	});
-
-	it("Prompt maps to its stock skill", () => {
-		for (const c of COMMANDS) {
-			expectStockPrompt(read(`prompts/opsx-${c}.md`), c);
-		}
-		expectStockPrompt(read("prompts/opsx-ff.md"), "ff");
-		expect(read("prompts/opsx-ff.md")).toContain("`openspec-ff-change`");
-	});
-
-	it("Mapped stock skill missing", () => {
-		for (const c of COMMANDS) {
-			const prompt = read(`prompts/opsx-${c}.md`);
-			expect(prompt).toContain(`If \`${STOCK_SKILL[c]}\` is not in the available skills list`);
-			expect(prompt).toContain("stop without");
 		}
 	});
 
@@ -138,7 +121,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("Name exists", () => {
 			expect(t()).toContain("`openspec list --json`");
-			expect(t()).toContain("suggest `/opsx-continue <name>` and stop");
+			expect(t()).toContain("suggest `openspec-continue-change <name>` and stop");
 		});
 	});
 
@@ -160,7 +143,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("Approval does not advance", () => {
 			expect(t()).toContain("Stop when planning is complete or the next ready artifact is `apply`");
-			expect(t()).toContain("never create the `apply` artifact; point to `/opsx-apply`");
+			expect(t()).toContain("never create the `apply` artifact; point to `openspec-apply-change`");
 		});
 
 		it("Changes requested", () => {
@@ -181,7 +164,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("Planning already complete", () => {
 			expect(t()).toContain("Create nothing except a ready `finalize` artifact");
-			expect(t()).toContain("otherwise point to `/opsx-apply`");
+			expect(t()).toContain("otherwise point to `openspec-apply-change`");
 		});
 
 		it("Planning completes mid-loop", () => {
@@ -203,8 +186,8 @@ describe("planning rules in workflow.md", () => {
 		});
 
 		it("continue closing prompts", () => {
-			expect(t()).toContain('"Planning is complete. Run `/opsx-apply`, or tell me what to change."');
-			expect(t()).toContain('"Run `/opsx-continue` again, or tell me what to change."');
+			expect(t()).toContain('"Planning is complete. Use the `openspec-apply-change` skill next, or tell me what to change."');
+			expect(t()).toContain('"Use the `openspec-continue-change` skill again, or tell me what to change."');
 		});
 	});
 
@@ -243,7 +226,7 @@ describe("planning rules in workflow.md", () => {
 				"Interaction channel",
 				"feature branch recorded in `apply.md`",
 				"`receiving-code-review`",
-				"`/opsx-verify`",
+				"`openspec-verify-change`",
 			]) {
 				expect(gate(), s).toContain(s);
 			}
@@ -268,7 +251,7 @@ describe("planning rules in workflow.md", () => {
 		});
 
 		it("gate does not depend on its position or on continue", () => {
-			expect(gate()).not.toMatch(/\bbelow\b|\babove\b|\/opsx-continue/);
+			expect(gate()).not.toMatch(/\bbelow\b|\babove\b|openspec-continue-change/);
 		});
 
 		it("code review fixes update apply.md as a new iteration", () => {
@@ -298,7 +281,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("Final gate blocks apply pointer", () => {
 			expect(t()).toContain("On `changes_requested`, revise, cascade per the Review gate and reopen it.");
-			expect(t()).toContain("Point to `/opsx-apply` only after the final gate is approved.");
+			expect(t()).toContain("Point to `openspec-apply-change` only after the final gate is approved.");
 		});
 
 		it("ff final gate lists the packet explicitly", () => {
@@ -369,7 +352,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("Scaffold and hand off", () => {
 			expect(t()).toContain(
-				"you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `/opsx-continue <name>`.",
+				"you may run `openspec new change <name>`. Never create `openspec/changes/` by hand. Then point to `openspec-continue-change <name>`.",
 			);
 			expect(t()).toContain("do not write `brainstorm.md`");
 			expect(t()).toContain("do not run a review gate in explore");
@@ -382,7 +365,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("explore capture targets omit the gated artifacts", () => {
 			expect(t()).toContain(
-				"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.",
+				"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `openspec-continue-change <name>` with its review gate.",
 			);
 			for (const f of ["`proposal.md`", "`specs/<capability>/spec.md`", "`design.md`", "`tasks.md`"]) {
 				expect(t(), f).toContain(f);
@@ -400,7 +383,7 @@ describe("planning rules in workflow.md", () => {
 
 		it("Planning complete", () => {
 			expect(t()).toContain("Stop when planning is complete");
-			expect(t()).toContain("point to `/opsx-apply`");
+			expect(t()).toContain("point to `openspec-apply-change`");
 		});
 
 		it("Older status output", () => {
@@ -483,9 +466,7 @@ describe("planning specialist routing", () => {
 	it("Delegation through the paragraph: workflow.md names roles, not plugins", () => {
 		const forbidden = /pi-subagents|tintinweb|gotgenes|contact_supervisor|subagents_enable|get_subagent_result|steer_subagent|bg_wait|Agent\(|subagent\(|superspec\./;
 		expect(workflow()).not.toMatch(forbidden);
-		for (const c of ["continue", "ff", "explore", "generate-specs"]) {
-			expect(read(`prompts/opsx-${c}.md`), `prompt ${c}`).not.toMatch(forbidden);
-		}
+		expect(read("prompts/opsx-generate-specs.md")).not.toMatch(forbidden);
 		expect(read("skills/opsx-generate-specs/SKILL.md")).not.toMatch(forbidden);
 	});
 
@@ -523,7 +504,7 @@ describe("planning docs", () => {
 		expect(wf).toContain("stops before `apply`");
 		const readmeRow = read("README.md")
 			.split("\n")
-			.find((l) => l.startsWith("|") && l.includes("`/opsx-continue`"));
+			.find((l) => l.startsWith("|") && l.includes("`openspec-continue-change`"));
 		expect(readmeRow).toBeDefined();
 		expect(readmeRow).not.toContain("then stops");
 	});

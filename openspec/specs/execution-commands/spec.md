@@ -1,7 +1,7 @@
 # execution-commands Specification
 
 ## Purpose
-Defines the `/opsx-apply`, `/opsx-verify`, `/opsx-sync` and `/opsx-archive` commands, which run the stock OpenSpec skills under `workflow.md` to execute a planned change. Apply follows the schema apply block, verify checks the result in the worktree, sync merges delta specs into main specs, and archive performs the delta-sync check and archives the change.
+Defines the apply, verify, sync and archive steps, which run as stock OpenSpec skills under `workflow.md` to execute a planned change. Apply follows the schema apply block, verify checks the result in the worktree, sync merges delta specs into main specs, and archive performs the delta-sync check and archives the change.
 
 ## Requirements
 

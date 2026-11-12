@@ -1,6 +1,6 @@
 # [Feature Name] Implementation Plan
 
-> Executed via `/opsx-apply`, which chooses the executor.
+> Executed via `openspec-apply-change`, which chooses the executor.
 > Spec reference: this change's `specs/` and `design.md`.
 
 **Goal:** <!-- One sentence -->

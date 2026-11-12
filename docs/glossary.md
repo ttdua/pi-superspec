@@ -1,11 +1,11 @@
 # Glossary
 
 **Activated project** — A project whose `openspec/schemas/superspec/schema.yaml`
-carries the `x-pi-superspec` marker. Only activated projects get the `opsx-*`
-commands and skills.
+carries the `x-pi-superspec` marker. Only activated projects get the
+`/opsx-generate-specs` command and skill.
 
 **Apply block** — The top-level `apply:` section of the schema; the instructions
-`/opsx-apply` follows.
+`openspec-apply-change` follows.
 
 **Package agents** — The six `superspec.<role>` specialist agent definitions under
 `agents/`, declared by `pi-subagents.agents` and `pi.subagents.agents` and available wherever the package is
@@ -98,8 +98,8 @@ extension detects it and injects it as a paragraph; skills do not name the tools
 Interaction channel. A closed or dismissed review is not an approval.
 
 **Routing note** — Context the extension injects in activated projects telling the
-agent which of four paths fits the work: fix directly, `/opsx-ff`, `/opsx-new` then
-`/opsx-continue`, or answer directly.
+agent which of four paths fits the work: fix directly, `openspec-ff-change`,
+`openspec-new-change` then `openspec-continue-change`, or answer directly.
 
 **Scenario** — A `#### Scenario:` block (WHEN/THEN) under a requirement; each maps
 to at least one test.

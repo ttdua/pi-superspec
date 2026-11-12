@@ -11,6 +11,8 @@ import {
 	workflowSection,
 } from "./helpers/workflow.ts";
 
+const OLD_STEP_COMMAND = /\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/;
+
 const FORBIDDEN = [
 	"AskUserQuestion",
 	"rpiv-",
@@ -72,9 +74,18 @@ describe("workflow.md structure", () => {
 		expect(text).not.toMatch(/plannotator|ask_user_question/i);
 	});
 
-	it("spells commands as /opsx-<cmd>", () => {
+	it("No step commands: names steps by stock skill id, never as /opsx-<step>", () => {
 		expect(workflow()).not.toMatch(/\/opsx:/);
-		expect(workflow()).toMatch(/\/opsx-continue/);
+		expect(workflow()).not.toMatch(OLD_STEP_COMMAND);
+		expect(workflow()).not.toContain("/opsx-<cmd>");
+		expect(workflow()).toMatch(/openspec-continue-change/);
+	});
+
+	it("intro: the agent reads the section before it runs the matching stock skill", () => {
+		const intro = workflow().split("\n## ")[0].replace(/\s+/g, " ");
+		expect(intro).toMatch(/before (it|you) runs? (one of )?the (matching )?stock (OpenSpec )?skill, however/i);
+		expect(intro).toContain("Shared rules, Review gate and Superpowers rule");
+		expect(intro).not.toMatch(/command you are running/);
 	});
 
 	it("links subagent-routing.md relatively and the link resolves", () => {
@@ -119,7 +130,7 @@ describe("shared rules", () => {
 		expect(shared()).toMatch(/Never invent subagent calls/);
 	});
 
-	it("maps every command to its stock skill", () => {
+	it("Skill map: names each step's stock skill id", () => {
 		const map: Record<string, string> = {
 			explore: "openspec-explore",
 			new: "openspec-new-change",
@@ -131,7 +142,7 @@ describe("shared rules", () => {
 			archive: "openspec-archive-change",
 		};
 		for (const [cmd, id] of Object.entries(map)) {
-			expect(shared(), cmd).toContain(`\`/opsx-${cmd}\` runs \`${id}\``);
+			expect(shared(), cmd).toContain(`${cmd} runs \`${id}\``);
 		}
 	});
 
@@ -156,8 +167,8 @@ describe("shared rules", () => {
 describe("explore", () => {
 	const text = () => flatSection("explore");
 
-	it("explore hand-off: points to /opsx-continue <name>, never recommends openspec-propose", () => {
-		expect(text()).toContain("Then point to `/opsx-continue <name>`.");
+	it("explore hand-off: points to openspec-continue-change <name>, never recommends openspec-propose", () => {
+		expect(text()).toContain("Then point to `openspec-continue-change <name>`.");
 		expect(text()).not.toContain("openspec-propose");
 	});
 
@@ -182,12 +193,12 @@ describe("explore", () => {
 
 	it("overrides the stock capture: scaffold only, even when asked to capture", () => {
 		expect(text()).toContain("This overrides the stock explore skill's \"capture the requested artifacts\" behaviour");
-		expect(text()).toContain("even when the user asks to capture proposal or specs into a new change, scaffold only with `openspec new change <name>` and point to `/opsx-continue <name>`");
+		expect(text()).toContain("even when the user asks to capture proposal or specs into a new change, scaffold only with `openspec new change <name>` and point to `openspec-continue-change <name>`");
 	});
 
 	it("never captures brainstorm.md or plan.md", () => {
 		expect(text()).toContain(
-			"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `/opsx-continue <name>` with its review gate.",
+			"`brainstorm.md` and `plan.md` are never explore capture targets because they are written through `openspec-continue-change <name>` with its review gate.",
 		);
 	});
 
@@ -210,13 +221,13 @@ describe("new", () => {
 	const text = () => flatSection("new");
 
 	it("suggests continue for an existing name and never passes --schema", () => {
-		expect(text()).toContain("suggest `/opsx-continue <name>` and stop");
+		expect(text()).toContain("suggest `openspec-continue-change <name>` and stop");
 		expect(text()).toContain("Never pass `--schema`");
 	});
 
 	it("creates no artifact and overrides the stock closing prompt", () => {
 		expect(text()).toContain("Create no artifact.");
-		expect(text()).toContain("Run `/opsx-continue` to create the next artifact, or `/opsx-ff` to fast-forward.");
+		expect(text()).toContain("Use the `openspec-continue-change` skill to create the next artifact, or `openspec-ff-change` to fast-forward.");
 	});
 });
 
@@ -242,7 +253,7 @@ describe("continue", () => {
 	it("stops before apply and falls back to isComplete", () => {
 		const t = text();
 		expect(t).toContain("`isPlanningComplete` is true (fall back to `isComplete` when it is absent)");
-		expect(t).toContain("never create the `apply` artifact; point to `/opsx-apply`");
+		expect(t).toContain("never create the `apply` artifact; point to `openspec-apply-change`");
 	});
 
 	it("completes partial glob artifacts and treats skipped as satisfied", () => {
@@ -308,8 +319,8 @@ describe("ff", () => {
 		}
 	});
 
-	it("points to /opsx-apply only after the final gate is approved", () => {
-		expect(text()).toContain("Point to `/opsx-apply` only after the final gate is approved.");
+	it("points to openspec-apply-change only after the final gate is approved", () => {
+		expect(text()).toContain("Point to `openspec-apply-change` only after the final gate is approved.");
 		expect(text()).toContain("do not start apply");
 	});
 });
@@ -404,7 +415,7 @@ describe("verify", () => {
 	});
 
 	it("requires apply.md and runs in the worktree", () => {
-		expect(text()).toContain("If `apply.md` does not exist, stop and point to `/opsx-apply`.");
+		expect(text()).toContain("If `apply.md` does not exist, stop and point to `openspec-apply-change`.");
 		expect(text()).toContain("until finalize, never read the change from the main checkout");
 		expect(text()).toContain("`finalize.md` exists");
 	});
@@ -426,7 +437,7 @@ describe("verify", () => {
 
 	it("is read-only and leaves the sync check to archive", () => {
 		expect(text()).toContain("Do not implement or archive anything during verify.");
-		expect(text()).toContain("The delta-spec sync check belongs to `/opsx-archive`");
+		expect(text()).toContain("The delta-spec sync check belongs to `openspec-archive-change`");
 	});
 });
 
@@ -498,7 +509,7 @@ describe("Superpowers rule and stock skills", () => {
 	it("lists the four unused stock skills", () => {
 		const t = flatSection("Stock skills not used");
 		for (const id of UNUSED_STOCK) expect(t, id).toContain(`\`${id}\``);
-		expect(t).toContain("suggest the `/opsx-*` path instead");
+		expect(t).toContain("suggest the matching workflow skill instead");
 	});
 
 	it("names openspec-propose nowhere but the unused list", () => {

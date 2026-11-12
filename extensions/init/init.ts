@@ -200,7 +200,7 @@ export async function runInit(io: InitIO, packageRoot: string, args = ""): Promi
 		...warnings,
 		...schemaReport,
 		"Schema superspec is valid.",
-		"Superspec is set up. Next: /opsx-new <name>",
+		"Superspec is set up. Next: ask the agent to start a change, or run /skill:openspec-new-change <name>",
 	];
 	if (installSkills) {
 		report.push(

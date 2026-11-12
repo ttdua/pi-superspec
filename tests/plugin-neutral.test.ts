@@ -53,6 +53,15 @@ describe("plugin-neutral workflow text", () => {
 		}
 	});
 
+	it("no shipped file names an old /opsx-<step> command", () => {
+		const oldStep = /\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/;
+		const shipped = ["schema", "prompts", "skills", "extensions"].flatMap((dir) => filesUnder(join(rootPath, dir)));
+		expect(shipped.length).toBeGreaterThan(0);
+		for (const file of shipped) {
+			expect(readFileSync(file, "utf8"), rel(file)).not.toMatch(oldStep);
+		}
+	});
+
 	it("agent bodies name no plugin-specific tool or package", () => {
 		for (const file of agentFiles) {
 			const { body } = parseFrontmatter(readFileSync(file, "utf8"));

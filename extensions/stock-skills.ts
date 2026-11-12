@@ -1,7 +1,7 @@
 import { accessSync, constants, statSync } from "node:fs";
 import { join } from "node:path";
 
-/** Stock OpenSpec skill ids the Superspec prompts run, in workflow order. */
+/** Stock OpenSpec skill ids that run the Superspec workflow steps, in workflow order. */
 export const REQUIRED_STOCK_SKILLS: readonly string[] = [
 	"openspec-explore",
 	"openspec-new-change",

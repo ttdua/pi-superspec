@@ -7,7 +7,7 @@ is built. Everything not stated here keeps upstream Superspec v4 behaviour.
 ## Artifact DAG
 
 ```text
-brainstorm ─┬─→ proposal ─→ specs ─→ tasks ─→ plan ─→ apply ─→ verify ─→ finalize   (then /opsx-archive)
+brainstorm ─┬─→ proposal ─→ specs ─→ tasks ─→ plan ─→ apply ─→ verify ─→ finalize   (then openspec-archive-change)
             └─→ design (optional; nothing requires it)
 ```
 
@@ -29,14 +29,14 @@ completes and archive does not warn.
 | 7 | apply | code + `apply.md` | Superpowers `using-git-worktrees` + `subagent-driven-development` (fallback `executing-plans`) | Isolation, fresh subagent per plan task, TDD, per-task and whole-branch review, ledger for recovery; unblocked tasks may run in parallel lanes. |
 | 8 | verify | `verify.md` | OpenSpec verify + Superpowers `verification-before-completion`; `systematic-debugging` on FAIL | Spec-level correctness backed by fresh evidence. |
 | 9 | finalize | `finalize.md` | Superspec v4 git-side closeout; `finishing-a-development-branch` as escape hatch | Deterministic merge back to the feature branch, push, PR offer, reviewer comment. |
-| 10 | archive | change moved to `archive/` | OpenSpec `/opsx-archive` | Sync deltas into living specs; runs before the PR merges so the PR holds the full history. |
+| 10 | archive | change moved to `archive/` | OpenSpec `openspec-archive-change` | Sync deltas into living specs; runs before the PR merges so the PR holds the full history. |
 
 Optional specialist seats (roles resolved through
 `schema/superspec/subagent-routing.md`; the bundled `superspec.*` agents are bundled candidates
 for them, with no precedence over other qualifying agents; parent keeps artifact writes and human gates):
 the scout role gives evidence-only recon for explore and brainstorm;
 the spec reviewer role checks completed specs and the plan reviewer role checks the
-completed plan, both inside `/opsx-continue` and `/opsx-ff` before the existing human gate. These
+completed plan, both inside `openspec-continue-change` and `openspec-ff-change` before the existing human gate. These
 internal reviews are advisory, not human approval, and add no stop: ff keeps its two planned stops
 (brainstorm and final). Without the integration the parent does the same check inline.
 The implementer, task reviewer and plan reviewer apply the user's `coding-standards` skill when one is installed; if it is missing they fall back to project conventions and nothing stops.
@@ -69,7 +69,7 @@ comment under the same policy as finalize.
     with branch name **`<change-name>`**.
   - From then until finalize the **worktree copy is authoritative**: `tasks.md`
     ticks, `apply.md`, `verify.md` are written and committed there.
-  - `/opsx-verify` (and its `openspec` calls) runs with the worktree as working
+  - `openspec-verify-change` (and its `openspec` calls) runs with the worktree as working
     directory.
 - **apply.md** records: worktree path, worktree branch, feature branch apply started
   from, base/integration branch, commit range, iteration, executor, tasks X of Y, and
@@ -112,19 +112,19 @@ A review gate asks the reviewer to decide on written work before the workflow mo
 It ends in one outcome: `approved`, `approved with notes` or `changes requested`. A
 closed or dismissed review is not an approval: the agent asks on the Interaction channel how to proceed.
 
-- `/opsx-continue` creates one artifact, runs a review gate on it and, once the gate is
+- `openspec-continue-change` creates one artifact, runs a review gate on it and, once the gate is
   approved, goes on to the next artifact in the same run. It stops before `apply` and
-  points you to `/opsx-apply`. A gate that ends in `changes requested` makes it revise
+  points you to `openspec-apply-change`. A gate that ends in `changes requested` makes it revise
   the artifact and reopen the gate, and no later artifact is created until it is
   approved; `dismissed` stops it and the agent asks on the Interaction channel how to
   proceed.
-- `/opsx-ff` runs a gate on `brainstorm.md`, creates proposal, design, specs, tasks and
+- `openspec-ff-change` runs a gate on `brainstorm.md`, creates proposal, design, specs, tasks and
   plan unattended, then runs one final gate over those five files. `brainstorm.md` is not
   repeated in the final gate.
 - finalize runs a code review gate (step 2b) after the in-worktree test run and before
   the feature branch is checked out, merged, pushed or opened as a PR. Notes or requested
   changes stop finalize: fix on the worktree branch, update `apply.md` as iteration N+1
-  (raise `Iteration:`, extend the commit range), run `/opsx-verify` again and re-enter
+  (raise `Iteration:`, extend the commit range), run `openspec-verify-change` again and re-enter
   finalize. The escape hatch runs the same gate before merging locally or opening a PR;
   `skipped` is recorded only for keep-as-is, discard, or a gate you waive in chat.
 - Interaction channel, detected by the extension and injected as an "Interaction channel"
@@ -152,16 +152,16 @@ closed or dismissed review is not an approval: the agent asks on the Interaction
 | # | Conflict | Resolution |
 |---|---|---|
 | 1 | `brainstorming` writes to `docs/superpowers/specs/` and ends with "invoke writing-plans only". | Write into the change dir; on approval return to the OpenSpec flow (next: proposal). |
-| 2 | `writing-plans` writes to `docs/superpowers/plans/` and ends with an execution handoff. | Write `plan.md`; skip the handoff; `/opsx-apply` decides the executor. |
+| 2 | `writing-plans` writes to `docs/superpowers/plans/` and ends with an execution handoff. | Write `plan.md`; skip the handoff; `openspec-apply-change` decides the executor. |
 | 3 | SDD and `executing-plans` end by invoking `finishing-a-development-branch` — merge/PR before verify. | Apply stops after the final review and writes `apply.md`. |
 | 4 | Two checklists plus the SDD ledger. | `tasks.md` authoritative; plan tasks carry its IDs; ledger is recovery only. |
 | 5 | Upstream verify's five checks differ from `openspec-verify-change`; its sync check belongs to archive. | One verify list (above); sync moved to archive. |
 | 6 | Finalize guesses the feature branch from `git log`. | `apply.md` records branch facts; finalize reads them. |
-| 7 | Stock OpenSpec skills name Claude tools (`AskUserQuestion`, `Task`). | The skills are not forked: `workflow.md` states the pi tool mapping and fallbacks ([architecture.md](architecture.md#pi-tool-mapping)), and the prompt and routing note say it overrides the running skill. |
+| 7 | Stock OpenSpec skills name Claude tools (`AskUserQuestion`, `Task`). | The skills are not forked: `workflow.md` states the pi tool mapping and fallbacks ([architecture.md](architecture.md#pi-tool-mapping)), and the schema instructions and routing note say it overrides the running skill. |
 | 8 | Upstream says `executing-plans` lacks TDD/review; Superpowers 7 requires TDD there. | `executing-plans` is the fallback without a subagent plugin; it must still request a whole-branch review before `apply.md`. |
-| 9 | `/opsx-ff` runs unattended but brainstorming is interactive. | ff gates `brainstorm.md`, runs proposal, design, specs, tasks and plan unattended, then runs one final review gate over those five, stopping before apply. |
+| 9 | `openspec-ff-change` runs unattended but brainstorming is interactive. | ff gates `brainstorm.md`, runs proposal, design, specs, tasks and plan unattended, then runs one final review gate over those five, stopping before apply. |
 | 10 | The Superpowers bootstrap pushes brainstorming before any creative work, writing outside OpenSpec. | Routing note: four paths by kind of work (below). |
-| 11 | A stock OpenSpec skill (for example its own artifact loop, hand-off or tool names) differs from `workflow.md`. | `workflow.md` wins; the schema instructions begin with a pointer to it and every prompt repeats the rule. |
+| 11 | A stock OpenSpec skill (for example its own artifact loop, hand-off or tool names) differs from `workflow.md`. | `workflow.md` wins; the schema instructions begin with a pointer to it, and the routing note's stock skills paragraph makes the agent read its section before running any stock skill. |
 
 ## Routing note (activated projects)
 
@@ -172,32 +172,33 @@ warns once per session start (including reload) with `pi install git:github.com/
 
 - No spec change (small mistake, typo, fix restoring specified behaviour, refactor; confirm the behaviour in openspec/specs/ first, unspecified behaviour is a spec change) →
   work directly with TDD, no change directory.
-- Spec change with clear requirements → `/opsx-ff`.
-- Spec change that needs careful step-by-step review → `/opsx-new`, then `/opsx-continue`.
+- Spec change with clear requirements → `openspec-ff-change`.
+- Spec change that needs careful step-by-step review → `openspec-new-change`, then `openspec-continue-change`.
 - Questions, research and reviews → answer directly, without proposing a change.
 - The agent states the path it chose and a one-line reason before starting.
 - Never write design docs or plans to `docs/superpowers/`.
 
-The routing note also carries a stock skills paragraph: it maps each `/opsx-*` command to its stock skill, says `workflow.md` overrides a stock skill where they differ, and names the four unused stock skills (`openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change`, `openspec-onboard`) so the agent suggests the matching `/opsx-*` path instead. At session start an activated project with a UI is warned once if a required stock skill is missing.
+The routing note also carries a stock skills paragraph: it names the eight stock skills, tells the agent to read the step's section of `workflow.md` plus Shared rules, Review gate and Superpowers rule before running any of them (however invoked), says `workflow.md` overrides a stock skill where they differ, tells the agent to name a missing skill, point to `openspec config profile` and `openspec update` (or `/opsx-init`) and stop, and names the four unused stock skills (`openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change`, `openspec-onboard`) so the agent suggests the matching workflow skill instead. At session start an activated project with a UI is warned once if a required stock skill is missing.
 
 The same context carries the Interaction channel paragraph (see Review gates).
 
 ## Commands
 
-Each workflow command runs a stock OpenSpec skill from `.agents/skills/` under `openspec/schemas/superspec/workflow.md`.
+The package ships two commands. The workflow steps are stock OpenSpec skills from `.agents/skills/`, run under `openspec/schemas/superspec/workflow.md` with `/skill:<id>` or by asking the agent.
 
-| Command | Stock skill | Behaviour |
+| Step or command | Stock skill | Behaviour |
 |---|---|---|
 | `/opsx-init` | — | Always available. Set up the project and install the stock skills; an outdated pristine schema is upgraded after confirmation, any other non-identical schema is blocked unless you pass `--force`, which replaces it after a backup. |
-| `/opsx-explore [topic]` | `openspec-explore` | Free-form thinking, no code. |
-| `/opsx-new <name>` | `openspec-new-change` | Create a change with the `superspec` schema. |
-| `/opsx-continue [name]` | `openspec-continue-change` | Create the next ready artifact, run a review gate on it and, once approved, continue to the next; stops before `apply`. **Default path for changes needing close review.** |
-| `/opsx-ff <name or description>` | `openspec-ff-change` | Brainstorm interactively and gate `brainstorm.md`, generate proposal → plan unattended, then run one final gate; stop before apply. |
-| `/opsx-apply [name]` | `openspec-apply-change` | Run the schema's apply block. |
-| `/opsx-verify [name]` | `openspec-verify-change` | Produce `verify.md`. |
-| `/opsx-sync [name]` | `openspec-sync-specs` | Sync delta specs into living specs without archiving. |
-| `/opsx-archive [name]` | `openspec-archive-change` | Sync if needed, then archive. |
+| `/opsx-generate-specs` | — | Activated projects only. Draft delta specs for an existing codebase in `bootstrap-specs`, then hand off to `openspec-ff-change`. |
+| explore `[topic]` | `openspec-explore` | Free-form thinking, no code. |
+| new `<name>` | `openspec-new-change` | Create a change with the `superspec` schema. |
+| continue `[name]` | `openspec-continue-change` | Create the next ready artifact, run a review gate on it and, once approved, continue to the next; stops before `apply`. **Default path for changes needing close review.** |
+| ff `<name or description>` | `openspec-ff-change` | Brainstorm interactively and gate `brainstorm.md`, generate proposal → plan unattended, then run one final gate; stop before apply. |
+| apply `[name]` | `openspec-apply-change` | Run the schema's apply block. |
+| verify `[name]` | `openspec-verify-change` | Produce `verify.md`. |
+| sync `[name]` | `openspec-sync-specs` | Sync delta specs into living specs without archiving. |
+| archive `[name]` | `openspec-archive-change` | Sync if needed, then archive. |
 
-`finalize` is not a command: create it with `/opsx-continue` after verify passes.
+`finalize` is not a step of its own: create it with `openspec-continue-change` after verify passes.
 
-Not shipped: `opsx-propose` (skips brainstorm and plan) and `opsx-bulk-archive`. The stock skills `openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change` and `openspec-onboard` stay installed but are not part of the workflow.
+Not shipped: the earlier `/opsx-<step>` commands, `opsx-propose` (skips brainstorm and plan) and `opsx-bulk-archive`. The stock skills `openspec-propose`, `openspec-update-change`, `openspec-bulk-archive-change` and `openspec-onboard` stay installed but are not part of the workflow.

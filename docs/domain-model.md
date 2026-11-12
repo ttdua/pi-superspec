@@ -77,8 +77,8 @@ OpenSpec documents in that language.
 
 ## Change
 
-One unit of work at `openspec/changes/<name>/`, created by `/opsx-new` or
-`/opsx-ff`. After archive it moves to `openspec/changes/archive/YYYY-MM-DD-<name>/`.
+One unit of work at `openspec/changes/<name>/`, created by `openspec-new-change`
+or `openspec-ff-change`. After archive it moves to `openspec/changes/archive/YYYY-MM-DD-<name>/`.
 
 | Property | Meaning |
 |---|---|
@@ -157,5 +157,5 @@ otherwise it is harness-owned and preserved.
 
 | Kind | Route |
 |---|---|
-| `behaviour-change` | New change via `/opsx-new`. |
+| `behaviour-change` | New change via `openspec-new-change` (or `openspec-ff-change`). |
 | `small-fix` | Direct TDD, no change directory. |

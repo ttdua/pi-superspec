@@ -395,7 +395,7 @@ run("bundled schema", () => {
 			const flat = verifyInstruction().replace(/\s+/g, " ");
 			const sentences = flat.split(/(?<=\.)\s/);
 			expect(
-				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
+				sentences.some((s) => s.includes("openspec-archive-change") && /sync/.test(s)),
 			).toBe(true);
 		});
 	});
@@ -435,8 +435,21 @@ run("bundled schema", () => {
 			).replace(/\s+/g, " ");
 			const sentences = flat.split(/(?<=\.)\s/);
 			expect(
-				sentences.some((s) => s.includes("/opsx-archive") && /sync/.test(s)),
+				sentences.some((s) => s.includes("openspec-archive-change") && /sync/.test(s)),
 			).toBe(true);
+		});
+	});
+	describe("no step commands", () => {
+		const OLD_STEP_COMMAND = /\/opsx-(explore|new|continue|ff|apply|verify|sync|archive)\b/;
+
+		it("No step commands: schema.yaml and templates name no /opsx-<step> command", () => {
+			const files = [
+				join(SCHEMA_DIR, "schema.yaml"),
+				...readdirSync(join(SCHEMA_DIR, "templates")).map((f) => join(SCHEMA_DIR, "templates", f)),
+			];
+			for (const file of files) {
+				expect(readFileSync(file, "utf8"), file).not.toMatch(OLD_STEP_COMMAND);
+			}
 		});
 	});
 	describe("artifact DAG", () => {
@@ -636,7 +649,7 @@ run("bundled schema", () => {
 		it("plan instruction carries the handoff, ID, scenario and spec rules", () => {
 			const text = instructionFor("plan");
 			expect(text).toContain(
-				"Skip the skill's execution handoff; `/opsx-apply` chooses the executor.",
+				"Skip the skill's execution handoff; `openspec-apply-change` chooses the executor.",
 			);
 			expect(text).toContain(
 				"Every plan task names the tasks.md group it implements (e.g. `Task 3 — implements 3`)",
@@ -652,7 +665,7 @@ run("bundled schema", () => {
 		it("plan template does not pre-select an executor", () => {
 			const t = tpl("plan.md");
 			expect(t).not.toContain("subagent-driven-development");
-			expect(t).toContain("Executed via `/opsx-apply`, which chooses the executor.");
+			expect(t).toContain("Executed via `openspec-apply-change`, which chooses the executor.");
 			expect(t).toMatch(/^## Task 1: .*implements N$/m);
 			expect(t).toMatch(/^## Scenario → test$/m);
 		});
