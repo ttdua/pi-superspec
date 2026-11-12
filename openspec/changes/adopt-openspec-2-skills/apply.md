@@ -6,7 +6,7 @@
 
 **Change**: `adopt-openspec-2-skills`
 **Iteration**: `1`
-**Applied at**: `2026-11-12 10:52`
+**Applied at**: `2026-11-12 10:36`
 **Executor**: `subagent-driven-development`
 
 Implementers were general-purpose agents briefed with the superspec implementer contract; reviewers were `code-reviewer` agents (read-only) per task, plus one whole-branch review. The bundled `superspec.*` agents are not registered under gotgenes, so the generic agents were used with the role handoff.
